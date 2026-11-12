@@ -18,6 +18,7 @@ const mqtt = require('mqtt');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const makeStore = require('./db');
+const { buildWorkbook } = require('./report');
 
 // ------------------------------------------------------------------ cấu hình
 const env = process.env;
@@ -29,6 +30,7 @@ const ACK_TIMEOUT_MS = 5000;
 const OFFLINE_AFTER_MS = 15000;
 const SAMPLE_EVERY_MS = 10000;
 const RETENTION_DAYS = Number(env.RETENTION_DAYS || 7);
+const TZ_HOURS = Number.isFinite(Number(env.TZ_OFFSET_HOURS)) && env.TZ_OFFSET_HOURS !== undefined ? Number(env.TZ_OFFSET_HOURS) : 7; // múi giờ hiển thị trong Excel (VN = +7)
 // DEVICES="tracker01:Solar Tracker 01,tracker02:Mái nhà"
 const DEVICES = (env.DEVICES || 'tracker01:Solar Tracker 01').split(',').map(s => s.trim()).filter(Boolean).map(s => {
   const [id, ...name] = s.split(':');
@@ -95,11 +97,16 @@ mq.on('message', (topic, payload) => {
     if (Date.now() - d.lastSample >= SAMPLE_EVERY_MS) {
       d.lastSample = Date.now();
       const n = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
-      store.insertTelemetry(id, d.lastSample, {
+      const sample = {
         pvV: n(j.solarVoltage), pvI: n(j.solarCurrent), pvP: n(j.solarPower),
         batV: n(j.batteryVoltage), batI: n(j.batteryCurrent), batP: n(j.batteryPower),
         m1: n(j.motor1Angle), m2: n(j.motor2Angle), temp: j.dhtOK ? n(j.temp) : null,
-      }).catch(e => console.error('[DB] telemetry', e.message));
+      };
+      store.insertTelemetry(id, d.lastSample, sample).catch(e => console.error('[DB] telemetry', e.message));
+      // tổng hợp theo giờ (giữ vĩnh viễn) – chỉ ghi khi đủ 6 đại lượng hợp lệ
+      if (['pvV', 'pvI', 'pvP', 'batV', 'batI', 'batP'].every(k => sample[k] !== null)) {
+        store.addHourly(id, d.lastSample, sample).catch(e => console.error('[DB] hourly', e.message));
+      }
     }
     return;
   }
@@ -202,6 +209,30 @@ app.get('/api/history', auth(), async (req, res) => {
     out.push({ t: g[g.length - 1].ts, pvP: avg('pvP'), pvV: avg('pvV'), pvI: avg('pvI'), batP: avg('batP'), batV: avg('batV'), batI: avg('batI') });
   }
   res.json(out);
+});
+
+// Xuất báo cáo Excel (mọi tài khoản đã đăng nhập, kể cả viewer): GET /api/export.xlsx?device=..&days=7
+const exportHits = new Map();
+app.get('/api/export.xlsx', auth(), async (req, res) => {
+  const dev = String(req.query.device || '');
+  const days = Math.min(366, Math.max(1, parseInt(req.query.days, 10) || 7));
+  if (!DEVICE_IDS.has(dev)) return res.status(400).json({ error: 'Thiết bị không hợp lệ' });
+  const last = exportHits.get(req.user.username) || 0;
+  if (Date.now() - last < 3000) return res.status(429).json({ error: 'Vui lòng chờ vài giây rồi thử lại' });
+  exportHits.set(req.user.username, Date.now());
+
+  const until = Date.now();
+  const since = until - days * 86400000;
+  const rows = await store.queryHourly(dev, Math.floor(since / 3600000) * 3600000);
+  const dv = DEVICES.find(d => d.id === dev);
+  const buf = await buildWorkbook({ deviceId: dev, deviceName: dv && dv.name, rows, since, until, tzHours: TZ_HOURS });
+  const stamp = (ms) => new Date(ms + TZ_HOURS * 3600000).toISOString().slice(0, 10);
+  res.set({
+    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'Content-Disposition': `attachment; filename="solar-tracker_${dev}_${stamp(since)}_${stamp(until)}.xlsx"`,
+    'Cache-Control': 'no-store',
+  });
+  res.send(Buffer.from(buf));
 });
 
 app.get('/api/logs', auth(['operator', 'admin']), async (req, res) => {

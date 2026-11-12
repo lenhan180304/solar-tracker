@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- st-env: "esp32" khi nhúng vào firmware, "cloud" khi phục vụ từ Cloud Backend (thay tự động) -->
+<meta name="st-env" content="cloud">
+<meta name="theme-color" content="#fbfaf8">
+<title>Solar Tracker - ESP32 IoT MPPT</title>
+<style>
+:root{
+  --bg:#fbfaf8;--panel:#ffffff;--panel2:#f8f6f1;--line:#eae6df;--line-sub:#f2efe9;
+  --orange:#f95738;--orange-soft:#fff3eb;--orange-line:#fed7aa;--amber:#fca311;--amber-soft:#fffbeb;
+  --green:#10b981;--green-soft:#ecfdf5;--green-line:#a7f3d0;--blue:#2563eb;--red:#dc2626;--red-soft:#fef2f2;--red-line:#fecaca;
+  --muted:#7c828d;--text:#1c2026;--text-sub:#4b5260;
+  --shadow:0 4px 18px rgba(35,30,20,.04);--shadow-hi:0 8px 28px rgba(35,30,20,.08);
+  --r:14px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+body{overflow-x:hidden}
+button{font-family:inherit}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- HEADER ---------- */
+header.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,.02)}
+.top-in{max-width:1220px;margin:auto;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange);font-size:22px;flex:none}
+.brand{font-weight:800;letter-spacing:1px;font-size:18px}
+.subbrand{font-size:10px;letter-spacing:1px;color:var(--muted);margin-top:2px;font-weight:600}
+.top-in .estop{margin-left:auto}
+.chips-row{max-width:1220px;margin:auto;padding:0 24px 8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);white-space:nowrap}
+.chip i{width:7px;height:7px;border-radius:50%;background:#c4c0b8}
+.chip.ok{background:var(--green-soft);border-color:#d1fae5;color:var(--green)}.chip.ok i{background:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.chip.warn{background:var(--amber-soft);border-color:#fde68a;color:#b7791f}.chip.warn i{background:var(--amber)}
+.chip.bad{background:var(--red-soft);border-color:var(--red-line);color:var(--red)}.chip.bad i{background:var(--red)}
+.chip.src{background:var(--orange-soft);border-color:var(--orange-line);color:var(--orange)}.chip.src i{background:var(--orange)}
+.estop{border:1px solid #fca5a5;background:#fee2e2;color:var(--red);padding:8px 14px;border-radius:20px;font-weight:800;font-size:11px;cursor:pointer;letter-spacing:.3px;transition:background .15s,color .15s}
+.estop:hover{background:#fecaca}
+.estop.active{background:var(--red);color:#fff;border-color:var(--red)}
+.userbox{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted)}
+.userbox select{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;color:var(--text)}
+.linkbtn{background:none;border:0;color:var(--orange);font-weight:800;font-size:11px;cursor:pointer;padding:4px}
+
+/* ---------- TABS ---------- */
+nav.tabs{max-width:1220px;margin:auto;padding:0 24px;display:flex;gap:4px}
+.tab{display:flex;align-items:center;gap:7px;border:0;background:none;padding:11px 14px 10px;font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab svg{width:16px;height:16px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* ---------- LAYOUT ---------- */
+.wrap{max-width:1220px;margin:auto;padding:0 24px 42px}
+.page{display:none;animation:fade .18s ease-out}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hero{position:relative;padding:26px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.eyebrow{font-size:11px;letter-spacing:2px;color:var(--orange);font-weight:700;margin-bottom:8px}
+.hero h1{font-size:28px;line-height:1.15;margin:0;letter-spacing:-.5px;font-weight:800}
+.sun{width:92px;height:92px;flex:none;border-radius:50%;background:radial-gradient(circle,#fed7aa 0,#fff7ed 60%,rgba(255,255,255,0) 70%);display:grid;place-items:center;font-size:40px;color:var(--orange)}
+.page-head{padding:24px 0 6px}
+.page-head h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px}
+.page-head p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+.grid{display:grid;gap:14px;margin-top:14px}
+.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.section{padding:20px}
+.section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.5px}
+.section-title .sub{margin-left:auto;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0}
+.icon{color:var(--orange);font-size:16px}
+.alert{display:none;background:var(--red-soft);border:2px solid #ef4444;color:#991b1b;padding:14px 20px;border-radius:12px;font-weight:800;font-size:14px;margin-top:16px;text-align:center}
+.note{font-size:12px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;line-height:1.5}
+
+/* ---------- METRICS ---------- */
+.metric{padding:18px 20px;min-height:132px;position:relative}
+.label{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.value{font-size:28px;font-weight:800;margin-top:12px;letter-spacing:-.5px}
+.unit{font-size:14px;color:var(--muted);font-weight:600;margin-left:3px}
+.bar{height:5px;background:var(--line-sub);border-radius:6px;margin-top:16px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:var(--blue);width:0%;transition:width .4s ease}
+.bar.yellow i{background:var(--amber)}.bar.orange i{background:var(--orange)}.bar.green i{background:var(--green)}
+.ring{position:absolute;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--orange);font-size:11px;font-weight:800;background:conic-gradient(var(--orange) calc(var(--p,0)*1%),var(--line-sub) 0);transition:--p .4s}
+.ring::before{content:"";position:absolute;inset:3px;border-radius:50%;background:#fffaf5}
+.ring span{position:relative}
+.rows{margin-top:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-sub);font-size:13px;color:var(--muted);font-weight:600}
+.row:last-child{border-bottom:0}
+.status-ok{color:var(--green);font-weight:800;font-size:11px;text-align:right}
+.status-warn{color:#d48806;font-weight:800;font-size:11px;text-align:right}
+.status-bad{color:var(--red);font-weight:800;font-size:11px;text-align:right}
+.stat-num{font-weight:800;color:var(--orange);font-size:14px}
+.kv{font-weight:800;color:var(--text);font-size:13px}
+
+/* ---------- AXES ---------- */
+.axes{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px}
+.axis{text-align:center}
+.axis-name{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+.angle{font-size:32px;font-weight:800;margin:6px 0;letter-spacing:-.5px}
+.angle small{font-size:16px;color:var(--muted);font-weight:600}
+.trackbar{height:4px;background:var(--line-sub);position:relative;border-radius:6px;margin:12px 10px 0}
+.trackbar b{position:absolute;top:-4px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff;border:2px solid var(--orange);left:50%;transition:left .4s ease}
+.ticks{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin:6px 4px 0;font-weight:700}
+
+/* ---------- LDR ---------- */
+.ldr-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;margin-top:16px;align-items:center}
+.ldr-compass{position:relative;height:200px;background:var(--panel2);border-radius:12px;border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;overflow:hidden}
+.cross-line{position:absolute;background:var(--line);z-index:1}
+.cross-line.h{top:50%;left:0;right:0;height:1px}.cross-line.v{left:50%;top:0;bottom:0;width:1px}
+.ldr-quad{padding:10px 14px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.ldr-quad.tr,.ldr-quad.br{text-align:right}
+.ldr-tag{font-size:10px;color:var(--orange);font-weight:700}
+.ldr-val{font-size:18px;font-weight:800;margin:2px 0}
+.ldr-bar{height:4px;background:var(--line-sub);border-radius:4px;overflow:hidden}
+.ldr-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),var(--orange));width:0%;transition:width .3s}
+.sun-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid var(--orange);color:var(--orange);display:grid;place-items:center;font-size:15px;z-index:3;box-shadow:0 2px 8px rgba(249,87,56,.25);transition:transform .5s ease}
+
+/* ---------- BUTTONS ---------- */
+.badge-btn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;background:var(--green-soft);color:var(--green);border:1px solid var(--green-line);transition:background .15s,color .15s,border-color .15s}
+.badge-btn.manual{background:var(--amber-soft);color:#d48806;border-color:#fde68a}
+.badge-btn.cal{background:#fff7ed;color:var(--orange);border-color:var(--orange-line)}
+.badge-btn.spd{background:#fff;color:var(--text);border-color:var(--line);padding:6px 10px;min-width:52px}
+.badge-btn.spd.on{background:var(--orange);color:#fff;border-color:#ea580c}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.motor{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.motor h3{font-size:11px;color:var(--muted);letter-spacing:.5px;font-weight:700;display:flex;justify-content:space-between;margin:0 0 12px}
+.motor-state{color:var(--green);font-weight:800}
+.motor-state.run{color:var(--orange)}
+.buttons{display:flex;justify-content:center;gap:10px}
+.btn{height:46px;min-width:72px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text);font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,transform .08s;box-shadow:0 1px 4px rgba(0,0,0,.03);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.btn:hover{background:var(--panel2);border-color:#d5d0c8}
+.btn:active{transform:scale(.97)}
+.btn.stop{font-size:12px;color:var(--red);background:var(--red-soft);border-color:var(--red-line)}
+.btn.primary{color:var(--orange)}
+.btn.sm{height:34px;min-width:36px;font-size:13px;padding:0 10px}
+.btn.wide{font-size:12px;display:inline-flex;align-items:center;gap:6px}
+.btn.solid{background:var(--orange);color:#fff;border-color:#ea580c}
+.btn.solid:hover{background:#ea580c}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.speedbar{margin-top:14px;padding:12px 16px;background:var(--panel2);border-radius:10px;border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.speed-badge{font-size:11px;font-weight:800;color:var(--orange);background:#fff7ed;padding:3px 10px;border-radius:12px;border:1px solid var(--orange-line)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.cloud-hint{display:none;font-size:11px;color:#b7791f;font-weight:700;margin-top:10px;text-align:center}
+.env-cloud .cloud-hint{display:block}
+
+/* Khoá điều khiển khi chờ ACK / quyền chỉ xem */
+body.cmd-pending .ctl:not(.safety){opacity:.55;pointer-events:none}
+body.role-viewer .ctl{opacity:.45;pointer-events:none}
+.viewer-banner{display:none;margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--amber-soft);border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:700}
+body.role-viewer .viewer-banner{display:block}
+
+/* ---------- CHART ---------- */
+.chart-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.pillgroup{display:flex;gap:8px;flex-wrap:wrap}
+.chart-pills{display:flex;gap:4px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)}
+.cpill{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.cpill.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.chart canvas{width:100%;height:260px;display:block;margin-top:10px}
+.legend{display:flex;gap:18px;font-size:11px;font-weight:700;color:var(--muted);margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend span:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--orange)}
+.legend .batDot:before{background:var(--green)}
+
+/* ---------- FORMS ---------- */
+.form{display:grid;gap:10px;margin-top:14px}
+.form label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:grid;gap:5px}
+.form input,.form select{font:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);width:100%}
+.form input:focus,.form select:focus{outline:2px solid var(--orange-line);border-color:var(--orange)}
+.form .inline{display:flex;gap:10px;align-items:center}
+.form .check{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:12.5px;color:var(--text)}
+.form .check input{width:auto}
+.f2{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+table.log{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+table.log th{text-align:left;font-size:10.5px;color:var(--muted);font-weight:800;letter-spacing:.4px;padding:8px 6px;border-bottom:1px solid var(--line)}
+table.log td{padding:8px 6px;border-bottom:1px solid var(--line-sub);vertical-align:top}
+table.log td.mono{font-family:var(--mono);font-size:11.5px}
+.scroll{overflow-x:auto}
+
+/* ---------- ENV VISIBILITY ---------- */
+.env-esp32 .only-cloud{display:none!important}
+.env-cloud .only-esp32{display:none!important}
+.only-admin{display:none!important}
+body.role-admin .only-admin{display:block!important}
+
+/* ---------- TOAST / LOGIN ---------- */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:50;display:grid;gap:8px;max-width:min(360px,calc(100vw - 32px))}
+.toast{background:#fff;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:700;box-shadow:var(--shadow-hi);animation:fade .18s ease-out}
+.toast.ok{border-left-color:var(--green)}.toast.warn{border-left-color:var(--amber)}.toast.bad{border-left-color:var(--red)}.toast.info{border-left-color:var(--orange)}
+#login{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;place-items:center;padding:16px}
+#login.show{display:grid}
+#login .card{width:min(380px,100%);padding:28px}
+#login h2{margin:14px 0 4px;font-size:20px}
+#login p{margin:0;color:var(--muted);font-size:12.5px}
+#loginErr{color:var(--red);font-size:12px;font-weight:700;min-height:16px}
+
+footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:1px;padding:8px 0 24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:880px){.sun{display:none}.g2,.controls,.ldr-grid{grid-template-columns:1fr}}
+@media(max-width:640px){
+  /* backdrop-filter biến header thành khối chứa của position:fixed -> tắt để thanh tab dính đáy màn hình */
+  header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}
+  .top-in{padding:10px 16px;gap:10px;flex-wrap:nowrap}.wrap{padding:0 16px 96px}
+  .subbrand{display:none}.brand{font-size:15px}.logo{width:34px;height:34px;font-size:19px}
+  .brand{white-space:nowrap;letter-spacing:.5px}
+  .estop{padding:8px 10px;font-size:10px;white-space:nowrap}
+  .chips-row{padding:0 0 8px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{font-size:9.5px;padding:4px 8px}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom));justify-content:space-around;gap:0;max-width:none}
+  .tab{flex-direction:column;gap:3px;font-size:9.5px;padding:7px 4px;border-bottom:0;border-top:2px solid transparent;flex:1}
+  .tab.active{border-top-color:var(--orange)}
+  .g4{gap:8px}.metric{padding:14px;min-height:118px}.value{font-size:23px}
+  .g3{grid-template-columns:1fr}
+  .hero h1{font-size:22px}
+  .buttons{gap:8px}.btn{min-width:64px;padding:0 10px}
+  .chart canvas{height:220px}
+  #toasts{bottom:84px}
+  .f2{grid-template-columns:1fr}
+}
+@media(max-width:380px){.g4{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="env-esp32">
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">☀</div>
+    <div>
+      <div class="brand">SOLAR TRACKER</div>
+      <div class="subbrand">HỆ THỐNG ĐIỆN MẶT TRỜI THÔNG MINH</div>
+    </div>
+    <button class="estop ctl safety" id="btnEstopHeader" onclick="cmd('estop_toggle')">DỪNG KHẨN CẤP (E-STOP)</button>
+  </div>
+  <div class="chips-row">
+    <div class="chips" id="chips">
+      <span class="chip src" id="chipSrc" title="Nguồn kết nối đang dùng"><i></i><b>LOCAL</b></span>
+      <span class="chip" id="chipLink" title="Kết nối trình duyệt"><i></i><b>ĐANG KẾT NỐI...</b></span>
+      <span class="chip" id="chipEsp" title="Trạng thái ESP32"><i></i><b>ESP32 --</b></span>
+      <span class="chip" id="chipNet" title="Internet của ESP32"><i></i><b>INTERNET --</b></span>
+      <span class="chip" id="chipCloud" title="Kết nối ESP32 ↔ Cloud"><i></i><b>CLOUD --</b></span>
+      <span class="chip" id="chipOwner" title="Nguồn đang giữ quyền điều khiển (30 s)"><i></i><b>QUYỀN ĐK: --</b></span>
+      <span class="userbox only-cloud">
+        <select id="devSel" title="Chọn thiết bị"></select>
+        <span id="userName">--</span>
+        <button class="linkbtn" onclick="logout()">ĐĂNG XUẤT</button>
+      </span>
+      <a class="linkbtn only-esp32" id="cloudLink" href="#" target="_blank" rel="noopener" style="display:none;text-decoration:none">MỞ CLOUD ↗</a>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>DASHBOARD</button>
+    <button class="tab" data-tab="measure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>MEASURE</button>
+    <button class="tab" data-tab="graph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-7"/></svg>GRAPH</button>
+    <button class="tab" data-tab="tracking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>TRACKING</button>
+    <button class="tab" data-tab="setting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>SETTING</button>
+  </nav>
+</header>
+
+<div class="wrap">
+
+<div class="alert" id="estopAlert">⚠️ CẢNH BÁO: HỆ THỐNG ĐANG DỪNG KHẨN CẤP (EMERGENCY STOP)! TOÀN BỘ ĐỘNG CƠ VÀ THIẾT BỊ ĐÃ ĐƯỢC NGẮT AN TOÀN!</div>
+<div class="viewer-banner">👁 Tài khoản của bạn chỉ có quyền GIÁM SÁT. Các nút điều khiển đã bị khoá.</div>
+
+<!-- ======================= DASHBOARD ======================= -->
+<section class="page active" id="page-dash">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">REAL-TIME ENERGY &amp; SOLAR TRACKING</div>
+      <h1>Giám sát &amp; điều khiển<br>hệ thống bám hướng mặt trời</h1>
+    </div>
+    <div class="sun">☀</div>
+  </div>
+
+  <div class="grid g4">
+    <div class="card metric">
+      <div class="label">Điện áp pin mặt trời</div>
+      <div class="value"><span class="num" id="pvV">--</span><span class="unit">V</span></div>
+      <div class="bar"><i id="pvVbar"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="label">Dòng điện</div>
+      <div class="value"><span class="num" id="pvI">--</span><span class="unit">A</span></div>
+      <div class="bar yellow"><i id="pvIbar"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="label">Công suất</div>
+      <div class="value"><span class="num" id="pvP">--</span><span class="unit">W</span></div>
+      <div class="ring" id="powerRingWrap"><span id="powerRing">--%</span></div>
+    </div>
+    <div class="card metric">
+      <div class="label">Ắc quy</div>
+      <div class="value"><span class="num" id="batV">--</span><span class="unit">V</span></div>
+      <div class="bar green"><i id="batVbar"></i></div>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card section">
+      <div class="section-title"><span class="icon">◉</span> TRẠNG THÁI HỆ THỐNG</div>
+      <div class="rows">
+        <div class="row"><span>ESP32</span><span class="status-ok" id="espStatus">ONLINE</span></div>
+        <div class="row"><span>DRIVER MOTOR</span><span class="status-ok" id="drvStatus">TMC2208 &amp; A4988 (SLEEP)</span></div>
+        <div class="row"><span>INA219 PV</span><span id="pvStatus" class="status-ok">--</span></div>
+        <div class="row"><span>INA219 BATTERY</span><span id="batStatus" class="status-warn">--</span></div>
+        <div class="row"><span>CHẾ ĐỘ HỆ THỐNG</span><button class="badge-btn ctl" id="modeBtnTop" onclick="toggleAuto()">AUTO</button></div>
+        <div class="row"><span>PIN MẶT TRỜI</span><span class="status-ok" id="solarState">ĐANG GIÁM SÁT</span></div>
+      </div>
+    </div>
+    <div class="card section">
+      <div class="section-title"><span class="icon">◇</span> VỊ TRÍ CƠ CẤU HAI TRỤC</div>
+      <div class="axes">
+        <div class="axis"><div class="axis-name">MOTOR 1 (TRỤC X)</div><div class="angle"><span class="num" id="a1">--</span><small>°</small></div><div class="trackbar"><b id="a1mk"></b></div><div class="ticks"><span>0°</span><span>90°</span><span>180°</span></div></div>
+        <div class="axis"><div class="axis-name">MOTOR 2 (TRỤC Y)</div><div class="angle"><span class="num" id="a2">--</span><small>°</small></div><div class="trackbar"><b id="a2mk"></b></div><div class="ticks"><span>0°</span><span>90°</span><span>180°</span></div></div>
+      </div>
+      <div class="rows" style="margin-top:16px">
+        <div class="row"><span>Trạng thái bám</span><span class="status-ok" id="trackStatDash">--</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= MEASURE ======================= -->
+<section class="page" id="page-measure">
+  <div class="page-head"><h2>Đo lường</h2><p>Thông số pin mặt trời (INA219 0x40), ắc quy (INA219 0x41) và môi trường.</p></div>
+  <div class="grid g3">
+    <div class="card section">
+      <div class="section-title"><span class="icon">☀</span> PIN MẶT TRỜI (PV)</div>
+      <div class="rows">
+        <div class="row"><span>Điện áp</span><span class="kv num" id="msPvV">-- V</span></div>
+        <div class="row"><span>Dòng điện</span><span class="kv num" id="msPvI">-- A</span></div>
+        <div class="row"><span>Công suất</span><span class="kv num" id="msPvP">-- W</span></div>
+        <div class="row"><span>PV Energy (Wh)</span><span class="status-ok num" id="pvWh">-- Wh</span></div>
+      </div>
+    </div>
+    <div class="card section">
+      <div class="section-title"><span class="icon">▮</span> ẮC QUY</div>
+      <div class="rows">
+        <div class="row"><span>Điện áp</span><span class="kv num" id="msBatV">-- V</span></div>
+        <div class="row"><span>Dòng điện</span><span class="kv num" id="msBatI">-- A</span></div>
+        <div class="row"><span>Công suất</span><span class="kv num" id="msBatP">-- W</span></div>
+        <div class="row"><span>Battery SOC</span><span class="status-ok num" id="batSOC">-- %</span></div>
+        <div class="row"><span>Battery Energy (Wh)</span><span class="kv num" id="msBatWh">-- Wh</span></div>
+      </div>
+    </div>
+    <div class="card section">
+      <div class="section-title"><span class="icon">◇</span> MÔI TRƯỜNG &amp; TẢN NHIỆT</div>
+      <div class="rows">
+        <div class="row"><span>Nhiệt độ (DHT11)</span><span class="status-ok num" id="dhtT">-- °C</span></div>
+        <div class="row"><span>Độ ẩm (DHT11)</span><span class="status-ok num" id="dhtH">-- %</span></div>
+        <div class="row"><span>Quạt Tản Nhiệt (Relay 5V)</span><span class="status-ok" id="fanStatus">TẮT</span></div>
+        <div class="row"><span>Đèn báo nguồn</span><span class="status-ok" id="ledStatus">--</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= GRAPH ======================= -->
+<section class="page" id="page-graph">
+  <div class="page-head"><h2>Biểu đồ</h2><p>Trực tiếp: 60 mẫu gần nhất. Lịch sử 1 h / 6 h / 24 h lấy từ Cloud Backend.</p></div>
+  <div class="card section chart" style="margin-top:14px">
+    <div class="chart-top">
+      <div class="section-title"><span class="icon">⌁</span> <span id="chartTitle">GIÁM SÁT CÔNG SUẤT THỜI GIAN THỰC (W)</span></div>
+      <div class="pillgroup">
+        <div class="chart-pills">
+          <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất (W)</button>
+          <button class="cpill" id="mpillV" onclick="setChartMetric('volt')">Điện áp (V)</button>
+          <button class="cpill" id="mpillI" onclick="setChartMetric('curr')">Dòng điện (A)</button>
+        </div>
+        <div class="chart-pills">
+          <button class="cpill" id="cpillPV" onclick="setChartChannel('pv')">Pin PV</button>
+          <button class="cpill" id="cpillBat" onclick="setChartChannel('bat')">Ắc quy</button>
+          <button class="cpill active" id="cpillBoth" onclick="setChartChannel('both')">Cả hai</button>
+        </div>
+        <div class="chart-pills only-cloud">
+          <button class="cpill active" id="rpillLive" onclick="setChartRange('live')">Trực tiếp</button>
+          <button class="cpill" id="rpill1h" onclick="setChartRange('1h')">1 giờ</button>
+          <button class="cpill" id="rpill6h" onclick="setChartRange('6h')">6 giờ</button>
+          <button class="cpill" id="rpill24h" onclick="setChartRange('24h')">24 giờ</button>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span id="legPV">Công suất PV (W)</span>
+      <span id="legBat" class="batDot">Công suất Ắc quy (W)</span>
+    </div>
+    <canvas id="chart"></canvas>
+    <div class="note only-esp32">Dữ liệu lịch sử dài hạn được lưu trên Cloud. Ở chế độ LOCAL biểu đồ hiển thị 60 mẫu gần nhất (1 mẫu/giây).</div>
+  </div>
+</section>
+
+<!-- ======================= TRACKING ======================= -->
+<section class="page" id="page-tracking">
+  <div class="page-head"><h2>Bám hướng mặt trời</h2><p>Cảm biến 4 hướng, chế độ AUTO/MANUAL và điều khiển cơ cấu hai trục.</p></div>
+
+  <div class="card section" style="margin-top:14px">
+    <div class="section-title"><span class="icon">☀</span> CẢM BIẾN ÁNH SÁNG 4 HƯỚNG (MODULE LM393 3 CHÂN) &amp; BÁM HƯỚNG MẶT TRỜI</div>
+    <div class="ldr-grid">
+      <div class="ldr-compass">
+        <div class="cross-line h"></div><div class="cross-line v"></div>
+        <div class="ldr-quad tl"><div class="ldr-tag">TL (GPIO 36)</div><div class="ldr-val num" id="ldrTL">--</div><div class="ldr-bar"><i id="bTL"></i></div></div>
+        <div class="ldr-quad tr"><div class="ldr-tag">TR (GPIO 39)</div><div class="ldr-val num" id="ldrTR">--</div><div class="ldr-bar"><i id="bTR"></i></div></div>
+        <div class="ldr-quad bl"><div class="ldr-tag">BL (GPIO 32)</div><div class="ldr-val num" id="ldrBL">--</div><div class="ldr-bar"><i id="bBL"></i></div></div>
+        <div class="ldr-quad br"><div class="ldr-tag">BR (GPIO 33)</div><div class="ldr-val num" id="ldrBR">--</div><div class="ldr-bar"><i id="bBR"></i></div></div>
+        <div class="sun-center" id="sunCenter">☀</div>
+      </div>
+      <div class="ldr-analysis">
+        <div class="row"><span>Chế độ bám hướng</span><button class="badge-btn ctl" id="modeBtn" onclick="toggleAuto()">AUTO TRACKING</button></div>
+        <div class="row"><span>Trạng thái bám</span><span class="status-ok" id="trackStat">ĐANG THEO DÕI</span></div>
+        <div class="row"><span>Chênh lệch Ngang (&Delta;H = R - L)</span><span class="stat-num num" id="dH">0</span></div>
+        <div class="row"><span>Chênh lệch Dọc (&Delta;V = T - B)</span><span class="stat-num num" id="dV">0</span></div>
+        <div class="row"><span>Cường độ sáng TB</span><span class="stat-num num" id="avgL">--</span></div>
+        <div class="row"><span>Vùng chết sai số (Tolerance)</span><span class="status-warn">&plusmn;80</span></div>
+        <div class="row"><span>Hiệu chuẩn LDR (Cân bằng)</span><button class="badge-btn cal ctl" onclick="cmd('cal_zero')">⚖ CALIBRATE ZERO</button></div>
+        <div class="row"><span>Gốc cơ khí (Đặt 90°)</span><button class="badge-btn manual ctl" onclick="cmd('set_home')">⌂ SET HOME (90°)</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card section" style="margin-top:14px">
+    <div class="section-title"><span class="icon">⌁</span> ĐIỀU KHIỂN CƠ CẤU THỦ CÔNG <span class="sub only-esp32">Nhấn: ±10° • Giữ: quay liên tục</span><span class="sub only-cloud">CLOUD: chỉ bấm từng bước ±10°</span></div>
+    <div class="controls">
+      <div class="motor">
+        <h3>MOTOR 1 (TRỤC X) <span class="motor-state" id="m1">STOP</span></h3>
+        <div class="buttons">
+          <button class="btn primary ctl" id="btnM1L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
+          <button class="btn primary ctl" id="btnM1R" title="Nhấn 1 lần: +10° | Giữ: Quay nhanh liên tục">10° ▶</button>
+        </div>
+      </div>
+      <div class="motor">
+        <h3>MOTOR 2 (TRỤC Y) <span class="motor-state" id="m2">STOP</span></h3>
+        <div class="buttons">
+          <button class="btn primary ctl" id="btnM2L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
+          <button class="btn primary ctl" id="btnM2R" title="Nhấn 1 lần: +10° | Giữ: Quay nhanh liên tục">10° ▶</button>
+        </div>
+      </div>
+    </div>
+    <div class="cloud-hint">Điều khiển qua Internet: chức năng "giữ để quay liên tục" bị tắt để đảm bảo an toàn — mỗi lần bấm quay đúng 10°.</div>
+  </div>
+</section>
+
+<!-- ======================= SETTING ======================= -->
+<section class="page" id="page-setting">
+  <div class="page-head"><h2>Cài đặt</h2><p>Tốc độ động cơ, hiệu chuẩn, quạt tản nhiệt và kết nối mạng.</p></div>
+
+  <div class="grid g2">
+    <div class="card section">
+      <div class="section-title"><span class="icon">⚡</span> TỐC ĐỘ XOAY ĐỘNG CƠ</div>
+      <div class="speedbar">
+        <span class="speed-badge" id="speedBadge">MỨC 3 (100% - CHUẨN)</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <button class="btn sm ctl" onclick="cmd('speed_down')" title="Giảm tốc độ">◀ -</button>
+          <button class="badge-btn spd ctl" id="spdBtn1" onclick="setSpeed(1)">50%</button>
+          <button class="badge-btn spd ctl" id="spdBtn2" onclick="setSpeed(2)">75%</button>
+          <button class="badge-btn spd ctl" id="spdBtn3" onclick="setSpeed(3)">100%</button>
+          <button class="badge-btn spd ctl" id="spdBtn4" onclick="setSpeed(4)">150%</button>
+          <button class="badge-btn spd ctl" id="spdBtn5" onclick="setSpeed(5)">200%</button>
+          <button class="btn sm ctl" onclick="cmd('speed_up')" title="Tăng tốc độ">+ ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title"><span class="icon">⚖</span> HIỆU CHUẨN &amp; GỐC CƠ KHÍ</div>
+      <div class="btnrow">
+        <button class="btn wide ctl" style="color:var(--blue)" onclick="cmd('set_home')">⌖ ĐẶT GỐC (SET HOME 90°)</button>
+        <button class="btn wide ctl" style="color:var(--orange)" onclick="cmd('cal_zero')">⚖ HIỆU CHUẨN CÂN BẰNG (CAL ZERO)</button>
+        <button class="btn wide ctl" style="color:var(--text-sub)" onclick="cmd('reset_cal')">↺ XÓA CALIB VỀ 0</button>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Offset LDR (TL / TR / BL / BR)</span><span class="kv num" id="offsets">--</span></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title"><span class="icon">❄</span> QUẠT TẢN NHIỆT</div>
+      <div class="rows">
+        <div class="row"><span>Ngưỡng Bật Quạt</span><span style="display:flex;align-items:center;gap:6px"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')">-</button><b id="fanThreshVal" class="num" style="color:var(--orange);min-width:62px;text-align:center">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')">+</button></span></div>
+        <div class="row"><span>Trạng thái quạt</span><span class="status-ok" id="fanStatus2">--</span></div>
+        <div class="row"><span>Nhiệt độ hiện tại</span><span class="kv num" id="dhtT2">-- °C</span></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title"><span class="icon">◇</span> THÔNG TIN KẾT NỐI</div>
+      <div class="value num" id="ip" style="font-size:24px;margin-top:10px">192.168.4.1</div>
+      <div class="rows">
+        <div class="row"><span>Wi-Fi AP</span><span class="status-ok">SOLAR_TRACKER</span></div>
+        <div class="row"><span>Wi-Fi Router (STA)</span><span class="status-warn" id="staStat">--</span></div>
+        <div class="row"><span>IP trong mạng Router</span><span class="kv num" id="staIp">--</span></div>
+        <div class="row"><span>Cường độ sóng</span><span class="kv num" id="rssi">--</span></div>
+        <div class="row"><span>Cloud (MQTT/TLS)</span><span class="status-warn" id="cloudStat">--</span></div>
+      </div>
+    </div>
+
+    <!-- Cấu hình Wi-Fi Router: chỉ có trên trang LOCAL của ESP32, không bao giờ hiển thị mật khẩu đã lưu -->
+    <div class="card section only-esp32">
+      <div class="section-title"><span class="icon">📶</span> WI-FI ROUTER (KẾT NỐI INTERNET)</div>
+      <form class="form" id="wifiForm" onsubmit="saveWifi(event)">
+        <label>Tên Wi-Fi (SSID)
+          <div class="inline"><input id="wSsid" list="wList" maxlength="32" autocomplete="off" required><button type="button" class="btn sm" onclick="scanWifi()" id="scanBtn">QUÉT</button></div>
+          <datalist id="wList"></datalist>
+        </label>
+        <label>Mật khẩu<input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
+        <div class="inline"><button class="btn solid wide" type="submit">LƯU &amp; KẾT NỐI</button><button class="btn wide" type="button" onclick="clearWifi()">XÓA CẤU HÌNH</button></div>
+      </form>
+      <div class="note">Lưu vào bộ nhớ NVS của ESP32. Wi-Fi <b>SOLAR_TRACKER</b> (192.168.4.1) vẫn luôn hoạt động; mất Internet không ảnh hưởng tới bám nắng.</div>
+    </div>
+
+    <div class="card section only-esp32">
+      <div class="section-title"><span class="icon">☁</span> CLOUD (MQTT OVER TLS)</div>
+      <form class="form" id="cloudForm" onsubmit="saveCloud(event)">
+        <label class="check"><input type="checkbox" id="cEn"> Bật kết nối Cloud</label>
+        <div class="f2">
+          <label>MQTT Broker (host)<input id="cHost" maxlength="96" placeholder="xxxx.s1.eu.hivemq.cloud"></label>
+          <label>Cổng TLS<input id="cPort" type="number" min="1" max="65535" value="8883"></label>
+        </div>
+        <div class="f2">
+          <label>Device ID<input id="cDev" maxlength="32" pattern="[A-Za-z0-9_\-]+" placeholder="tracker01"></label>
+          <label>MQTT user<input id="cUser" maxlength="64" autocomplete="off"></label>
+        </div>
+        <label>MQTT password<input id="cPass" type="password" maxlength="96" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
+        <label>URL Cloud Dashboard (tuỳ chọn)<input id="cUrl" maxlength="120" placeholder="https://solar-tracker.onrender.com"></label>
+        <div class="inline"><button class="btn solid wide" type="submit">LƯU CẤU HÌNH CLOUD</button></div>
+      </form>
+    </div>
+
+    <!-- Cloud: nhật ký điều khiển & quản lý người dùng -->
+    <div class="card section only-cloud">
+      <div class="section-title"><span class="icon">☰</span> NHẬT KÝ ĐIỀU KHIỂN TỪ XA <button class="linkbtn" style="margin-left:auto" onclick="loadLogs()">LÀM MỚI</button></div>
+      <div class="scroll"><table class="log"><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Lệnh</th><th>Kết quả</th></tr></thead><tbody id="logBody"><tr><td colspan="4">--</td></tr></tbody></table></div>
+    </div>
+
+    <div class="card section only-cloud only-admin">
+      <div class="section-title"><span class="icon">👤</span> NGƯỜI DÙNG &amp; PHÂN QUYỀN</div>
+      <div class="scroll"><table class="log"><thead><tr><th>Tài khoản</th><th>Quyền</th><th></th></tr></thead><tbody id="userBody"></tbody></table></div>
+      <form class="form" onsubmit="addUser(event)">
+        <div class="f2"><label>Tài khoản<input id="nuName" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" required></label>
+        <label>Quyền<select id="nuRole"><option value="viewer">viewer (giám sát)</option><option value="operator">operator (điều khiển)</option><option value="admin">admin</option></select></label></div>
+        <label>Mật khẩu (≥ 8 ký tự)<input id="nuPass" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></label>
+        <div class="inline"><button class="btn solid wide" type="submit">THÊM NGƯỜI DÙNG</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>ESP32 SOLAR TRACKER • HYBRID LOCAL + CLOUD DASHBOARD</footer>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<div id="login">
+  <form class="card" onsubmit="doLogin(event)">
+    <div class="logo">☀</div>
+    <h2>SOLAR TRACKER CLOUD</h2>
+    <p>Đăng nhập để giám sát và điều khiển từ xa.</p>
+    <div class="form">
+      <label>Tài khoản<input id="lgUser" autocomplete="username" required></label>
+      <label>Mật khẩu<input id="lgPass" type="password" autocomplete="current-password" required></label>
+      <div id="loginErr"></div>
+      <button class="btn solid" type="submit">ĐĂNG NHẬP</button>
+    </div>
+  </form>
+</div>
+
+<script>
+/* =====================================================================
+   SOLAR TRACKER DASHBOARD – một mã nguồn cho cả LOCAL (ESP32) và CLOUD
+   - LOCAL : GET /api/data (1 s) + GET /cmd?c=..&val=..  (giữ nguyên API cũ)
+   - CLOUD : WSS /ws  -> Backend -> MQTT/TLS -> ESP32 (có ACK + timeout)
+   ===================================================================== */
+const ENV = (document.querySelector('meta[name="st-env"]') || {}).content || 'esp32';
+document.body.classList.remove('env-esp32'); document.body.classList.add('env-' + ENV);
+const $ = id => document.getElementById(id);
+
+let chartMetric = 'power';
+let chartChannel = 'both';
+let chartRange = 'live';
+const histPV_P = [], histPV_V = [], histPV_I = [];
+const histBat_P = [], histBat_V = [], histBat_I = [];
+let histData = null;           // dữ liệu lịch sử Cloud (khi chartRange != live)
+let lastData = null;
+
+function f(x,n){return Number(x||0).toFixed(n)}
+function setText(id,t){const e=$(id);if(e&&e.textContent!==String(t))e.textContent=t}
+function setCls(id,c){const e=$(id);if(e&&e.className!==c)e.className=c}
+function bar(id,v,max){const e=$(id);if(e){const w=Math.max(2,Math.min(100,Number(v||0)/max*100)).toFixed(1)+'%';if(e.style.width!==w)e.style.width=w}}
+function setChip(id,kind,text){const e=$(id);if(!e)return;const c='chip '+kind;if(e.className!==c)e.className=c;const b=e.querySelector('b');if(b.textContent!==text)b.textContent=text}
+function toast(msg,kind,ms){const t=document.createElement('div');t.className='toast '+(kind||'info');t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>t.remove(),ms||3200);while($('toasts').children.length>4)$('toasts').firstChild.remove()}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ---------------- TABS ---------------- */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));
+  try{localStorage.setItem('st_tab',name)}catch(e){}
+  if(name==='graph')requestAnimationFrame(drawChart);
+  if(name==='setting'&&ENV==='cloud'){loadLogs();if(document.body.classList.contains('role-admin'))loadUsers()}
+  if(name==='setting'&&ENV==='esp32')loadNetCfg();
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+try{const t=localStorage.getItem('st_tab');if(t&&$('page-'+t))showTab(t)}catch(e){}
+
+/* ---------------- CHART ---------------- */
+function setChartMetric(m) {
+  chartMetric = m;
+  document.getElementById('mpillP').className = 'cpill' + (m === 'power' ? ' active' : '');
+  document.getElementById('mpillV').className = 'cpill' + (m === 'volt' ? ' active' : '');
+  document.getElementById('mpillI').className = 'cpill' + (m === 'curr' ? ' active' : '');
+  updateChartHeaders();
+  drawChart();
+}
+function setChartChannel(c) {
+  chartChannel = c;
+  document.getElementById('cpillPV').className = 'cpill' + (c === 'pv' ? ' active' : '');
+  document.getElementById('cpillBat').className = 'cpill' + (c === 'bat' ? ' active' : '');
+  document.getElementById('cpillBoth').className = 'cpill' + (c === 'both' ? ' active' : '');
+  updateChartHeaders();
+  drawChart();
+}
+function setChartRange(r){
+  chartRange = r;
+  ['live','1h','6h','24h'].forEach(k=>{const e=$('rpill'+(k==='live'?'Live':k));if(e)e.className='cpill'+(k===r?' active':'')});
+  histData = null; updateChartHeaders(); drawChart();
+  if(r!=='live') Cloud.history(r).then(h=>{if(chartRange===r){histData=h;drawChart()}}).catch(()=>toast('Không tải được dữ liệu lịch sử','bad'));
+}
+function updateChartHeaders() {
+  const mName = (chartMetric === 'power') ? 'CÔNG SUẤT' : ((chartMetric === 'volt') ? 'ĐIỆN ÁP' : 'DÒNG ĐIỆN');
+  const unit = (chartMetric === 'power') ? 'W' : ((chartMetric === 'volt') ? 'V' : 'A');
+  const when = chartRange==='live' ? 'THỜI GIAN THỰC' : ('LỊCH SỬ ' + chartRange.toUpperCase());
+  document.getElementById('chartTitle').textContent = 'GIÁM SÁT ' + mName + ' ' + when + ' (' + unit + ')';
+  document.getElementById('legPV').textContent = mName + ' PV (' + unit + ')';
+  document.getElementById('legBat').textContent = mName + ' Ắc quy (' + unit + ')';
+  document.getElementById('legPV').style.display = (chartChannel === 'bat') ? 'none' : 'flex';
+  document.getElementById('legBat').style.display = (chartChannel === 'pv') ? 'none' : 'flex';
+}
+function drawChart(){
+  const c=$('chart'); if(!c||!c.offsetParent)return;     // tab ẩn -> không vẽ
+  const r=c.getBoundingClientRect(),d=devicePixelRatio||1,H=r.height||260;
+  const W=Math.round(r.width*d),HH=Math.round(H*d);
+  if(c.width!==W||c.height!==HH){c.width=W;c.height=HH}
+  const x=c.getContext('2d'); x.setTransform(d,0,0,d,0,0);
+  const w=r.width,h=H; x.clearRect(0,0,w,h);
+  const key = chartMetric==='power'?'P':(chartMetric==='volt'?'V':'I');
+  let arrPV, arrBat, n;
+  if(chartRange==='live'){
+    arrPV = key==='P'?histPV_P:(key==='V'?histPV_V:histPV_I);
+    arrBat = key==='P'?histBat_P:(key==='V'?histBat_V:histBat_I);
+    n = 59;
+  } else {
+    const hd = histData || [];
+    arrPV = hd.map(p=>p['pv'+key]); arrBat = hd.map(p=>p['bat'+key]);
+    n = Math.max(1, hd.length-1);
+  }
+  const unit = key==='P'?'W':(key==='V'?'V':'A');
+  let maxVal = key==='P'?25:(key==='V'?24:3.0);
+  if (chartChannel !== 'bat') arrPV.forEach(v => { if (v > maxVal) maxVal = v; });
+  if (chartChannel !== 'pv') arrBat.forEach(v => { if (v > maxVal) maxVal = v; });
+  maxVal = Math.ceil(maxVal * 1.15 * 10) / 10;
+  x.strokeStyle='#eae6df'; x.lineWidth=1; x.fillStyle='#94a3b8'; x.font='10px -apple-system,BlinkMacSystemFont,sans-serif';
+  for(let i=0;i<4;i++){
+    const y=15 + i*(h-35)/3, val=maxVal - i*(maxVal/3);
+    x.beginPath();x.moveTo(42,y);x.lineTo(w,y);x.stroke();
+    x.fillText(f(val, key === 'I' ? 1 : 0) + unit, 2, y + 3);
+  }
+  if(chartRange!=='live'){
+    const hd=histData||[];
+    if(!histData){x.fillText('Đang tải dữ liệu lịch sử...',w/2-60,h/2);return}
+    if(hd.length<2){x.fillText('Chưa có dữ liệu trong khoảng thời gian này',w/2-100,h/2);return}
+    const fmt=t=>{const D=new Date(t);return String(D.getHours()).padStart(2,'0')+':'+String(D.getMinutes()).padStart(2,'0')};
+    [0,Math.floor(hd.length/2),hd.length-1].forEach((i,k)=>{const s=fmt(hd[i].t);x.fillText(s,k===0?42:(k===1?42+(w-52)/2-12:w-34),h-4)});
+  }
+  function line(a,col){
+    if(a.length<2)return;
+    x.strokeStyle=col; x.lineWidth=2.4; x.lineJoin='round'; x.beginPath();
+    a.forEach((v,i)=>{
+      const xx=42 + i*(w-52)/n;
+      const yy=(h-20)-(Math.min(maxVal,Math.max(0,v))/maxVal)*(h-35);
+      i?x.lineTo(xx,yy):x.moveTo(xx,yy);
+    });
+    x.stroke();
+  }
+  if (chartChannel === 'pv' || chartChannel === 'both') line(arrPV, '#f95738');
+  if (chartChannel === 'bat' || chartChannel === 'both') line(arrBat, '#10b981');
+}
+let rzT; window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(drawChart,120)});
+
+/* ---------------- RENDER (dữ liệu giống /api/data) ---------------- */
+function render(d){
+  lastData = d;
+  const pv=Number(d.solarVoltage)||0,pi=Number(d.solarCurrent)||0,pp=Number(d.solarPower)||0,bv=Number(d.batteryVoltage)||0,bi=Number(d.batteryCurrent)||0,bp=Number(d.batteryPower)||0;
+  const se=Number(d.solarEnergy)||0,be=Number(d.batteryEnergy)||0,bsoc=Number(d.batterySOC)||0;
+
+  setText('pvV',f(pv,2)); setText('pvI',f(pi,2)); setText('pvP',f(pp,2)); setText('batV',f(bv,2));
+  setText('msPvV',f(pv,2)+' V'); setText('msPvI',f(pi,3)+' A'); setText('msPvP',f(pp,2)+' W');
+  setText('msBatV',f(bv,2)+' V'); setText('msBatI',f(bi,3)+' A'); setText('msBatP',f(bp,2)+' W'); setText('msBatWh',f(be,2)+' Wh');
+  setText('pvWh',f(se,2)+' Wh'); setText('batSOC',bsoc+' %');
+  const tTxt=d.dhtOK?f(d.temp,1)+' °C':'--.- °C';
+  setText('dhtT',tTxt); setText('dhtT2',tTxt); setText('dhtH',d.dhtOK?f(d.humi,1)+' %':'--.- %');
+  setText('a1',f(d.motor1Angle,1)); setText('a2',f(d.motor2Angle,1));
+  const mk=(id,a)=>{const e=$(id);if(e){const l=Math.max(0,Math.min(100,Number(a||0)/180*100)).toFixed(1)+'%';if(e.style.left!==l)e.style.left=l}};
+  mk('a1mk',d.motor1Angle); mk('a2mk',d.motor2Angle);
+  setText('m1',d.motor1State||'STOP'); setText('m2',d.motor2State||'STOP');
+  setCls('m1','motor-state'+(d.motor1Running?' run':'')); setCls('m2','motor-state'+(d.motor2Running?' run':''));
+  setText('ip',d.ip||'192.168.4.1');
+
+  setText('pvStatus',d.inaPV?'CONNECTED':'NOT FOUND'); setCls('pvStatus',d.inaPV?'status-ok':'status-warn');
+  setText('batStatus',d.inaBattery?'CONNECTED':'NOT FOUND'); setCls('batStatus',d.inaBattery?'status-ok':'status-warn');
+  if(d.driversEnabled){
+    if(d.motor1Running||d.motor2Running){setText('drvStatus','HOẠT ĐỘNG (ACTIVE)');setCls('drvStatus','status-warn')}
+    else{setText('drvStatus','SẴN SÀNG (HOLD)');setCls('drvStatus','status-ok')}
+  } else {setText('drvStatus','SLEEP (MÁT LẠNH)');setCls('drvStatus','status-ok')}
+
+  bar('pvVbar',pv,24); bar('pvIbar',pi,2); bar('batVbar',bv,14);
+  const pct=Math.round(Math.min(100,pp/30*100));
+  setText('powerRing',pct+'%'); const rw=$('powerRingWrap'); if(rw)rw.style.setProperty('--p',pct);
+
+  // 4 cảm biến LDR
+  setText('ldrTL',d.ldrTL); setText('ldrTR',d.ldrTR); setText('ldrBL',d.ldrBL); setText('ldrBR',d.ldrBR);
+  bar('bTL',d.ldrTL,4095); bar('bTR',d.ldrTR,4095); bar('bBL',d.ldrBL,4095); bar('bBR',d.ldrBR,4095);
+  setText('dH',(d.diffH>0?'+':'')+d.diffH); setText('dV',(d.diffV>0?'+':'')+d.diffV); setText('avgL',d.avgLight);
+  const sc=$('sunCenter'); if(sc){const ox=Math.max(-40,Math.min(40,(Number(d.diffH)||0)/20)),oy=Math.max(-40,Math.min(40,-(Number(d.diffV)||0)/20));const tf='translate(calc(-50% + '+ox.toFixed(0)+'px),calc(-50% + '+oy.toFixed(0)+'px))';if(sc.style.transform!==tf)sc.style.transform=tf}
+  setText('offsets',[d.offTL,d.offTR,d.offBL,d.offBR].map(v=>v==null?'--':v).join(' / '));
+
+  // Nút chế độ
+  if(d.autoMode){setText('modeBtn','AUTO TRACKING');setCls('modeBtn','badge-btn ctl');setText('modeBtnTop','AUTO');setCls('modeBtnTop','badge-btn ctl')}
+  else{setText('modeBtn','MANUAL MODE');setCls('modeBtn','badge-btn manual ctl');setText('modeBtnTop','MANUAL');setCls('modeBtnTop','badge-btn manual ctl')}
+
+  // Trạng thái bám (ánh xạ giữ nguyên như bản cũ)
+  const tsr=String(d.trackStatus||''); let tt,tc;
+  if(tsr.includes('Pmax')||tsr==='LOCKED'||tsr==='MPPT LOCKED'){tt='ĐÃ BÁM ĐỈNH P_MAX (MPPT)';tc='status-ok'}
+  else if(tsr.includes('P&O')){tt='MPPT ĐANG DÒ CÔNG SUẤT';tc='status-warn'}
+  else if(tsr.includes('COARSE')||tsr==='TRACKING'){tt='LDR ĐỊNH HƯỚNG QUANG HỌC';tc='status-warn'}
+  else if(tsr==='LDR LOCKED'||tsr==='LDR ALIGNED'){tt='ĐÃ CÂN BẰNG QUANG HỌC LDR';tc='status-ok'}
+  else if(tsr.includes('RETURNING')||tsr.includes('0°')){tt='ĐANG TRỞ VỀ 0° (BAN ĐÊM)';tc='status-warn'}
+  else if(tsr==='NIGHT'){tt='TRỜI TỐI (NGHỈ)';tc='status-warn'}
+  else{tt=tsr||'--';tc='status-ok'}
+  setText('trackStat',tt); setCls('trackStat',tc); setText('trackStatDash',tt); setCls('trackStatDash',tc);
+
+  // Tốc độ động cơ
+  if(d.speedText) setText('speedBadge','MỨC '+d.speedLevel+' ('+d.speedText+')');
+  for(let i=1;i<=5;i++) setCls('spdBtn'+i,'badge-btn spd ctl'+(d.speedLevel===i?' on':''));
+
+  // Quạt & ngưỡng
+  const fanT=d.fanState?'BẬT (ĐANG CHẠY)':'TẮT (NGẮT)',fanC=d.fanState?'status-warn':'status-ok';
+  setText('fanStatus',fanT); setCls('fanStatus',fanC); setText('fanStatus2',fanT); setCls('fanStatus2',fanC);
+  setText('fanThreshVal',Number(d.fanThresh||38).toFixed(1)+' °C');
+  setText('ledStatus',d.powerLed?'SÁNG':'TẮT');
+
+  // E-STOP
+  const al=$('estopAlert'); const disp=d.eStop?'block':'none'; if(al.style.display!==disp)al.style.display=disp;
+  setText('btnEstopHeader',d.eStop?'⚠️ ĐANG E-STOP (BẤM ĐỂ MỞ)':'DỪNG KHẨN CẤP (E-STOP)');
+  setCls('btnEstopHeader','estop ctl safety'+(d.eStop?' active':''));
+
+  // Mạng & Cloud (trường mới, có thể không có ở firmware cũ)
+  if('staConnected' in d){
+    setText('staStat',d.staSsid?(d.staConnected?'ĐÃ KẾT NỐI • '+d.staSsid:'ĐANG KẾT NỐI • '+d.staSsid):'CHƯA CẤU HÌNH');
+    setCls('staStat',d.staConnected?'status-ok':'status-warn');
+    setText('staIp',d.staIp||'--'); setText('rssi',d.staConnected?d.rssi+' dBm':'--');
+    setText('cloudStat',!d.cloudEnabled?'TẮT':(d.cloudConnected?'ĐÃ KẾT NỐI':'ĐANG KẾT NỐI...'));
+    setCls('cloudStat',d.cloudConnected?'status-ok':'status-warn');
+    const cl=$('cloudLink'); if(cl&&d.dashUrl&&/^https:\/\//.test(d.dashUrl)){if(cl.getAttribute('href')!==d.dashUrl)cl.href=d.dashUrl;cl.style.display=''}
+  }
+  updateChips(d);
+
+  // Lịch sử biểu đồ trực tiếp (60 mẫu)
+  histPV_P.push(pp); histPV_V.push(pv); histPV_I.push(pi);
+  histBat_P.push(bp); histBat_V.push(bv); histBat_I.push(bi);
+  if(histPV_P.length>60){histPV_P.shift();histPV_V.shift();histPV_I.shift();histBat_P.shift();histBat_V.shift();histBat_I.shift()}
+  if(chartRange==='live')drawChart();
+}
+
+/* ---------------- STATUS CHIPS ---------------- */
+let linkOk=false, espOnline=false;
+function updateChips(d){
+  d=d||lastData||{};
+  if(ENV==='esp32'){
+    setChip('chipSrc','src','LOCAL');
+    setChip('chipLink',linkOk?'ok':'bad',linkOk?'LOCAL CONNECTED':'LOCAL DISCONNECTED');
+    setChip('chipEsp',linkOk?'ok':'bad',linkOk?'ESP32 ONLINE':'ESP32 OFFLINE');
+    if('staConnected' in d){
+      setChip('chipNet',d.internet?'ok':(d.staSsid?'warn':''),d.internet?'INTERNET CONNECTED':'INTERNET DISCONNECTED');
+      setChip('chipCloud',d.cloudConnected?'ok':(d.cloudEnabled?'warn':''),d.cloudConnected?'CLOUD CONNECTED':(d.cloudEnabled?'CLOUD ĐANG KẾT NỐI':'CLOUD TẮT'));
+    } else { setChip('chipNet','','INTERNET --'); setChip('chipCloud','','CLOUD --'); }
+  } else {
+    setChip('chipSrc','src','CLOUD');
+    setChip('chipLink',linkOk?'ok':'bad',linkOk?'CLOUD CONNECTED':'CLOUD DISCONNECTED');
+    setChip('chipEsp',espOnline?'ok':'bad',espOnline?'ESP32 ONLINE':'ESP32 OFFLINE');
+    const net=navigator.onLine!==false;
+    setChip('chipNet',net?'ok':'bad',net?'INTERNET CONNECTED':'INTERNET DISCONNECTED');
+    setChip('chipCloud',espOnline?'ok':'bad',espOnline?'THIẾT BỊ ↔ CLOUD OK':'THIẾT BỊ MẤT KẾT NỐI');
+  }
+  const ow=d.controlOwner||'NONE';
+  setChip('chipOwner',ow==='NONE'?'':(ow===(ENV==='cloud'?'CLOUD':'LOCAL')?'ok':'warn'),'QUYỀN ĐK: '+(ow==='NONE'?'TỰ DO':ow));
+  if(ENV==='esp32'){setText('espStatus',linkOk?'ONLINE':'OFFLINE');setCls('espStatus',linkOk?'status-ok':'status-warn')}
+  else{setText('espStatus',espOnline?'ONLINE':'OFFLINE');setCls('espStatus',espOnline?'status-ok':'status-warn')}
+}
+
+/* ---------------- TRANSPORT: LOCAL (API cũ của ESP32) ---------------- */
+const Local = {
+  allowHold: true,
+  start(){ this.poll(); setInterval(()=>this.poll(),1000); },
+  async poll(){
+    try{
+      const r=await fetch('/api/data',{cache:'no-store'}); const d=await r.json();
+      linkOk=true; render(d);
+    }catch(e){ linkOk=false; updateChips(); }
+  },
+  send(c,val){
+    let u='/cmd?c='+encodeURIComponent(c); if(val!==undefined)u+='&val='+encodeURIComponent(val);
+    return fetch(u,{cache:'no-store'}).then(r=>{ if(!r.ok)throw new Error('HTTP '+r.status); return {ok:true}; });
+  },
+  refresh(){ return this.poll(); }
+};
+
+/* ---------------- TRANSPORT: CLOUD (WSS + ACK) ---------------- */
+const Cloud = {
+  allowHold: false, ws:null, device:null, pending:new Map(), retry:1000,
+  async start(){
+    const me = await fetch('/api/me',{credentials:'same-origin'});
+    if(me.status===401){ $('login').classList.add('show'); return; }
+    const u = await me.json();
+    setText('userName',u.username+' ('+u.role+')');
+    document.body.classList.toggle('role-viewer',u.role==='viewer');
+    document.body.classList.toggle('role-admin',u.role==='admin');
+    const devs = await (await fetch('/api/devices')).json();
+    const sel=$('devSel'); sel.innerHTML='';
+    devs.forEach(dv=>{const o=document.createElement('option');o.value=dv.id;o.textContent=dv.name||dv.id;sel.appendChild(o)});
+    let saved=null; try{saved=localStorage.getItem('st_dev')}catch(e){}
+    this.device = (devs.find(x=>x.id===saved)||devs[0]||{}).id;
+    sel.value=this.device||''; sel.onchange=()=>{this.device=sel.value;try{localStorage.setItem('st_dev',sel.value)}catch(e){};histPV_P.length=0;histPV_V.length=0;histPV_I.length=0;histBat_P.length=0;histBat_V.length=0;histBat_I.length=0;this.connect()};
+    if(!this.device){toast('Chưa có thiết bị nào được cấu hình trên Backend','bad',6000);return}
+    this.connect();
+    setInterval(()=>{ if(lastData&&lastData._ts&&Date.now()-lastData._ts>15000&&espOnline){espOnline=false;updateChips()} },3000);
+    window.addEventListener('online',()=>updateChips()); window.addEventListener('offline',()=>updateChips());
+  },
+  connect(){
+    if(this.ws){this.ws.onclose=null;try{this.ws.close()}catch(e){}}
+    const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws?device='+encodeURIComponent(this.device));
+    this.ws=ws;
+    ws.onopen=()=>{linkOk=true;this.retry=1000;updateChips()};
+    ws.onclose=(e)=>{linkOk=false;updateChips();this.failAll('LINK_LOST');
+      if(e.code===4401){$('login').classList.add('show');return}
+      setTimeout(()=>this.connect(),this.retry);this.retry=Math.min(this.retry*2,15000)};
+    ws.onerror=()=>{try{ws.close()}catch(e){}};
+    ws.onmessage=(ev)=>{
+      let m; try{m=JSON.parse(ev.data)}catch(e){return}
+      if(m.type==='state'&&m.device===this.device){espOnline=!!m.online; if(m.data){m.data._ts=Date.now();render(m.data)} else updateChips()}
+      else if(m.type==='device'&&m.device===this.device){espOnline=!!m.online;updateChips()}
+      else if(m.type==='ack'){const p=this.pending.get(m.reqId);if(p){clearTimeout(p.t);this.pending.delete(m.reqId);p.res(m)}}
+    };
+  },
+  failAll(reason){this.pending.forEach((p,k)=>{clearTimeout(p.t);p.res({ok:false,reason})});this.pending.clear()},
+  send(c,val){
+    return new Promise(res=>{
+      if(!this.ws||this.ws.readyState!==1)return res({ok:false,reason:'LINK_LOST'});
+      const reqId=Math.random().toString(36).slice(2)+Date.now().toString(36);
+      const t=setTimeout(()=>{this.pending.delete(reqId);res({ok:false,reason:'TIMEOUT'})},9000);
+      this.pending.set(reqId,{res,t});
+      this.ws.send(JSON.stringify({type:'cmd',reqId,device:this.device,c,val}));
+    });
+  },
+  refresh(){ return Promise.resolve(); },
+  history(range){ return fetch('/api/history?device='+encodeURIComponent(this.device)+'&range='+range).then(r=>{if(!r.ok)throw 0;return r.json()}); }
+};
+
+const T = ENV==='cloud' ? Cloud : Local;
+function load(){ return T.refresh(); }
+
+/* ---------------- LỆNH ĐIỀU KHIỂN (giữ nguyên tên hàm/lệnh cũ) ---------------- */
+const SAFETY_CMDS = new Set(['stop','estop_toggle']);
+const REASONS = {
+  TIMEOUT:'ESP32 không phản hồi (hết thời gian chờ) — lệnh CHƯA được xác nhận',
+  OFFLINE:'ESP32 đang offline — lệnh không được gửi',
+  BUSY_LOCAL:'Bị từ chối: đang có người điều khiển tại chỗ (LOCAL)',
+  ESTOP_LOCAL:'Chỉ có thể mở E-STOP tại chỗ khi LOCAL đang giữ quyền',
+  HOLD_DISABLED:'Giữ để quay liên tục bị tắt khi điều khiển qua Cloud',
+  FORBIDDEN:'Tài khoản không có quyền điều khiển',
+  UNKNOWN_CMD:'Lệnh không hợp lệ', BAD_VALUE:'Giá trị không hợp lệ',
+  RATE_LIMIT:'Gửi lệnh quá nhanh, vui lòng chờ', LINK_LOST:'Mất kết nối tới Cloud — lệnh chưa được xác nhận',
+  DUPLICATE:'Lệnh trùng (đã bỏ qua)', BUSY:'Đang chờ xác nhận lệnh trước'
+};
+let pendingCount = 0;
+function cmd(c, val){
+  if(ENV==='cloud'){
+    if(pendingCount>0 && !SAFETY_CMDS.has(c)){toast(REASONS.BUSY,'warn');return Promise.resolve()}
+    pendingCount++; document.body.classList.add('cmd-pending');
+    const tt=setTimeout(()=>toast('Đang gửi "'+c+'" tới ESP32...','info',1500),400);
+    return T.send(c,val).then(a=>{
+      clearTimeout(tt);
+      if(a.ok) toast('✓ ESP32 đã xác nhận: '+c,'ok',1800);
+      else toast('✗ '+c+': '+(REASONS[a.reason]||a.reason||'Thất bại'),a.reason==='TIMEOUT'||a.reason==='OFFLINE'?'bad':'warn',4500);
+      return a;
+    }).finally(()=>{pendingCount=Math.max(0,pendingCount-1); if(!pendingCount)document.body.classList.remove('cmd-pending')});
+  }
+  return T.send(c,val).then(load).catch(()=>toast('Không gửi được lệnh "'+c+'" — kiểm tra kết nối Wi-Fi SOLAR_TRACKER','bad'));
+}
+function setSpeed(v){ return cmd('speed_set', v); }
+function toggleAuto(){ return cmd('auto_toggle'); }
+
+/* Nút motor: LOCAL = nhấn ±10° / giữ ≥350 ms quay liên tục, nhả -> stop (như bản cũ)
+              CLOUD = chỉ nhấn từng bước ±10° (không gửi lệnh *_hold)               */
+function bindMotorBtn(id, cmdStep, cmdHold) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let timer = null, isHolding = false, pressed = false;
+  const onDown = (e) => {
+    e.preventDefault(); pressed = true; isHolding = false;
+    if (!T.allowHold) return;
+    timer = setTimeout(() => { isHolding = true; cmd(cmdHold); }, 350);
+  };
+  const onUp = (e) => {
+    e.preventDefault(); if(!pressed) return; pressed = false;
+    clearTimeout(timer);
+    if (isHolding) { isHolding = false; cmd('stop'); }
+    else { cmd(cmdStep); }
+  };
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('mouseup', onUp);
+  el.addEventListener('mouseleave', () => {
+    if (timer) clearTimeout(timer);
+    pressed = false;
+    if (isHolding) { isHolding = false; cmd('stop'); }
+  });
+  el.addEventListener('touchstart', onDown, {passive:false});
+  el.addEventListener('touchend', onUp, {passive:false});
+  el.addEventListener('touchcancel', (e)=>{ e.preventDefault(); clearTimeout(timer); pressed=false; if(isHolding){isHolding=false;cmd('stop')} }, {passive:false});
+}
+bindMotorBtn('btnM1L', 'm1_left', 'm1_left_hold');
+bindMotorBtn('btnM1R', 'm1_right', 'm1_right_hold');
+bindMotorBtn('btnM2L', 'm2_left', 'm2_left_hold');
+bindMotorBtn('btnM2R', 'm2_right', 'm2_right_hold');
+bindMotorBtn('btnM2U', 'm2_right', 'm2_right_hold');
+bindMotorBtn('btnM2D', 'm2_left', 'm2_left_hold');
+
+/* ---------------- LOCAL: cấu hình Wi-Fi Router & Cloud (lưu NVS) ---------------- */
+let netCfgLoaded=false;
+function loadNetCfg(){
+  if(ENV!=='esp32'||netCfgLoaded)return;
+  fetch('/api/netcfg',{cache:'no-store'}).then(r=>r.json()).then(c=>{
+    netCfgLoaded=true;
+    $('wSsid').value=c.staSsid||''; $('wPass').placeholder=c.staHasPass?'Để trống = giữ mật khẩu đã lưu':'Mật khẩu Wi-Fi';
+    $('cEn').checked=!!c.cloudEnabled; $('cHost').value=c.mqttHost||''; $('cPort').value=c.mqttPort||8883;
+    $('cDev').value=c.deviceId||''; $('cUser').value=c.mqttUser||''; $('cUrl').value=c.dashUrl||'';
+    $('cPass').placeholder=c.mqttHasPass?'Để trống = giữ mật khẩu đã lưu':'Mật khẩu MQTT';
+  }).catch(()=>{});
+}
+function postForm(url,obj){return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(obj)}).then(async r=>{const t=await r.text();if(!r.ok)throw new Error(t||('HTTP '+r.status));return t})}
+function saveWifi(e){
+  e.preventDefault();
+  postForm('/api/wifi',{ssid:$('wSsid').value.trim(),pass:$('wPass').value})
+    .then(()=>{toast('Đã lưu Wi-Fi. ESP32 đang kết nối Router...','ok');$('wPass').value='';netCfgLoaded=false;loadNetCfg()})
+    .catch(er=>toast('Lỗi lưu Wi-Fi: '+er.message,'bad'));
+}
+function clearWifi(){
+  if(!confirm('Xóa cấu hình Wi-Fi Router? ESP32 sẽ chỉ còn phát Wi-Fi SOLAR_TRACKER (LOCAL).'))return;
+  postForm('/api/wifi',{clear:'1'}).then(()=>{toast('Đã xóa cấu hình Wi-Fi Router','ok');$('wSsid').value='';netCfgLoaded=false;loadNetCfg()}).catch(er=>toast('Lỗi: '+er.message,'bad'));
+}
+function scanWifi(){
+  const b=$('scanBtn'); b.disabled=true; b.textContent='...';
+  const poll=(n)=>fetch('/api/wifi/scan',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+    if(j.running&&n>0)return setTimeout(()=>poll(n-1),1000);
+    const dl=$('wList'); dl.innerHTML='';
+    (j.networks||[]).forEach(w=>{const o=document.createElement('option');o.value=w.ssid;o.label=w.rssi+' dBm';dl.appendChild(o)});
+    toast('Tìm thấy '+(j.networks||[]).length+' mạng Wi-Fi','info'); b.disabled=false; b.textContent='QUÉT';
+  }).catch(()=>{b.disabled=false;b.textContent='QUÉT';toast('Quét Wi-Fi thất bại','bad')});
+  poll(12);
+}
+function saveCloud(e){
+  e.preventDefault();
+  postForm('/api/cloud',{en:$('cEn').checked?'1':'0',host:$('cHost').value.trim(),port:$('cPort').value,dev:$('cDev').value.trim(),user:$('cUser').value.trim(),pass:$('cPass').value,url:$('cUrl').value.trim()})
+    .then(()=>{toast('Đã lưu cấu hình Cloud','ok');$('cPass').value='';netCfgLoaded=false;loadNetCfg()})
+    .catch(er=>toast('Lỗi lưu Cloud: '+er.message,'bad'));
+}
+
+/* ---------------- CLOUD: đăng nhập, nhật ký, người dùng ---------------- */
+function doLogin(e){
+  e.preventDefault(); setText('loginErr','');
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('lgUser').value,password:$('lgPass').value})})
+    .then(r=>r.json().then(j=>({r,j}))).then(({r,j})=>{
+      if(!r.ok){setText('loginErr',j.error||'Đăng nhập thất bại');return}
+      $('lgPass').value=''; $('login').classList.remove('show'); Cloud.start();
+    }).catch(()=>setText('loginErr','Không kết nối được máy chủ'));
+}
+function logout(){fetch('/api/logout',{method:'POST'}).finally(()=>location.reload())}
+function loadLogs(){
+  if(ENV!=='cloud'||!Cloud.device)return;
+  fetch('/api/logs?device='+encodeURIComponent(Cloud.device)).then(r=>r.json()).then(rows=>{
+    $('logBody').innerHTML=rows.length?rows.map(x=>'<tr><td class="mono">'+esc(new Date(x.ts).toLocaleString('vi-VN'))+'</td><td>'+esc(x.username)+'</td><td class="mono">'+esc(x.cmd)+(x.val!=null&&x.val!==''?' = '+esc(x.val):'')+'</td><td class="'+(x.result==='OK'?'status-ok':'status-warn')+'" style="text-align:left">'+esc(x.result)+'</td></tr>').join(''):'<tr><td colspan="4">Chưa có lệnh nào</td></tr>';
+  }).catch(()=>{});
+}
+function loadUsers(){
+  fetch('/api/users').then(r=>r.json()).then(rows=>{
+    $('userBody').innerHTML=rows.map(u=>'<tr><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td style="text-align:right"><button class="linkbtn" data-del="'+esc(u.username)+'">XÓA</button></td></tr>').join('');
+    $('userBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Xóa người dùng '+b.dataset.del+'?'))fetch('/api/users/'+encodeURIComponent(b.dataset.del),{method:'DELETE'}).then(r=>r.json()).then(j=>{if(j.error)toast(j.error,'bad');loadUsers()})});
+  }).catch(()=>{});
+}
+function addUser(e){
+  e.preventDefault();
+  fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('nuName').value.trim(),password:$('nuPass').value,role:$('nuRole').value})})
+    .then(r=>r.json()).then(j=>{if(j.error)toast(j.error,'bad');else{toast('Đã thêm người dùng','ok');$('nuName').value='';$('nuPass').value='';loadUsers()}});
+}
+
+/* ---------------- START ---------------- */
+updateChartHeaders(); updateChips({});
+T.start();
+</script>
+</body>
+</html>

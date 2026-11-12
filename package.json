@@ -1,0 +1,22 @@
+{
+  "name": "solar-tracker-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Backend cho Solar Tracker ESP32 (MQTT/TLS <-> HTTPS/WSS, auth, history, command log)",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "hash": "node -e \"require('bcryptjs').hash(process.argv[1],12).then(console.log)\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mqtt": "^5.10.3",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  }
+}

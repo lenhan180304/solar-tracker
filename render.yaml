@@ -1,0 +1,35 @@
+# Render Blueprint – tạo Web Service "solar-tracker" (gói Free)
+# Render -> New -> Blueprint -> chọn repo này. Các biến "sync: false" sẽ được hỏi khi tạo.
+services:
+  - type: web
+    name: solar-tracker
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_HOURS
+        value: "8"
+      - key: RETENTION_DAYS
+        value: "7"
+      - key: DEVICES
+        value: "tracker01:Solar Tracker 01"
+      - key: MQTT_URL          # mqtts://<cluster>.s1.eu.hivemq.cloud:8883
+        sync: false
+      - key: MQTT_USER         # credential "backend" trên HiveMQ
+        sync: false
+      - key: MQTT_PASS
+        sync: false
+      - key: DATABASE_URL      # connection string Neon (postgresql://...?sslmode=require)
+        sync: false
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASS        # >= 10 ký tự
+        sync: false

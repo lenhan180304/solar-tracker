@@ -494,7 +494,8 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:1px;
         <div class="row"><span>Wi-Fi Router (STA)</span><span class="status-warn" id="staStat">--</span></div>
         <div class="row"><span>IP trong mạng Router</span><span class="kv num" id="staIp">--</span></div>
         <div class="row"><span>Cường độ sóng</span><span class="kv num" id="rssi">--</span></div>
-        <div class="row"><span>Cloud (MQTT/TLS)</span><span class="status-warn" id="cloudStat">--</span></div>
+        <div class="row"><span>Cloud (MQTT/TLS) — tự động</span><span class="status-warn" id="cloudStat">--</span></div>
+        <div class="row only-esp32"><span>Mã thiết bị Cloud (Device ID)</span><span class="kv num" id="devIdShow">--</span></div>
       </div>
     </div>
 
@@ -512,23 +513,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:1px;
       <div class="note">Lưu vào bộ nhớ NVS của ESP32. Wi-Fi <b>SOLAR_TRACKER</b> (192.168.4.1) vẫn luôn hoạt động; mất Internet không ảnh hưởng tới bám nắng.</div>
     </div>
 
-    <div class="card section only-esp32">
-      <div class="section-title"><span class="icon">☁</span> CLOUD (MQTT OVER TLS)</div>
-      <form class="form" id="cloudForm" onsubmit="saveCloud(event)">
-        <label class="check"><input type="checkbox" id="cEn"> Bật kết nối Cloud</label>
-        <div class="f2">
-          <label>MQTT Broker (host)<input id="cHost" maxlength="96" placeholder="xxxx.s1.eu.hivemq.cloud"></label>
-          <label>Cổng TLS<input id="cPort" type="number" min="1" max="65535" value="8883"></label>
-        </div>
-        <div class="f2">
-          <label>Device ID<input id="cDev" maxlength="32" pattern="[A-Za-z0-9_\-]+" placeholder="tracker01"></label>
-          <label>MQTT user<input id="cUser" maxlength="64" autocomplete="off"></label>
-        </div>
-        <label>MQTT password<input id="cPass" type="password" maxlength="96" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
-        <label>URL Cloud Dashboard (tuỳ chọn)<input id="cUrl" maxlength="120" placeholder="https://solar-tracker.onrender.com"></label>
-        <div class="inline"><button class="btn solid wide" type="submit">LƯU CẤU HÌNH CLOUD</button></div>
-      </form>
-    </div>
+    <!-- Cấu hình Cloud đã được nhúng sẵn trong firmware (src/cloud_defaults.h): không cần nhập trên web -->
 
     <!-- Cloud: nhật ký điều khiển & quản lý người dùng -->
     <div class="card section only-cloud">
@@ -765,6 +750,7 @@ function render(d){
     setText('staIp',d.staIp||'--'); setText('rssi',d.staConnected?d.rssi+' dBm':'--');
     setText('cloudStat',!d.cloudEnabled?'TẮT':(d.cloudConnected?'ĐÃ KẾT NỐI':'ĐANG KẾT NỐI...'));
     setCls('cloudStat',d.cloudConnected?'status-ok':'status-warn');
+    setText('devIdShow',d.deviceId||'--');
     const cl=$('cloudLink'); if(cl&&d.dashUrl&&/^https:\/\//.test(d.dashUrl)){if(cl.getAttribute('href')!==d.dashUrl)cl.href=d.dashUrl;cl.style.display=''}
   }
   updateChips(d);
@@ -946,9 +932,6 @@ function loadNetCfg(){
   fetch('/api/netcfg',{cache:'no-store'}).then(r=>r.json()).then(c=>{
     netCfgLoaded=true;
     $('wSsid').value=c.staSsid||''; $('wPass').placeholder=c.staHasPass?'Để trống = giữ mật khẩu đã lưu':'Mật khẩu Wi-Fi';
-    $('cEn').checked=!!c.cloudEnabled; $('cHost').value=c.mqttHost||''; $('cPort').value=c.mqttPort||8883;
-    $('cDev').value=c.deviceId||''; $('cUser').value=c.mqttUser||''; $('cUrl').value=c.dashUrl||'';
-    $('cPass').placeholder=c.mqttHasPass?'Để trống = giữ mật khẩu đã lưu':'Mật khẩu MQTT';
   }).catch(()=>{});
 }
 function postForm(url,obj){return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(obj)}).then(async r=>{const t=await r.text();if(!r.ok)throw new Error(t||('HTTP '+r.status));return t})}
@@ -972,13 +955,6 @@ function scanWifi(){
   }).catch(()=>{b.disabled=false;b.textContent='QUÉT';toast('Quét Wi-Fi thất bại','bad')});
   poll(12);
 }
-function saveCloud(e){
-  e.preventDefault();
-  postForm('/api/cloud',{en:$('cEn').checked?'1':'0',host:$('cHost').value.trim(),port:$('cPort').value,dev:$('cDev').value.trim(),user:$('cUser').value.trim(),pass:$('cPass').value,url:$('cUrl').value.trim()})
-    .then(()=>{toast('Đã lưu cấu hình Cloud','ok');$('cPass').value='';netCfgLoaded=false;loadNetCfg()})
-    .catch(er=>toast('Lỗi lưu Cloud: '+er.message,'bad'));
-}
-
 /* ---------------- CLOUD: đăng nhập, nhật ký, người dùng ---------------- */
 function doLogin(e){
   e.preventDefault(); setText('loginErr','');

@@ -199,8 +199,16 @@ app.get('/api/devices', auth(), (req, res) => res.json(DEVICES.map(d => ({ ...d,
 
 app.get('/api/history', auth(), async (req, res) => {
   const dev = String(req.query.device || '');
-  const ranges = { '1h': 3600e3, '6h': 6 * 3600e3, '24h': 24 * 3600e3 };
+  const ranges = { '1h': 3600e3, '6h': 6 * 3600e3, '24h': 24 * 3600e3, '7d': 7 * 86400e3, '30d': 30 * 86400e3 };
   if (!DEVICE_IDS.has(dev) || !ranges[req.query.range]) return res.status(400).json({ error: 'Tham số không hợp lệ' });
+  if (req.query.range === '7d' || req.query.range === '30d') {
+    // dài hạn: dùng bảng tổng hợp theo giờ (giữ vĩnh viễn), mỗi giờ một điểm = trung bình trong giờ đó
+    const hrs = await store.queryHourly(dev, Math.floor((Date.now() - ranges[req.query.range]) / 3600000) * 3600000);
+    return res.json(hrs.map(h => {
+      const n = h.n || 1, a = (k) => h[k].sum / n;
+      return { t: h.ts + 1800000, pvP: a('pvP'), pvV: a('pvV'), pvI: a('pvI'), batP: a('batP'), batV: a('batV'), batI: a('batI') };
+    }));
+  }
   const rows = await store.queryTelemetry(dev, Date.now() - ranges[req.query.range]);
   const B = Math.max(1, Math.ceil(rows.length / 360)); // tối đa 360 điểm
   const out = [];

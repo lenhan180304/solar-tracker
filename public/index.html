@@ -88,6 +88,10 @@ header.top{height:var(--hh);background:var(--surface);border-bottom:1px solid va
 .seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
 .seg a{padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:800;color:var(--muted);text-decoration:none;letter-spacing:.3px;cursor:pointer}
 .seg a.on{background:var(--primary);color:#fff;cursor:default}
+.seg a.on.sim{background:#f59e0b;color:#fff}
+.seg.ro a{cursor:not-allowed;opacity:.65}
+#simSeg a,#chipSim b{white-space:nowrap}
+.seg-lbl{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.4px;margin-right:6px}
 
 .content{padding:20px 24px 40px;max-width:1360px;width:100%;margin:0 auto}
 .page{display:none;animation:fade .18s ease-out}
@@ -104,6 +108,7 @@ header.top{height:var(--hh);background:var(--surface);border-bottom:1px solid va
 .section-title .ic{color:var(--primary);width:17px;height:17px}
 .section-title .sub{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:0}
 .alert{display:none;background:var(--red-soft);border:2px solid var(--red);color:var(--red);padding:14px 20px;border-radius:12px;font-weight:800;font-size:14px;margin-bottom:14px;text-align:center}
+.alert.sim{background:var(--warn-soft);border-color:#f59e0b;color:var(--warn)}
 .note{font-size:12px;color:var(--muted);background:var(--surface2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;line-height:1.5}
 .viewer-banner{display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--warn);font-size:12.5px;font-weight:700}
 body.role-viewer .viewer-banner{display:block}
@@ -385,6 +390,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
     <span class="chip" id="chipEsp" title="Trạng thái ESP32"><i></i><b>ESP32 --</b></span>
     <span class="chip" id="chipNet" title="Internet của ESP32"><i></i><b>INTERNET --</b></span>
     <span class="chip" id="chipOwner" title="Nguồn đang giữ quyền điều khiển (30 s)"><i></i><b>QUYỀN ĐK: --</b></span>
+    <span class="seg ctl" id="simSeg" title="Chế độ hệ thống: THẬT (AUTO, cảm biến ánh sáng thật) hoặc MÔ PHỎNG (liên kết MATLAB)"><a id="btnSimReal" class="on" role="button">THẬT</a><a id="btnSimOn" role="button">MÔ PHỎNG</a></span>
+    <span class="chip" id="chipSim" style="display:none" title="Liên kết MATLAB trong chế độ mô phỏng"><i></i><b>MATLAB --</b></span>
   </div>
   <div class="top-r">
     <div class="clock num"><b id="clockT">--:--:--</b><span id="clockD">--/--/----</span></div>
@@ -402,6 +409,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
 <div class="content">
 
 <div class="alert" id="estopAlert">⚠️ CẢNH BÁO: HỆ THỐNG ĐANG DỪNG KHẨN CẤP (EMERGENCY STOP)! TOÀN BỘ ĐỘNG CƠ VÀ THIẾT BỊ ĐÃ ĐƯỢC NGẮT AN TOÀN!</div>
+<div class="alert sim" id="simAlert">🧪 ĐANG Ở CHẾ ĐỘ MÔ PHỎNG – cảm biến ánh sáng thật bị bỏ qua, hệ thống chạy theo MATLAB. Bấm "THẬT" (hoặc nút REAL trên màn hình TFT) để quay về bám nắng thật; mất MATLAB 10 giây thì tự quay về.</div>
 <div class="viewer-banner">👁 Tài khoản của bạn chỉ có quyền GIÁM SÁT. Các nút điều khiển đã bị khoá.</div>
 
 <!-- ======================= DASHBOARD ======================= -->
@@ -618,6 +626,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
         <div class="row"><span>Chênh lệch Ngang (&Delta;H = R - L)</span><span class="stat-num num" id="dH">N/A</span></div>
         <div class="row"><span>Chênh lệch Dọc (&Delta;V = T - B)</span><span class="stat-num num" id="dV">N/A</span></div>
         <div class="row"><span>Cường độ sáng TB</span><span class="stat-num num" id="avgL">N/A</span></div>
+        <div class="row"><span>ADC thô (TL / TR / BL / BR)</span><span class="kv num" id="ldrRaw">N/A</span></div>
         <div class="row"><span>Vùng chết sai số (Tolerance)</span><span class="status-warn">&plusmn;80</span></div>
         <div class="row"><span>Hiệu chuẩn LDR (Cân bằng)</span><button class="badge-btn cal ctl" onclick="cmd('cal_zero')">⚖ CALIBRATE ZERO</button></div>
         <div class="row"><span>Gốc cơ khí (Đặt 90°)</span><button class="badge-btn manual ctl" onclick="cmd('set_home')">⌂ SET HOME (90°)</button></div>
@@ -630,6 +639,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
     <div class="controls">
       <div class="motor">
         <h3>MOTOR 1 (TRỤC X) <span class="motor-state" id="m1x">STOP</span></h3>
+        <div style="text-align:center;margin:2px 0 8px;font-size:12px;color:var(--text2)">GÓC HIỆN TẠI <b id="a1x" style="font-size:26px;color:var(--text);font-variant-numeric:tabular-nums">--.-</b><b style="font-size:16px">°</b></div>
         <div class="buttons">
           <button class="btn primary ctl" id="btnM1L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
           <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
@@ -638,6 +648,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
       </div>
       <div class="motor">
         <h3>MOTOR 2 (TRỤC Y) <span class="motor-state" id="m2x">STOP</span></h3>
+        <div style="text-align:center;margin:2px 0 8px;font-size:12px;color:var(--text2)">GÓC HIỆN TẠI <b id="a2x" style="font-size:26px;color:var(--text);font-variant-numeric:tabular-nums">--.-</b><b style="font-size:16px">°</b></div>
         <div class="buttons">
           <button class="btn primary ctl" id="btnM2L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
           <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
@@ -672,6 +683,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
         <div class="row"><span>DRIVER MOTOR</span><span class="status-ok" id="drvStatus">TMC2208 &amp; A4988 (SLEEP)</span></div>
         <div class="row"><span>INA219 PV</span><span id="pvStatus" class="status-ok">N/A</span></div>
         <div class="row"><span>INA219 BATTERY</span><span id="batStatus" class="status-warn">N/A</span></div>
+        <div class="row"><span>I2C (địa chỉ tìm thấy)</span><span id="i2cFound" class="num">--</span></div>
+        <div class="row"><span>Quét lại bus I2C (INA 0x40 / 0x41)</span><button class="badge-btn ctl" id="btnI2cScan">QUÉT I2C</button></div>
         <div class="row"><span>PIN MẶT TRỜI</span><span class="status-ok" id="solarState">ĐANG GIÁM SÁT</span></div>
         <div class="row"><span>Cập nhật dữ liệu gần nhất</span><span class="kv upd">N/A</span></div>
       </div>
@@ -723,6 +736,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
       </div>
       <div class="rows">
         <div class="row"><span>Offset LDR (TL / TR / BL / BR)</span><span class="kv num" id="offsets">N/A</span></div>
+        <div class="row"><span>Hệ số cân bằng (TL / TR / BL / BR)</span><span class="kv num" id="calGains">N/A</span></div>
+        <div class="row"><span>Kết quả cân bằng sáng gần nhất</span><span class="kv" id="calMsg">--</span></div>
       </div>
     </div>
 
@@ -1027,7 +1042,7 @@ function render(d){
   setText('pvWh',f(se,2)+' Wh'); setText('batSOC',bsoc+' %');
   const tTxt=d.dhtOK?f(d.temp,1)+' °C':'--.- °C';
   setText('dhtT',tTxt); setText('dhtT2',tTxt); setText('dhtH',d.dhtOK?f(d.humi,1)+' %':'--.- %');
-  setText('a1',f(d.motor1Angle,1)); setText('a2',f(d.motor2Angle,1));
+  setText('a1',f(d.motor1Angle,1)); setText('a2',f(d.motor2Angle,1)); setText('a1x',f(d.motor1Angle,1)); setText('a2x',f(d.motor2Angle,1));
   const nd=(id,a)=>{const e=$(id);if(e){const tf='rotate('+(Math.max(0,Math.min(180,Number(a)||0))-90).toFixed(1)+' 60 62)';if(e.getAttribute('transform')!==tf)e.setAttribute('transform',tf)}};
   nd('g1',d.motor1Angle); nd('g2',d.motor2Angle);
   setText('m1',d.motor1State||'STOP'); setText('m2',d.motor2State||'STOP');
@@ -1054,6 +1069,15 @@ function render(d){
   setText('dH',(d.diffH>0?'+':'')+d.diffH); setText('dV',(d.diffV>0?'+':'')+d.diffV); setText('avgL',d.avgLight);
   const sc=$('sunCenter'); if(sc){const ox=Math.max(-40,Math.min(40,(Number(d.diffH)||0)/20)),oy=Math.max(-40,Math.min(40,-(Number(d.diffV)||0)/20));const tf='translate(calc(-50% + '+ox.toFixed(0)+'px),calc(-50% + '+oy.toFixed(0)+'px))';if(sc.style.transform!==tf)sc.style.transform=tf}
   setText('offsets',[d.offTL,d.offTR,d.offBL,d.offBR].map(v=>v==null?'N/A':v).join(' / '));
+  // ADC thô, cờ bão hòa và kết quả cân bằng sáng (trường mới, có thể không có ở firmware cũ)
+  if('ldrRawTL' in d){
+    setText('ldrRaw',[d.ldrRawTL,d.ldrRawTR,d.ldrRawBL,d.ldrRawBR].join(' / '));
+    [['ldrTL',d.ldrRawTL],['ldrTR',d.ldrRawTR],['ldrBL',d.ldrRawBL],['ldrBR',d.ldrRawBR],['qTL',d.ldrRawTL],['qTR',d.ldrRawTR],['qBL',d.ldrRawBL],['qBR',d.ldrRawBR]].forEach(([id,r])=>{const e=$(id);if(e){const c=(Number(r)>=4000)?'#dc2626':'';if(e.style.color!==c)e.style.color=c}});
+    setText('calGains',[d.gainTL,d.gainTR,d.gainBL,d.gainBR].map(v=>v==null?'N/A':Number(v).toFixed(3)).join(' / '));
+    setText('calMsg',d.calMsg||'--');
+    if(d.calMsg&&d.calMsg!==window._lastCalMsg){ if(window._lastCalMsg!==undefined) toast('Cân bằng sáng: '+d.calMsg,d.calMsg.startsWith('OK')||d.calMsg.startsWith('DA XOA')?'ok':'warn',8000); window._lastCalMsg=d.calMsg }
+    else if(window._lastCalMsg===undefined) window._lastCalMsg=d.calMsg||'';
+  }
 
   // Nút chế độ
   if(d.autoMode){setText('modeBtn','AUTO TRACKING');setCls('modeBtn','badge-btn ctl');setText('modeBtnTop','AUTO');setCls('modeBtnTop','badge-btn ctl')}
@@ -1088,6 +1112,13 @@ function render(d){
   setText('btnEstopHeader',d.eStop?'⚠️ ĐANG E-STOP (BẤM ĐỂ MỞ)':'DỪNG KHẨN CẤP (E-STOP)');
   setCls('btnEstopHeader','estop ctl safety'+(d.eStop?' active':''));
   setText('estopInfo',d.eStop?'ĐANG DỪNG KHẨN CẤP':'Bình thường');
+
+  // Chế độ THẬT / MÔ PHỎNG
+  const sim=!!d.simMode;
+  const sa=$('simAlert'); if(sa){const sd=sim?'block':'none'; if(sa.style.display!==sd)sa.style.display=sd}
+  setCls('btnSimReal',sim?'':'on'); setCls('btnSimOn',sim?'on sim':'');
+  const cs=$('chipSim'); if(cs){const dd=sim?'':'none'; if(cs.style.display!==dd)cs.style.display=dd; if(sim){const a=Number(d.simAgeMs)||0; setChip('chipSim',a<4000?'ok':'bad',a<4000?'MATLAB OK':'MATLAB MẤT')}}
+  setText('i2cFound',d.i2cFound||'N/A');
 
   // Sạc pin + sơ đồ dòng năng lượng (không suy diễn khi chưa biết chiều dòng)
   const ci=chargeInfo(d);
@@ -1150,6 +1181,25 @@ function updateChips(d){
   document.body.classList.toggle('stale',!online);
   setText('espStatus',online?'ONLINE':'OFFLINE'); setCls('espStatus',online?'status-ok':'status-warn');
 }
+/* Công tắc THẬT | MÔ PHỎNG: chỉ đổi được ở web nội bộ (LOCAL) hoặc trên TFT; Cloud chỉ xem */
+if(ENV!=='esp32')$('simSeg').classList.add('ro');
+$('btnSimOn').addEventListener('click',()=>{
+  if(ENV!=='esp32'){toast('Chế độ mô phỏng chỉ bật được tại thiết bị: màn hình TFT hoặc web nội bộ.','warn',4500);return}
+  if(lastData&&lastData.simMode)return;
+  if(confirm('Vào chế độ MÔ PHỎNG?\nCảm biến ánh sáng thật sẽ bị bỏ qua và hệ thống chạy theo MATLAB.\nTự quay về chế độ THẬT nếu mất MATLAB quá 10 giây.'))cmd('sim_on');
+});
+$('btnSimReal').addEventListener('click',()=>{
+  if(ENV!=='esp32'){toast('Chế độ mô phỏng chỉ đổi được tại thiết bị: màn hình TFT hoặc web nội bộ.','warn',4500);return}
+  if(lastData&&!lastData.simMode)return;
+  cmd('sim_off');
+});
+$('btnI2cScan').addEventListener('click',()=>{
+  if(ENV!=='esp32'){toast('Quét I2C chỉ dùng được ở web nội bộ (LOCAL).','warn',4000);return}
+  fetch('/api/i2c',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+    toast('I2C tìm thấy: '+j.found+' | 0x40 '+(j.ack40?'có':'KHÔNG (lỗi '+j.err40+')')+' | 0x41 '+(j.ack41?'có':'KHÔNG (lỗi '+j.err41+')'),j.ack40&&j.ack41?'ok':'warn',7000);
+    setText('i2cFound',j.found);
+  }).catch(()=>toast('Không quét được I2C (kiểm tra kết nối tới ESP32)','bad'));
+});
 $('cloudLink').addEventListener('click',e=>{ if(ENV==='esp32'){const h=$('cloudLink').getAttribute('href'); if(!h||h==='#'){e.preventDefault();toast('Chưa có địa chỉ Cloud. Hãy kết nối ESP32 với Wi-Fi Router (Setting) để dùng Cloud.','warn',4500)} else {$('cloudLink').target='_blank';$('cloudLink').rel='noopener'} } else e.preventDefault(); });
 $('segLocal').addEventListener('click',e=>{ if(ENV==='esp32')e.preventDefault(); else toast('Đang mở giao diện LOCAL. Cần kết nối Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN với ESP32.','info',4500); });
 

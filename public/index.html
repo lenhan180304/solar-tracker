@@ -709,6 +709,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
         <div class="row"><span>Nhiệt độ hiện tại</span><span class="kv num" id="dhtT2">N/A</span></div>
         <div class="row"><span>Trạng thái quạt</span><span class="status-ok" id="fanStatus2">N/A</span></div>
         <div class="row"><span>Ngưỡng bật quạt</span><span class="kv num" id="fanThrInfo">N/A</span></div>
+        <div class="row"><span>Bật/tắt quạt chủ động</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></div>
       </div>
     </div>
     <div class="card section">
@@ -745,6 +746,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
       <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> QUẠT TẢN NHIỆT</div>
       <div class="rows">
         <div class="row"><span>Ngưỡng Bật Quạt</span><span style="display:flex;align-items:center;gap:6px"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')">-</button><b id="fanThreshVal" class="num" style="color:var(--primary);min-width:64px;text-align:center">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')">+</button></span></div>
+        <div class="row"><span>Bật/tắt quạt chủ động</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></div>
       </div>
     </div>
 
@@ -1105,6 +1107,7 @@ function render(d){
   setText('fanStatus',fanT); setCls('fanStatus',fanC); setText('fanStatus2',fanT); setCls('fanStatus2',fanC);
   const thr=Number(d.fanThresh||38).toFixed(1)+' °C';
   setText('fanThreshVal',thr); setText('fanThrInfo',thr);
+  document.querySelectorAll('.fanmode').forEach(b=>b.classList.toggle('solid',Number(b.dataset.m)===Number(d.fanMode||0)));
   setText('ledStatus',d.powerLed?'SÁNG':'TẮT');
 
   // E-STOP

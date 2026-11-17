@@ -707,6 +707,10 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
       <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> MÔI TRƯỜNG &amp; TẢN NHIỆT</div>
       <div class="rows">
         <div class="row"><span>Nhiệt độ hiện tại</span><span class="kv num" id="dhtT2">N/A</span></div>
+        <div class="row"><span>Nhiệt độ ngoài trời</span><span class="kv num" id="outT">N/A</span></div>
+        <div class="row"><span>Độ ẩm ngoài trời</span><span class="kv num" id="outH">N/A</span></div>
+        <div class="row"><span>Mặt trời mọc / lặn</span><span class="kv num" id="sunTimes">N/A</span></div>
+        <div class="row"><span>Nguồn thời tiết (Open-Meteo)</span><span class="kv" id="wxStatus">N/A</span></div>
         <div class="row"><span>Trạng thái quạt</span><span class="status-ok" id="fanStatus2">N/A</span></div>
         <div class="row"><span>Ngưỡng bật quạt</span><span class="kv num" id="fanThrInfo">N/A</span></div>
         <div class="row"><span>Bật/tắt quạt chủ động</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></div>
@@ -747,6 +751,24 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
       <div class="rows">
         <div class="row"><span>Ngưỡng Bật Quạt</span><span style="display:flex;align-items:center;gap:6px"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')">-</button><b id="fanThreshVal" class="num" style="color:var(--primary);min-width:64px;text-align:center">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')">+</button></span></div>
         <div class="row"><span>Bật/tắt quạt chủ động</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> CHẾ ĐỘ BAN ĐÊM (NIGHT)</div>
+      <div class="rows">
+        <div class="row"><span>Trạng thái</span><span class="status-ok" id="nightState">N/A</span></div>
+        <div class="row"><span>Tự động vào Night khi</span><span class="kv">sau giờ mặt trời lặn &amp; PV &lt; 5 V</span></div>
+        <div class="row"><span>Điện áp PV hiện tại</span><span class="kv num" id="nightPv">N/A</span></div>
+        <div class="row"><span>Chế độ Night</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">TỰ ĐỘNG</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">VÀO NIGHT CHỦ ĐỘNG</button></span></div>
+      </div>
+    </div>
+
+    <div class="card section only-esp32">
+      <div class="section-title"><svg class="ic"><use href="#i-gear"/></svg> MÀN HÌNH TFT &amp; VỊ TRÍ</div>
+      <div class="rows">
+        <div class="row"><span>Tự tắt màn hình TFT sau (phút, 0 = không tắt)</span><span style="display:flex;gap:6px;align-items:center"><input id="tftSleepIn" type="number" min="0" max="240" step="1" style="width:72px"><button class="btn sm ctl" onclick="setTftSleep()">LƯU</button></span></div>
+        <div class="row"><span>Vị trí: vĩ độ / kinh độ (giờ mặt trời lặn &amp; thời tiết)</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><input id="latIn" type="number" step="0.0001" style="width:92px"><input id="lonIn" type="number" step="0.0001" style="width:92px"><button class="btn sm ctl" onclick="setLoc()">LƯU</button></span></div>
       </div>
     </div>
 
@@ -1108,6 +1130,12 @@ function render(d){
   const thr=Number(d.fanThresh||38).toFixed(1)+' °C';
   setText('fanThreshVal',thr); setText('fanThrInfo',thr);
   document.querySelectorAll('.fanmode').forEach(b=>b.classList.toggle('solid',Number(b.dataset.m)===Number(d.fanMode||0)));
+  document.querySelectorAll('.nightmode').forEach(b=>b.classList.toggle('solid',(Number(b.dataset.m)===1)===!!d.nightForce));
+  setText('nightState',d.isNight?(d.nightForce?'ĐANG Ở NIGHT (chủ động)':'ĐANG Ở NIGHT (tự động)'):'BAN NGÀY (đang bám nắng)'); setCls('nightState',d.isNight?'status-warn':'status-ok');
+  setText('nightPv',f(d.solarVoltage,2)+' V (ngưỡng '+Number(d.pvNightV||5).toFixed(1)+' V)');
+  setText('outT',d.wxOK?f(d.outTemp,1)+' °C':'-- (chưa có)'); setText('outH',d.wxOK?f(d.outHumi,0)+' %':'-- (chưa có)');
+  setText('sunTimes',(d.sunrise||'--:--')+' / '+(d.sunset||'--:--')); setText('wxStatus',d.wxMsg||'--');
+  [['tftSleepIn',d.tftSleep],['latIn',d.lat],['lonIn',d.lon]].forEach(([id,v])=>{const e=$(id);if(e&&document.activeElement!==e&&v!==undefined&&e.dataset.set!==String(v)){e.value=v;e.dataset.set=String(v)}});
   setText('ledStatus',d.powerLed?'SÁNG':'TẮT');
 
   // E-STOP
@@ -1291,6 +1319,8 @@ const REASONS = {
   DUPLICATE:'Lệnh trùng (đã bỏ qua)', BUSY:'Đang chờ xác nhận lệnh trước'
 };
 let pendingCount = 0;
+function setTftSleep(){const v=parseInt($('tftSleepIn').value);if(isNaN(v)||v<0||v>240){toast('Nhập số phút từ 0 đến 240','warn');return}cmd('tft_sleep_set',v)}
+function setLoc(){const a=parseFloat($('latIn').value),o=parseFloat($('lonIn').value);if(isNaN(a)||isNaN(o)||a<-90||a>90||o<-180||o>180){toast('Vĩ độ -90..90, kinh độ -180..180','warn');return}cmd('loc_lat',a).then(()=>cmd('loc_lon',o))}
 function cmd(c, val){
   if(ENV==='cloud'){
     if(pendingCount>0 && !SAFETY_CMDS.has(c)){toast(REASONS.BUSY,'warn');return Promise.resolve()}

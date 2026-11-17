@@ -39,6 +39,10 @@ function memoryStore() {
     async queryTelemetryRange(device, from, to, limit) {
       return telemetry.filter(r => r.device === device && r.ts >= from && r.ts <= to).sort((a, b) => a.ts - b.ts).slice(0, limit || 1e9);
     },
+    async queryVoltage(device, from, to, limit) {
+      return telemetry.filter(r => r.device === device && r.ts >= from && r.ts <= to && (r.pvV != null || r.batV != null))
+        .sort((a, b) => a.ts - b.ts).slice(0, limit || 1e9).map(r => ({ ts: r.ts, pvV: r.pvV ?? null, batV: r.batV ?? null }));
+    },
     async countTelemetry(device, from, to) {
       const rs = telemetry.filter(r => r.device === device && r.ts >= from && r.ts <= to);
       const c = (k) => rs.filter(r => r[k] !== null && r[k] !== undefined).length;
@@ -142,6 +146,11 @@ function pgStore(url) {
       return rows.map(r => ({ ts: Number(r.ts), pvV: r.pv_v, pvI: r.pv_i, pvP: r.pv_p, batV: r.bat_v, batI: r.bat_i, batP: r.bat_p,
         m1: r.m1, m2: r.m2, temp: r.temp, ldrTL: r.ldr_tl, ldrTR: r.ldr_tr, ldrBL: r.ldr_bl, ldrBR: r.ldr_br,
         dH: r.diff_h, dV: r.diff_v, auto: r.auto_mode, trk: r.trk, flags: r.flags }));
+    },
+    async queryVoltage(device, from, to, limit) {
+      const rows = (await q(`SELECT ts,pv_v,bat_v FROM telemetry WHERE device=$1 AND ts>=$2 AND ts<=$3 AND (pv_v IS NOT NULL OR bat_v IS NOT NULL) ORDER BY ts LIMIT $4`,
+        [device, from, to, limit || 1000000])).rows;
+      return rows.map(r => ({ ts: Number(r.ts), pvV: r.pv_v, batV: r.bat_v }));
     },
     async countTelemetry(device, from, to) {
       const r = (await q(`SELECT count(*) n, min(ts) first, max(ts) last, count(pv_v) pv, count(bat_v) bat, count(ldr_tl) ldr, count(auto_mode) trk

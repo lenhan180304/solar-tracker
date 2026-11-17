@@ -320,6 +320,7 @@ body.role-viewer .ctl{opacity:.45;pointer-events:none}
 .rpt-grid input,.rpt-grid select{font:inherit;font-size:13px;font-weight:500;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);width:100%}
 .rpt-quick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted);font-weight:500}
 .rpt-quick .cpill{border:1px solid var(--line);background:var(--surface)}
+.rpt-quick .cpill.active{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
 .rpt-prev{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);padding:12px 14px}
 .rpt-st{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:10px}
 .rpt-st.ok{color:var(--ok-t)}.rpt-st.warn{color:var(--warn-t)}.rpt-st.bad{color:var(--red-t)}
@@ -735,32 +736,14 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
   </div>
 
   <div class="card section only-cloud" id="rptCard" style="margin-top:14px">
-    <div class="section-title"><svg class="ic"><use href="#i-log"/></svg> Xuất báo cáo Excel <span class="sub">Từ dữ liệu đo thực tế đã lưu trên Cloud • không dùng số liệu mẫu</span></div>
-    <div class="rpt-grid">
-      <label>Thời gian bắt đầu<input type="datetime-local" id="rptFrom" step="60"></label>
-      <label>Thời gian kết thúc<input type="datetime-local" id="rptTo" step="60"></label>
-      <label>Loại báo cáo<select id="rptType"><option value="all">Toàn bộ (5 sheet)</option><option value="overview">Tổng quan</option><option value="energy">Năng lượng</option><option value="tracking">Tracking (bám nắng)</option></select></label>
-      <label>Định dạng xuất<select id="rptFmt"><option value="xlsx">Excel (.xlsx)</option></select></label>
-    </div>
-    <div class="rpt-quick"><span>Chọn nhanh:</span>
-      <button class="cpill" type="button" onclick="rptQuick(1)">1 giờ</button><button class="cpill" type="button" onclick="rptQuick(6)">6 giờ</button><button class="cpill" type="button" onclick="rptQuick(24)">24 giờ</button><button class="cpill" type="button" onclick="rptQuick(168)">7 ngày</button><button class="cpill" type="button" onclick="rptQuick(720)">30 ngày</button>
+    <div class="section-title"><svg class="ic"><use href="#i-log"/></svg> Xuất báo cáo điện áp (Excel) <span class="sub">Điện áp PV và ắc quy • từ dữ liệu đo thực tế đã lưu trên Cloud</span></div>
+    <div class="rpt-quick" id="rptRanges" role="radiogroup" aria-label="Khoảng thời gian báo cáo"><span>Khoảng thời gian:</span>
+      <button class="cpill active" type="button" role="radio" aria-checked="true" data-r="7d" onclick="rptPick('7d')">7 ngày</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1m" onclick="rptPick('1m')">1 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="6m" onclick="rptPick('6m')">6 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1y" onclick="rptPick('1y')">1 năm</button>
     </div>
     <div class="rpt-prev" id="rptPrev"><div class="rpt-st" id="rptSt">Đang kiểm tra dữ liệu...</div>
-      <div class="rpt-kv"><div>Số mẫu dữ liệu sẽ xuất<b class="num" id="rptN">--</b></div><div>Khoảng dữ liệu thực tế<b class="num" id="rptSpan">--</b></div><div>Độ phủ dữ liệu<b class="num" id="rptCov">--</b></div><div>Mẫu có LDR / tracking<b class="num" id="rptTrk">--</b></div><div>Sự kiện đã ghi nhận<b class="num" id="rptEv">--</b></div></div>
+      <div class="rpt-kv"><div>Ngày bắt đầu<b class="num" id="rptFrom">--</b></div><div>Ngày kết thúc<b class="num" id="rptTo">--</b></div><div>Tổng số mẫu đo<b class="num" id="rptN">--</b></div><div>Điện áp PV trung bình<b class="num" id="rptPv">--</b></div><div>Điện áp ắc quy trung bình<b class="num" id="rptBat">--</b></div></div>
     </div>
     <div class="inline" style="margin-top:14px;flex-wrap:wrap"><button class="btn solid wide" id="btnExport" onclick="downloadReport()">XUẤT BÁO CÁO EXCEL</button><span id="rptMsg" style="font-size:12px;color:var(--muted)"></span></div>
-    <div class="exportbar" style="margin-top:16px">
-      <div><b>Báo cáo tổng hợp theo giờ (dài hạn)</b><div class="sub2">Dữ liệu giữ vĩnh viễn nhưng chỉ có điện áp, dòng điện, công suất. Dùng khi cần xem dài hơn thời gian lưu dữ liệu chi tiết.</div></div>
-      <div class="inline">
-        <select id="expDays" aria-label="Khoảng thời gian">
-          <option value="7" selected>7 ngày gần nhất</option>
-          <option value="30">30 ngày</option>
-          <option value="90">90 ngày</option>
-          <option value="365">1 năm</option>
-        </select>
-        <button class="btn wide" id="btnExportHourly" onclick="downloadHourly()">Tải Excel theo giờ</button>
-      </div>
-    </div>
   </div>
   <div class="note only-esp32" style="margin-top:14px">Dữ liệu lịch sử dài hạn và xuất báo cáo Excel nằm trên Cloud. Ở chế độ LOCAL biểu đồ hiển thị các mẫu gần nhất (1 mẫu/giây).</div>
 </section>
@@ -1730,67 +1713,38 @@ function doLogin(e){
       $('lgPass').value=''; $('login').classList.remove('show'); Cloud.start();
     }).catch(()=>setText('loginErr','Không kết nối được máy chủ'));
 }
-/* ---------------- BÁO CÁO EXCEL (5 sheet, biểu đồ Excel thật) ---------------- */
-function rptLocal(ms){const d=new Date(ms-new Date(ms).getTimezoneOffset()*60000);return d.toISOString().slice(0,16)}
-function rptRangeMs(){const f=new Date($('rptFrom').value).getTime(),t=new Date($('rptTo').value).getTime();return{f,t}}
-let rptTimer=null,rptSeq=0,rptOk=false,rptInited=false;
-function rptInit(){ if(rptInited||ENV!=='cloud')return; rptInited=true; ['rptFrom','rptTo','rptType'].forEach(id=>$(id).addEventListener('change',rptPreview)); rptQuick(24) }
-function rptQuick(h){const now=Date.now();$('rptTo').value=rptLocal(now);$('rptFrom').value=rptLocal(now-h*3600e3);rptPreview()}
+/* ---------------- BÁO CÁO ĐIỆN ÁP (Excel, 1 sheet) ---------------- */
+let rptRange='7d',rptSeq=0,rptOk=false,rptInited=false;
+function rptInit(){ if(rptInited||ENV!=='cloud')return; rptInited=true; rptPick('7d') }
 function rptSet(kind,txt){const e=$('rptSt');e.className='rpt-st '+kind;e.textContent=txt}
-function rptPreview(){
-  clearTimeout(rptTimer); rptOk=false; $('btnExport').disabled=true; rptSet('','Đang kiểm tra dữ liệu...');
-  rptTimer=setTimeout(async()=>{
-    const my=++rptSeq,{f,t}=rptRangeMs();
-    if(!isFinite(f)||!isFinite(t)||f>=t){rptSet('bad','Khoảng thời gian không hợp lệ: thời gian bắt đầu phải trước thời gian kết thúc.');return}
-    try{
-      const r=await fetch('/api/report/preview?device='+encodeURIComponent(Cloud.device)+'&from='+f+'&to='+t,{credentials:'same-origin'});
-      const j=await r.json(); if(my!==rptSeq)return;
-      if(!r.ok)throw new Error(j.error||('Lỗi '+r.status));
-      setText('rptN',j.n.toLocaleString('vi-VN')+(j.n?' mẫu':''));
-      const fm=ms=>new Date(ms).toLocaleString('vi-VN',{hour12:false});
-      setText('rptSpan',j.n?fm(j.first)+' → '+fm(j.last):'--');
-      setText('rptCov',j.n?j.coverage.toFixed(1)+' %':'--');
-      setText('rptTrk',j.n?j.ldr.toLocaleString('vi-VN')+' / '+j.trk.toLocaleString('vi-VN'):'--');
-      setText('rptEv',String(j.events));
-      if(!j.n){rptSet('bad','Không có dữ liệu đo trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.'+(j.hourlyRows?' (Có '+j.hourlyRows+' giờ dữ liệu tổng hợp: dùng "Báo cáo tổng hợp theo giờ" bên dưới.)':'')+' Dữ liệu chi tiết được lưu '+j.retentionDays+' ngày.');return}
-      if(j.n>j.maxRows){rptSet('bad','Có '+j.n.toLocaleString('vi-VN')+' mẫu, vượt giới hạn '+j.maxRows.toLocaleString('vi-VN')+' mẫu mỗi báo cáo. Hãy chọn khoảng ngắn hơn.');return}
-      const notes=[];
-      if(j.coverage<80)notes.push('độ phủ dữ liệu thấp ('+j.coverage.toFixed(0)+'%): ESP32/Cloud từng mất kết nối');
-      if(j.pv<j.n)notes.push((j.n-j.pv)+' mẫu thiếu dữ liệu PV (INA219 không phản hồi) sẽ để trống');
-      if(j.ldr<j.n)notes.push((j.n-j.ldr)+' mẫu chưa có dữ liệu LDR/bám nắng (ghi trước khi nâng cấp) sẽ để trống');
-      if(!j.events)notes.push('chưa có sự kiện nào được ghi nhận');
-      rptOk=true; $('btnExport').disabled=false;
-      rptSet(notes.length?'warn':'ok',(notes.length?'Sẵn sàng xuất • lưu ý: '+notes.join('; ')+'.':'Dữ liệu đầy đủ, sẵn sàng xuất báo cáo.'));
-    }catch(e){ if(my===rptSeq)rptSet('bad','Không kiểm tra được dữ liệu: '+e.message) }
-  },350);
+function rptPick(r){
+  rptRange=r; document.querySelectorAll('#rptRanges .cpill').forEach(b=>{const on=b.dataset.r===r;b.classList.toggle('active',on);b.setAttribute('aria-checked',on)});
+  rptOk=false; $('btnExport').disabled=true; rptSet('','Đang kiểm tra dữ liệu...');
+  const my=++rptSeq;
+  fetch('/api/report/voltage/preview?device='+encodeURIComponent(Cloud.device)+'&range='+r,{credentials:'same-origin'}).then(async x=>{
+    const j=await x.json(); if(my!==rptSeq)return; if(!x.ok)throw new Error(j.error||('Lỗi '+x.status));
+    const off=(j.tzHours||7)*3600e3, d=ms=>{const t=new Date(ms+off);return String(t.getUTCDate()).padStart(2,'0')+'/'+String(t.getUTCMonth()+1).padStart(2,'0')+'/'+t.getUTCFullYear()};
+    setText('rptFrom',d(j.from)); setText('rptTo',d(j.to)); setText('rptN',j.n?j.n.toLocaleString('vi-VN'):'0');
+    setText('rptPv',j.pv.n?j.pv.avg.toFixed(2)+' V':'--'); setText('rptBat',j.bat.n?j.bat.avg.toFixed(2)+' V':'--');
+    if(!j.n){rptSet('bad','Không có dữ liệu điện áp trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.');return}
+    const notes=[]; if(j.mode==='hourly')notes.push('khoảng này dài nên báo cáo dùng giá trị trung bình theo giờ (mỗi dòng = 1 giờ)'); if(j.pv.n===0)notes.push('chưa có dữ liệu điện áp PV'); if(j.bat.n===0)notes.push('chưa có dữ liệu điện áp ắc quy');
+    rptOk=true; $('btnExport').disabled=false;
+    rptSet(notes.length?'warn':'ok',notes.length?'Sẵn sàng xuất • lưu ý: '+notes.join('; ')+'.':'Dữ liệu đầy đủ, sẵn sàng xuất báo cáo (từng mẫu đo gốc).');
+  }).catch(e=>{ if(my===rptSeq)rptSet('bad','Không kiểm tra được dữ liệu: '+e.message) });
 }
 async function downloadReport(){
   const b=$('btnExport'); if(!b||b.disabled||!rptOk)return;
-  const {f,t}=rptRangeMs(); const old=b.textContent; b.disabled=true; b.textContent='ĐANG TẠO BÁO CÁO...'; setText('rptMsg','Đang lấy dữ liệu, tính thống kê và tạo biểu đồ...');
+  const old=b.textContent; b.disabled=true; b.textContent='ĐANG TẠO BÁO CÁO...'; setText('rptMsg','Đang lấy dữ liệu, tính thống kê và tạo biểu đồ...');
   try{
-    const r=await fetch('/api/report.xlsx?device='+encodeURIComponent(Cloud.device)+'&from='+f+'&to='+t+'&type='+encodeURIComponent($('rptType').value),{credentials:'same-origin'});
+    const r=await fetch('/api/report/voltage.xlsx?device='+encodeURIComponent(Cloud.device)+'&range='+rptRange,{credentials:'same-origin'});
     if(!r.ok){let m='Lỗi '+r.status;try{m=(await r.json()).error||m}catch(e){} throw new Error(m)}
-    const name=((r.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/)||[])[1]||'Solar_Tracker_Report.xlsx';
+    const name=((r.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/)||[])[1]||'Solar_Voltage_Report.xlsx';
     const url=URL.createObjectURL(await r.blob());
     const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),10000);
     toast('Đã tạo báo cáo '+name,'ok',4000); setText('rptMsg','Đã tải: '+name);
   }catch(e){ toast('Không tạo được báo cáo: '+e.message,'bad',6000); setText('rptMsg','Lỗi: '+e.message) }
   finally{ b.textContent=old; b.disabled=!rptOk }
-}
-async function downloadHourly(){
-  const b=$('btnExportHourly'); if(!b||b.disabled)return;
-  const old=b.textContent; b.disabled=true; b.textContent='ĐANG TẠO FILE...';
-  try{
-    const r=await fetch('/api/export.xlsx?device='+encodeURIComponent(Cloud.device)+'&days='+encodeURIComponent($('expDays').value),{credentials:'same-origin'});
-    if(!r.ok){let m='Lỗi '+r.status;try{m=(await r.json()).error||m}catch(e){} throw new Error(m)}
-    const name=((r.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/)||[])[1]||'solar-tracker.xlsx';
-    const url=URL.createObjectURL(await r.blob());
-    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),10000);
-    toast('Đã tạo file '+name,'ok',3500);
-  }catch(e){ toast('Không tải được báo cáo: '+e.message,'bad',5000); }
-  finally{ b.disabled=false; b.textContent=old; }
 }
 
 function logout(){fetch('/api/logout',{method:'POST'}).finally(()=>location.reload())}

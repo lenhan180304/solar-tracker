@@ -20,6 +20,7 @@ const jwt = require('jsonwebtoken');
 const makeStore = require('./db');
 const { buildWorkbook } = require('./report');
 const { buildReport, MAX_ROWS } = require('./report_xlsx');
+const { buildVoltageReport, fromRaw, fromHourly, RANGES } = require('./voltage_report');
 
 // ------------------------------------------------------------------ cấu hình
 const env = process.env;
@@ -313,6 +314,51 @@ app.get('/api/report.xlsx', auth(), async (req, res) => {
     console.error('[REPORT]', e);
     res.status(500).json({ error: 'Không tạo được báo cáo: ' + e.message });
   }
+});
+
+// ---------------- BÁO CÁO ĐIỆN ÁP (1 sheet: thống kê + 2 biểu đồ + bảng dữ liệu) ----------------
+// range = 7d | 1m | 6m | 1y, tính lùi từ hiện tại. Dùng mẫu gốc nếu còn lưu & không quá nhiều dòng, nếu không dùng trung bình theo giờ (có ghi chú trong file).
+const VOLT_RAW_MAX = Number(env.VOLT_RAW_MAX || 70000);
+async function loadVoltage(dev, rk) {
+  const to = Date.now(), from = to - RANGES[rk].days * 86400000;
+  let data = null;
+  if (RANGES[rk].days <= RETENTION_DAYS) {
+    const c = await store.countTelemetry(dev, from, to);
+    if (c.n && c.n <= VOLT_RAW_MAX) data = fromRaw(await store.queryVoltage(dev, from, to, VOLT_RAW_MAX + 1));
+  }
+  if (!data || !data.rows.length) {
+    const hrs = (await store.queryHourly(dev, Math.floor(from / 3600000) * 3600000)).filter(h => h.ts <= to);
+    data = fromHourly(hrs);
+  }
+  return { from, to, data };
+}
+function voltArgs(req, res) {
+  const dev = String(req.query.device || ''), rk = String(req.query.range || '7d');
+  if (!DEVICE_IDS.has(dev)) { res.status(400).json({ error: 'Thiết bị không hợp lệ' }); return null; }
+  if (!RANGES[rk]) { res.status(400).json({ error: 'Khoảng thời gian không hợp lệ (7d, 1m, 6m, 1y)' }); return null; }
+  return { dev, rk };
+}
+app.get('/api/report/voltage/preview', auth(), async (req, res) => {
+  const a = voltArgs(req, res); if (!a) return;
+  try {
+    const { from, to, data } = await loadVoltage(a.dev, a.rk);
+    res.json({ from, to, mode: data.mode, n: data.rows.length, pv: data.stat.pv, bat: data.stat.bat, tzHours: TZ_HOURS });
+  } catch (e) { console.error('[REPORT]', e); res.status(500).json({ error: 'Không đọc được dữ liệu: ' + e.message }); }
+});
+app.get('/api/report/voltage.xlsx', auth(), async (req, res) => {
+  const a = voltArgs(req, res); if (!a) return;
+  const last = exportHits.get(req.user.username) || 0;
+  if (Date.now() - last < 3000) return res.status(429).json({ error: 'Vui lòng chờ vài giây rồi thử lại' });
+  exportHits.set(req.user.username, Date.now());
+  try {
+    const { from, to, data } = await loadVoltage(a.dev, a.rk);
+    if (!data.rows.length) return res.status(404).json({ error: 'Không có dữ liệu điện áp trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.' });
+    const dv = DEVICES.find(d => d.id === a.dev);
+    const buf = await buildVoltageReport({ deviceId: a.dev, deviceName: dv && dv.name, range: a.rk, from, to, data, tzHours: TZ_HOURS });
+    const name = `Solar_Voltage_Report_${RANGES[a.rk].file}_${new Date(Date.now() + TZ_HOURS * 3600000).toISOString().slice(0, 10)}.xlsx`;
+    res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
+    res.send(Buffer.from(buf));
+  } catch (e) { console.error('[REPORT]', e); res.status(500).json({ error: 'Không tạo được báo cáo: ' + e.message }); }
 });
 
 // Xuất báo cáo Excel THEO GIỜ (cũ, giữ nguyên để xem dài hạn > thời gian lưu chi tiết): GET /api/export.xlsx?device=..&days=7

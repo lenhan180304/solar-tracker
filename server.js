@@ -20,7 +20,7 @@ const jwt = require('jsonwebtoken');
 const makeStore = require('./db');
 const { buildWorkbook } = require('./report');
 const { buildReport, MAX_ROWS } = require('./report_xlsx');
-const { buildVoltageReport, fromRaw, fromHourly, RANGES } = require('./voltage_report');
+const { buildVoltageReport, fromRaw, fromHourly, summarize, RANGES } = require('./voltage_report');
 
 // ------------------------------------------------------------------ cấu hình
 const env = process.env;
@@ -325,7 +325,7 @@ const VOLT_RAW_MAX = Number(env.VOLT_RAW_MAX || 70000);
 async function loadVoltage(dev, rk) {
   const to = Date.now(), from = to - RANGES[rk].days * 86400000;
   let data = null;
-  if (RANGES[rk].days <= RETENTION_DAYS) {
+  if (RANGES[rk].days <= Math.min(RETENTION_DAYS, 31)) {
     const c = await store.countTelemetry(dev, from, to);
     if (c.n && c.n <= VOLT_RAW_MAX) data = fromRaw(await store.queryVoltage(dev, from, to, VOLT_RAW_MAX + 1));
   }
@@ -345,7 +345,7 @@ app.get('/api/report/voltage/preview', auth(), async (req, res) => {
   const a = voltArgs(req, res); if (!a) return;
   try {
     const { from, to, data } = await loadVoltage(a.dev, a.rk);
-    res.json({ from, to, mode: data.mode, n: data.rows.length, pv: data.stat.pv, bat: data.stat.bat, tzHours: TZ_HOURS });
+    res.json({ from, to, ...summarize(data), tzHours: TZ_HOURS });
   } catch (e) { console.error('[REPORT]', e); res.status(500).json({ error: 'Không đọc được dữ liệu: ' + e.message }); }
 });
 app.get('/api/report/voltage.xlsx', auth(), async (req, res) => {
@@ -358,7 +358,7 @@ app.get('/api/report/voltage.xlsx', auth(), async (req, res) => {
     if (!data.rows.length) return res.status(404).json({ error: 'Không có dữ liệu điện áp trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.' });
     const dv = DEVICES.find(d => d.id === a.dev);
     const buf = await buildVoltageReport({ deviceId: a.dev, deviceName: dv && dv.name, range: a.rk, from, to, data, tzHours: TZ_HOURS });
-    const name = `Solar_Voltage_Report_${RANGES[a.rk].file}_${new Date(Date.now() + TZ_HOURS * 3600000).toISOString().slice(0, 10)}.xlsx`;
+    const name = `Solar_Report_${RANGES[a.rk].file}_${new Date(Date.now() + TZ_HOURS * 3600000).toISOString().slice(0, 10)}.xlsx`;
     res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
     res.send(Buffer.from(buf));
   } catch (e) { console.error('[REPORT]', e); res.status(500).json({ error: 'Không tạo được báo cáo: ' + e.message }); }

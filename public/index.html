@@ -414,6 +414,29 @@ footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;pa
 
 <!-- ======================= DASHBOARD ======================= -->
 <section class="page active" id="page-dash">
+  <div class="card section" style="margin-bottom:14px">
+    <div class="section-title"><svg class="ic"><use href="#i-sun"/></svg> THỜI TIẾT NGOÀI TRỜI &amp; MẶT TRỜI <span class="sub" id="wxSub">--</span></div>
+    <div class="grid g4">
+    <div class="card stat">
+      <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-temp"/></svg></div><div class="label">Nhiệt độ ngoài trời</div></div>
+      <div class="value"><span class="num" id="wxT">--</span><span class="unit">°C</span></div>
+    </div>
+    <div class="card stat">
+      <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-temp"/></svg></div><div class="label">Độ ẩm ngoài trời</div></div>
+      <div class="value"><span class="num" id="wxH">--</span><span class="unit">%</span></div>
+    </div>
+    <div class="card stat">
+      <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-sun"/></svg></div><div class="label">Mặt trời mọc</div></div>
+      <div class="value"><span class="num" id="wxSr">--</span></div>
+    </div>
+    <div class="card stat">
+      <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-sun"/></svg></div><div class="label">Mặt trời lặn</div></div>
+      <div class="value"><span class="num" id="wxSs">--</span></div>
+    </div>
+    </div>
+    <div class="bar yellow" style="margin-top:14px"><i id="sunBar"></i></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:12.5px;color:var(--text2);flex-wrap:wrap"><span id="sunInfo">--</span><button class="btn sm ctl" onclick="cmd('wx_refresh')">↻ LÀM MỚI</button></div>
+  </div>
   <div class="grid g4">
     <div class="card stat">
       <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-sun"/></svg></div><div class="label">PV Voltage</div><i class="dotst"></i></div>
@@ -1135,6 +1158,14 @@ function render(d){
   setText('nightPv',f(d.solarVoltage,2)+' V (ngưỡng '+Number(d.pvNightV||5).toFixed(1)+' V)');
   setText('outT',d.wxOK?f(d.outTemp,1)+' °C':'-- (chưa có)'); setText('outH',d.wxOK?f(d.outHumi,0)+' %':'-- (chưa có)');
   setText('sunTimes',(d.sunrise||'--:--')+' / '+(d.sunset||'--:--')); setText('wxStatus',d.wxMsg||'--');
+  {const hasW=!!d.wxOK,age=Number(d.wxAge);
+   setText('wxT',hasW?f(d.outTemp,1):'--'); setText('wxH',hasW?f(d.outHumi,0):'--'); setText('wxSr',d.sunrise||'--:--'); setText('wxSs',d.sunset||'--:--');
+   const fd=m=>Math.floor(m/60)+' giờ '+(m%60)+' phút', mm=x=>{const r=/^(\d+):(\d+)$/.exec(x||'');return r?(+r[1])*60+(+r[2]):null};
+   setText('wxSub',hasW?('Cập nhật '+(age<90?age+' giây':Math.round(age/60)+' phút')+' trước'+(age>3600?' (DỮ LIỆU CŨ)':'')+' • Open-Meteo • '+Number(d.lat).toFixed(2)+', '+Number(d.lon).toFixed(2)):(d.wxMsg||'chưa có dữ liệu'));
+   const sr=mm(d.sunrise),ss=mm(d.sunset),nw=mm(d.clock);
+   if(sr!=null&&ss!=null&&nw!=null&&ss>sr){const p=Math.max(0,Math.min(100,(nw-sr)*100/(ss-sr)));const b=$('sunBar');if(b)b.style.width=p.toFixed(1)+'%';
+     setText('sunInfo','Giờ thiết bị '+d.clock+' • '+(nw<sr?'chưa mặt trời mọc, còn '+fd(sr-nw):(nw>ss?'mặt trời đã lặn '+fd(nw-ss)+' trước':'còn '+fd(ss-nw)+' đến hoàng hôn • ngày dài '+fd(ss-sr))));}
+   else setText('sunInfo',hasW?'Chưa có giờ thiết bị (cần Wi-Fi Router + Internet để đồng bộ giờ)':'Cần kết nối Wi-Fi Router + Internet để lấy thời tiết');}
   [['tftSleepIn',d.tftSleep],['latIn',d.lat],['lonIn',d.lon]].forEach(([id,v])=>{const e=$(id);if(e&&document.activeElement!==e&&v!==undefined&&e.dataset.set!==String(v)){e.value=v;e.dataset.set=String(v)}});
   setText('ledStatus',d.powerLed?'SÁNG':'TẮT');
 

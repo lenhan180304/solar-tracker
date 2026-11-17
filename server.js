@@ -49,7 +49,7 @@ const ALLOWED_CMDS = new Set([
   'm1_left', 'm1_right', 'm2_left', 'm2_right', 'm2_up', 'm2_down',
   'stop', 'auto', 'auto_toggle', 'cal_zero', 'reset_cal', 'set_home',
   'speed_up', 'speed_down', 'speed_set',
-  'fan_thresh_up', 'fan_thresh_down', 'fan_thresh_set', 'fan_on', 'fan_off', 'fan_auto', 'night_on', 'night_auto', 'estop_toggle',
+  'fan_thresh_up', 'fan_thresh_down', 'fan_thresh_set', 'fan_on', 'fan_off', 'fan_auto', 'night_on', 'night_auto', 'wx_refresh', 'estop_toggle',
 ]);
 const SAFETY_CMDS = new Set(['stop', 'estop_toggle']);
 

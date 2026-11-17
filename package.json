@@ -9,15 +9,20 @@
   },
   "scripts": {
     "start": "node server.js",
-    "hash": "node -e \"require('bcryptjs').hash(process.argv[1],12).then(console.log)\""
+    "hash": "node -e \"require('bcryptjs').hash(process.argv[1],12).then(console.log)\"",
+    "test:report": "node test/test_report.js out"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.10.3",
     "pg": "^8.13.1",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "aedes": "^0.51.3"
   }
 }

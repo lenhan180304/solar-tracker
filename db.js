@@ -11,12 +11,14 @@ const METRICS = [
   ['batV', 'bat_v'], ['batI', 'bat_i'], ['batP', 'bat_p'],
 ];
 const HOUR = 3600000;
+const EVENT_KEEP_DAYS = 365;      // nhật ký sự kiện nhỏ nên giữ lâu (dữ liệu chi tiết theo RETENTION_DAYS)
 const hourOf = (ts) => Math.floor(ts / HOUR) * HOUR;
 
 function memoryStore() {
   const users = new Map();
   const telemetry = [];
   const logs = [];
+  const events = [];
   const hourly = new Map(); // `${device}|${hour}` -> {device, ts, n, pvV:{sum,min,max}, ...}
   return {
     kind: 'memory',
@@ -34,6 +36,19 @@ function memoryStore() {
       if (telemetry.length > 200000) telemetry.splice(0, 10000);
     },
     async queryTelemetry(device, since) { return telemetry.filter(r => r.device === device && r.ts >= since); },
+    async queryTelemetryRange(device, from, to, limit) {
+      return telemetry.filter(r => r.device === device && r.ts >= from && r.ts <= to).sort((a, b) => a.ts - b.ts).slice(0, limit || 1e9);
+    },
+    async countTelemetry(device, from, to) {
+      const rs = telemetry.filter(r => r.device === device && r.ts >= from && r.ts <= to);
+      const c = (k) => rs.filter(r => r[k] !== null && r[k] !== undefined).length;
+      return { n: rs.length, first: rs.length ? Math.min(...rs.map(r => r.ts)) : null, last: rs.length ? Math.max(...rs.map(r => r.ts)) : null,
+               pv: c('pvV'), bat: c('batV'), ldr: c('ldrTL'), trk: c('auto') };
+    },
+    async insertEvent(e) { events.push(e); if (events.length > 50000) events.splice(0, 5000); },
+    async listEvents(device, from, to, limit) {
+      return events.filter(e => e.device === device && e.ts >= from && e.ts <= to).sort((a, b) => a.ts - b.ts).slice(0, limit || 1e9);
+    },
     async addHourly(device, ts, r) {
       const key = device + '|' + hourOf(ts);
       let h = hourly.get(key);
@@ -52,6 +67,8 @@ function memoryStore() {
     async listLogs(device, limit) { return logs.filter(r => r.device === device).slice(-limit).reverse(); },
     async purge(before) {
       for (let i = telemetry.length - 1; i >= 0; i--) if (telemetry[i].ts < before) telemetry.splice(i, 1);
+      const evBefore = Date.now() - EVENT_KEEP_DAYS * 86400000;
+      for (let i = events.length - 1; i >= 0; i--) if (events[i].ts < evBefore) events.splice(i, 1);
     },
   };
 }
@@ -82,6 +99,14 @@ function pgStore(url) {
         device TEXT NOT NULL, ts BIGINT NOT NULL,
         pv_v REAL, pv_i REAL, pv_p REAL, bat_v REAL, bat_i REAL, bat_p REAL,
         m1 REAL, m2 REAL, temp REAL)`);
+      // Mở rộng (chỉ THÊM cột, không xoá/đổi dữ liệu cũ): LDR, ΔH/ΔV, chế độ bám, trạng thái, cờ thiết bị
+      for (const col of ['ldr_tl REAL', 'ldr_tr REAL', 'ldr_bl REAL', 'ldr_br REAL', 'diff_h REAL', 'diff_v REAL', 'auto_mode SMALLINT', 'trk TEXT', 'flags INTEGER']) {
+        await q(`ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS ${col}`);
+      }
+      await q(`CREATE TABLE IF NOT EXISTS events(
+        id BIGSERIAL PRIMARY KEY, ts BIGINT NOT NULL, device TEXT NOT NULL,
+        kind TEXT NOT NULL, mode TEXT, status TEXT, descr TEXT)`);
+      await q(`CREATE INDEX IF NOT EXISTS events_dev_ts ON events(device, ts)`);
       await q(`CREATE INDEX IF NOT EXISTS telemetry_dev_ts ON telemetry(device, ts)`);
       await q(`CREATE TABLE IF NOT EXISTS telemetry_hourly(
         device TEXT NOT NULL, hour_ts BIGINT NOT NULL, n INTEGER NOT NULL,
@@ -101,14 +126,35 @@ function pgStore(url) {
     async deleteUser(u) { await q('DELETE FROM users WHERE username=$1', [u]); },
     async countAdmins() { return Number((await q("SELECT count(*) c FROM users WHERE role='admin'")).rows[0].c); },
     async insertTelemetry(device, ts, r) {
-      await q(`INSERT INTO telemetry(device,ts,pv_v,pv_i,pv_p,bat_v,bat_i,bat_p,m1,m2,temp)
-               VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [device, ts, r.pvV, r.pvI, r.pvP, r.batV, r.batI, r.batP, r.m1, r.m2, r.temp]);
+      await q(`INSERT INTO telemetry(device,ts,pv_v,pv_i,pv_p,bat_v,bat_i,bat_p,m1,m2,temp,ldr_tl,ldr_tr,ldr_bl,ldr_br,diff_h,diff_v,auto_mode,trk,flags)
+               VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
+        [device, ts, r.pvV, r.pvI, r.pvP, r.batV, r.batI, r.batP, r.m1, r.m2, r.temp,
+         r.ldrTL, r.ldrTR, r.ldrBL, r.ldrBR, r.dH, r.dV, r.auto, r.trk, r.flags]);
     },
     async queryTelemetry(device, since) {
       const rows = (await q(`SELECT ts,pv_v,pv_i,pv_p,bat_v,bat_i,bat_p FROM telemetry
                              WHERE device=$1 AND ts>=$2 ORDER BY ts`, [device, since])).rows;
       return rows.map(r => ({ ts: Number(r.ts), pvV: r.pv_v, pvI: r.pv_i, pvP: r.pv_p, batV: r.bat_v, batI: r.bat_i, batP: r.bat_p }));
+    },
+    async queryTelemetryRange(device, from, to, limit) {
+      const rows = (await q(`SELECT ts,pv_v,pv_i,pv_p,bat_v,bat_i,bat_p,m1,m2,temp,ldr_tl,ldr_tr,ldr_bl,ldr_br,diff_h,diff_v,auto_mode,trk,flags
+                             FROM telemetry WHERE device=$1 AND ts>=$2 AND ts<=$3 ORDER BY ts LIMIT $4`, [device, from, to, limit || 1000000])).rows;
+      return rows.map(r => ({ ts: Number(r.ts), pvV: r.pv_v, pvI: r.pv_i, pvP: r.pv_p, batV: r.bat_v, batI: r.bat_i, batP: r.bat_p,
+        m1: r.m1, m2: r.m2, temp: r.temp, ldrTL: r.ldr_tl, ldrTR: r.ldr_tr, ldrBL: r.ldr_bl, ldrBR: r.ldr_br,
+        dH: r.diff_h, dV: r.diff_v, auto: r.auto_mode, trk: r.trk, flags: r.flags }));
+    },
+    async countTelemetry(device, from, to) {
+      const r = (await q(`SELECT count(*) n, min(ts) first, max(ts) last, count(pv_v) pv, count(bat_v) bat, count(ldr_tl) ldr, count(auto_mode) trk
+                          FROM telemetry WHERE device=$1 AND ts>=$2 AND ts<=$3`, [device, from, to])).rows[0];
+      return { n: Number(r.n), first: r.first === null ? null : Number(r.first), last: r.last === null ? null : Number(r.last),
+               pv: Number(r.pv), bat: Number(r.bat), ldr: Number(r.ldr), trk: Number(r.trk) };
+    },
+    async insertEvent(e) {
+      await q('INSERT INTO events(ts,device,kind,mode,status,descr) VALUES($1,$2,$3,$4,$5,$6)', [e.ts, e.device, e.kind, e.mode, e.status, e.descr]);
+    },
+    async listEvents(device, from, to, limit) {
+      return (await q('SELECT ts,kind,mode,status,descr FROM events WHERE device=$1 AND ts>=$2 AND ts<=$3 ORDER BY ts LIMIT $4',
+        [device, from, to, limit || 100000])).rows.map(r => ({ ...r, ts: Number(r.ts) }));
     },
     async addHourly(device, ts, r) {
       const params = [device, hourOf(ts)];
@@ -135,6 +181,7 @@ function pgStore(url) {
       // chỉ xóa dữ liệu chi tiết cũ và nhật ký quá 90 ngày; bảng tổng hợp theo giờ được giữ vĩnh viễn
       await q('DELETE FROM telemetry WHERE ts<$1', [before]);
       await q('DELETE FROM command_log WHERE ts<$1', [before - 83 * 86400000]);
+      await q('DELETE FROM events WHERE ts<$1', [Date.now() - EVENT_KEEP_DAYS * 86400000]);
     },
   };
 }

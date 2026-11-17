@@ -19,6 +19,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const makeStore = require('./db');
 const { buildWorkbook } = require('./report');
+const { buildReport, MAX_ROWS } = require('./report_xlsx');
 
 // ------------------------------------------------------------------ cấu hình
 const env = process.env;
@@ -28,8 +29,8 @@ const SESSION_HOURS = Number(env.SESSION_HOURS || 8);
 const COOKIE_SECURE = env.COOKIE_SECURE !== 'false';
 const ACK_TIMEOUT_MS = 5000;
 const OFFLINE_AFTER_MS = 15000;
-const SAMPLE_EVERY_MS = 10000;
-const RETENTION_DAYS = Number(env.RETENTION_DAYS || 7);
+const SAMPLE_EVERY_MS = Math.max(100, Number(env.SAMPLE_EVERY_MS || 10000));   // (biến môi trường chỉ để kiểm thử nhanh; mặc định 10 s)
+const RETENTION_DAYS = Number(env.RETENTION_DAYS || 30);   // dữ liệu chi tiết (10 s/mẫu) giữ bao nhiêu ngày; bảng tổng hợp theo giờ giữ vĩnh viễn
 const TZ_HOURS = Number.isFinite(Number(env.TZ_OFFSET_HOURS)) && env.TZ_OFFSET_HOURS !== undefined ? Number(env.TZ_OFFSET_HOURS) : 7; // múi giờ hiển thị trong Excel (VN = +7)
 // DEVICES="tracker01:Solar Tracker 01,tracker02:Mái nhà"
 const DEVICES = (env.DEVICES || 'tracker01:Solar Tracker 01').split(',').map(s => s.trim()).filter(Boolean).map(s => {
@@ -75,6 +76,43 @@ mq.on('connect', () => { console.log('[MQTT] connected'); mq.subscribe(['st/+/st
 mq.on('error', e => console.error('[MQTT]', e.message));
 mq.on('close', () => console.log('[MQTT] closed'));
 
+// ---- Nhật ký sự kiện: CHỈ ghi khi quan sát được thay đổi thật trong dữ liệu ESP32 gửi lên (không suy đoán) ----
+const lastOnline = new Map();
+function logEvent(id, ts, kind, mode, status, descr) {
+  store.insertEvent({ device: id, ts, kind, mode: mode || null, status: status || null, descr: descr || null }).catch(e => console.error('[DB] event', e.message));
+}
+function noteOnline(id, why) {
+  const on = isOnline(id), prev = lastOnline.get(id);
+  lastOnline.set(id, on);
+  if (prev === undefined || prev === on) return;          // lần đầu: chỉ lấy mốc, không ghi sự kiện
+  const d = devices.get(id);
+  logEvent(id, Date.now(), on ? 'ESP32 Connected' : 'ESP32 Disconnected', d.lastMode, on ? 'ONLINE' : 'OFFLINE', why);
+  if (!on) d.prev = null;                                  // sau khi mất kết nối, lấy lại mốc so sánh mới
+}
+function flagsOf(j) {
+  return (j.eStop ? 1 : 0) | (j.isNight ? 2 : 0) | (j.simMode ? 4 : 0) | (j.inaPV === false ? 8 : 0) | (j.inaBattery === false ? 16 : 0) |
+         (j.motor1Running ? 32 : 0) | (j.motor2Running ? 64 : 0) | (j.dhtOK === false ? 128 : 0);
+}
+function trackEvents(id, d, j, ts) {
+  const cur = { auto: !!j.autoMode, es: !!j.eStop, night: !!j.isNight, sim: !!j.simMode, m1: !!j.motor1Running, m2: !!j.motor2Running,
+                pv: j.inaPV !== false, bat: j.inaBattery !== false, dht: j.dhtOK !== false, trk: String(j.trackStatus || '') };
+  const prev = d.prev; d.prev = cur;
+  d.lastMode = cur.auto ? 'AUTO' : 'MANUAL';
+  if (!prev) return;                                        // chưa có mốc -> không ghi gì
+  const mode = d.lastMode, st = cur.es ? 'E-STOP' : (cur.night ? 'NIGHT' : 'ONLINE');
+  const ev = (kind, descr) => logEvent(id, ts, kind, mode, st, descr);
+  if (prev.auto !== cur.auto) ev(cur.auto ? 'AUTO Mode' : 'MANUAL Mode', 'Chế độ bám chuyển sang ' + mode);
+  if (prev.es !== cur.es) ev(cur.es ? 'Emergency Stop' : 'Emergency Stop Released', cur.es ? 'Dừng khẩn cấp được kích hoạt' : 'Đã nhả dừng khẩn cấp');
+  if (prev.night !== cur.night) ev(cur.night ? 'Night Mode Entered' : 'Night Mode Exited', cur.night ? 'Vào chế độ ban đêm' : 'Thoát chế độ ban đêm');
+  if (prev.sim !== cur.sim) ev(cur.sim ? 'Simulation Entered' : 'Simulation Exited', cur.sim ? 'Vào chế độ mô phỏng (MATLAB)' : 'Quay về chế độ thật');
+  if (prev.m1 !== cur.m1) ev(cur.m1 ? 'Motor Activated' : 'Motor Stopped', 'Motor 1 (trục đứng) ' + (cur.m1 ? 'bắt đầu quay: ' + (j.motor1State || '') : 'dừng') + ' • góc ' + Number(j.motor1Angle).toFixed(1) + '°');
+  if (prev.m2 !== cur.m2) ev(cur.m2 ? 'Motor Activated' : 'Motor Stopped', 'Motor 2 (trục ngang) ' + (cur.m2 ? 'bắt đầu quay: ' + (j.motor2State || '') : 'dừng') + ' • góc ' + Number(j.motor2Angle).toFixed(1) + '°');
+  if (prev.trk !== cur.trk && cur.trk) ev('Tracking Status', (prev.trk || '--') + ' → ' + cur.trk);
+  if (prev.pv !== cur.pv) ev(cur.pv ? 'Sensor Recovered' : 'Sensor Error', 'INA219 PV ' + (cur.pv ? 'đã đọc được lại' : 'không phản hồi'));
+  if (prev.bat !== cur.bat) ev(cur.bat ? 'Sensor Recovered' : 'Sensor Error', 'INA219 ắc quy ' + (cur.bat ? 'đã đọc được lại' : 'không phản hồi'));
+  if (prev.dht !== cur.dht) ev(cur.dht ? 'Sensor Recovered' : 'Sensor Error', 'DHT11 ' + (cur.dht ? 'đã đọc được lại' : 'không đọc được'));
+}
+
 const pending = new Map(); // cmdId -> {ws, reqId, device, user, c, val, t0, timer, ip}
 
 mq.on('message', (topic, payload) => {
@@ -88,19 +126,25 @@ mq.on('message', (topic, payload) => {
     const was = isOnline(id);
     d.status = !!j.online;
     if (!d.status) d.lastState = 0;
-    if (was !== isOnline(id)) broadcast(id, { type: 'device', device: id, online: isOnline(id) });
+    if (was !== isOnline(id)) { noteOnline(id, d.status ? 'Broker báo ESP32 online' : 'Broker báo ESP32 offline (LWT)'); broadcast(id, { type: 'device', device: id, online: isOnline(id) }); }
     return;
   }
   if (kind === 'state') {
     d.data = j; d.lastState = Date.now(); d.status = true;
+    noteOnline(id, 'Nhận gói trạng thái từ ESP32');
+    trackEvents(id, d, j, d.lastState);
     broadcast(id, { type: 'state', device: id, online: true, data: j });
     if (Date.now() - d.lastSample >= SAMPLE_EVERY_MS) {
       d.lastSample = Date.now();
       const n = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
+      // INA219 không có -> lưu NULL (thiếu dữ liệu), KHÔNG lưu số 0 giả. Firmware cũ không gửi cờ inaPV/inaBattery -> coi là có.
+      const pvOk = j.inaPV !== false, batOk = j.inaBattery !== false;
       const sample = {
-        pvV: n(j.solarVoltage), pvI: n(j.solarCurrent), pvP: n(j.solarPower),
-        batV: n(j.batteryVoltage), batI: n(j.batteryCurrent), batP: n(j.batteryPower),
+        pvV: pvOk ? n(j.solarVoltage) : null, pvI: pvOk ? n(j.solarCurrent) : null, pvP: pvOk ? n(j.solarPower) : null,
+        batV: batOk ? n(j.batteryVoltage) : null, batI: batOk ? n(j.batteryCurrent) : null, batP: batOk ? n(j.batteryPower) : null,
         m1: n(j.motor1Angle), m2: n(j.motor2Angle), temp: j.dhtOK ? n(j.temp) : null,
+        ldrTL: n(j.ldrTL), ldrTR: n(j.ldrTR), ldrBL: n(j.ldrBL), ldrBR: n(j.ldrBR), dH: n(j.diffH), dV: n(j.diffV),
+        auto: j.autoMode === undefined ? null : (j.autoMode ? 1 : 0), trk: j.trackStatus ? String(j.trackStatus).slice(0, 40) : null, flags: flagsOf(j),
       };
       store.insertTelemetry(id, d.lastSample, sample).catch(e => console.error('[DB] telemetry', e.message));
       // tổng hợp theo giờ (giữ vĩnh viễn) – chỉ ghi khi đủ 6 đại lượng hợp lệ
@@ -219,8 +263,59 @@ app.get('/api/history', auth(), async (req, res) => {
   res.json(out);
 });
 
-// Xuất báo cáo Excel (mọi tài khoản đã đăng nhập, kể cả viewer): GET /api/export.xlsx?device=..&days=7
+// ---------------- BÁO CÁO EXCEL MỚI (5 sheet, biểu đồ Excel thật) ----------------
 const exportHits = new Map();
+function parseRange(q) {
+  const to = Number(q.to) || Date.now();
+  const from = Number(q.from) || (to - 86400000);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from >= to) return { error: 'Khoảng thời gian không hợp lệ (bắt đầu phải trước kết thúc)' };
+  if (to - from > 366 * 86400000) return { error: 'Khoảng thời gian tối đa 366 ngày' };
+  return { from, to };
+}
+app.get('/api/report/preview', auth(), async (req, res) => {
+  const dev = String(req.query.device || '');
+  if (!DEVICE_IDS.has(dev)) return res.status(400).json({ error: 'Thiết bị không hợp lệ' });
+  const r = parseRange(req.query); if (r.error) return res.status(400).json({ error: r.error });
+  const c = await store.countTelemetry(dev, r.from, r.to);
+  const ev = await store.listEvents(dev, r.from, r.to, 100000);
+  const hourly = await store.queryHourly(dev, Math.floor(r.from / 3600000) * 3600000);
+  const hourlyN = hourly.filter(h => h.ts <= r.to).length;
+  const expected = Math.max(1, Math.round((Math.min(r.to, Date.now()) - r.from) / SAMPLE_EVERY_MS));
+  res.json({ ...c, events: ev.length, hourlyRows: hourlyN, expected, coverage: c.n ? Math.min(100, c.n / expected * 100) : 0,
+             maxRows: MAX_ROWS, retentionDays: RETENTION_DAYS, sampleSec: SAMPLE_EVERY_MS / 1000, online: isOnline(dev) });
+});
+app.get('/api/report.xlsx', auth(), async (req, res) => {
+  const dev = String(req.query.device || '');
+  if (!DEVICE_IDS.has(dev)) return res.status(400).json({ error: 'Thiết bị không hợp lệ' });
+  const r = parseRange(req.query); if (r.error) return res.status(400).json({ error: r.error });
+  const type = ['all', 'overview', 'energy', 'tracking'].includes(req.query.type) ? req.query.type : 'all';
+  const last = exportHits.get(req.user.username) || 0;
+  if (Date.now() - last < 3000) return res.status(429).json({ error: 'Vui lòng chờ vài giây rồi thử lại' });
+  exportHits.set(req.user.username, Date.now());
+  try {
+    const c = await store.countTelemetry(dev, r.from, r.to);
+    if (!c.n) return res.status(404).json({ error: 'Không có dữ liệu đo trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.' });
+    if (c.n > MAX_ROWS) return res.status(413).json({ error: `Khoảng thời gian có ${c.n} mẫu, vượt giới hạn ${MAX_ROWS} mẫu mỗi báo cáo. Hãy chọn khoảng ngắn hơn.` });
+    const samples = await store.queryTelemetryRange(dev, r.from, r.to, MAX_ROWS + 1);
+    const events = await store.listEvents(dev, r.from, r.to, 50000);
+    const dv = DEVICES.find(d => d.id === dev);
+    const buf = await buildReport({ deviceId: dev, deviceName: dv && dv.name, samples, events, from: r.from, to: r.to, type,
+                                    tzHours: TZ_HOURS, sampleSec: SAMPLE_EVERY_MS / 1000, online: isOnline(dev), retentionDays: RETENTION_DAYS });
+    const loc = new Date(Date.now() + TZ_HOURS * 3600000).toISOString();     // YYYY-MM-DDTHH:mm...
+    const name = `Solar_Tracker_Report_${loc.slice(0, 10)}_${loc.slice(11, 13)}-${loc.slice(14, 16)}.xlsx`;
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${name}"`,
+      'Cache-Control': 'no-store',
+    });
+    res.send(Buffer.from(buf));
+  } catch (e) {
+    console.error('[REPORT]', e);
+    res.status(500).json({ error: 'Không tạo được báo cáo: ' + e.message });
+  }
+});
+
+// Xuất báo cáo Excel THEO GIỜ (cũ, giữ nguyên để xem dài hạn > thời gian lưu chi tiết): GET /api/export.xlsx?device=..&days=7
 app.get('/api/export.xlsx', auth(), async (req, res) => {
   const dev = String(req.query.device || '');
   const days = Math.min(366, Math.max(1, parseInt(req.query.days, 10) || 7));
@@ -346,11 +441,10 @@ async function onWsMessage(ws, raw) {
 setInterval(() => {
   wss.clients.forEach(ws => { if (!ws.isAlive) return ws.terminate(); ws.isAlive = false; ws.ping(); });
 }, 30000).unref();
-const lastOnline = new Map();
 setInterval(() => {
   for (const id of DEVICE_IDS) {
     const on = isOnline(id);
-    if (lastOnline.get(id) !== on) { lastOnline.set(id, on); broadcast(id, { type: 'device', device: id, online: on }); }
+    if (lastOnline.get(id) !== on) { noteOnline(id, on ? 'Nhận lại dữ liệu từ ESP32' : 'Quá ' + (OFFLINE_AFTER_MS / 1000) + ' s không nhận được dữ liệu'); broadcast(id, { type: 'device', device: id, online: on }); }
   }
 }, 3000).unref();
 setInterval(() => store.purge(Date.now() - RETENTION_DAYS * 86400000).catch(e => console.error('[DB] purge', e.message)), 3600000).unref();

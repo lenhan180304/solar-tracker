@@ -51,13 +51,16 @@ const ALLOWED_CMDS = new Set([
   'm1_left', 'm1_right', 'm2_left', 'm2_right', 'm2_up', 'm2_down',
   'stop', 'auto', 'auto_toggle', 'cal_zero', 'reset_cal', 'set_home',
   'speed_up', 'speed_down', 'speed_set',
-  'fan_thresh_up', 'fan_thresh_down', 'fan_thresh_set', 'fan_on', 'fan_off', 'fan_auto', 'night_on', 'night_auto', 'wx_refresh', 'estop_toggle',
+  'fan_thresh_up', 'fan_thresh_down', 'fan_thresh_set', 'fan_on', 'fan_off', 'fan_auto', 'night_on', 'night_off', 'night_auto', 'tft_sleep_set', 'loc_lat', 'loc_lon', 'wx_refresh', 'estop_toggle',
 ]);
 const SAFETY_CMDS = new Set(['stop', 'estop_toggle']);
 
 function validateValue(c, val) {
   if (c === 'speed_set') { const v = Number(val); return Number.isInteger(v) && v >= 1 && v <= 5 ? { ok: true, v } : { ok: false }; }
   if (c === 'fan_thresh_set') { const v = Number(val); return Number.isFinite(v) && v >= 20 && v <= 70 ? { ok: true, v } : { ok: false }; }
+  if (c === 'tft_sleep_set') { const v = Number(val); return Number.isInteger(v) && v >= 0 && v <= 240 ? { ok: true, v } : { ok: false }; }
+  if (c === 'loc_lat') { const v = Number(val); return Number.isFinite(v) && v >= -90 && v <= 90 ? { ok: true, v } : { ok: false }; }
+  if (c === 'loc_lon') { const v = Number(val); return Number.isFinite(v) && v >= -180 && v <= 180 ? { ok: true, v } : { ok: false }; }
   if (c === 'auto') return typeof val === 'boolean' ? { ok: true, v: val } : { ok: false };
   return { ok: true, v: undefined };
 }

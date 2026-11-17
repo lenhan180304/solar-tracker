@@ -921,7 +921,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
         <div class="row"><span>Trạng thái</span><span class="status-ok" id="nightState">N/A</span></div>
         <div class="row"><span>Tự động vào Night khi</span><span class="kv">sau giờ mặt trời lặn &amp; PV &lt; 5 V</span></div>
         <div class="row"><span>Điện áp PV hiện tại</span><span class="kv num" id="nightPv">N/A</span></div>
-        <div class="row"><span>Chế độ Night</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">TỰ ĐỘNG</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">VÀO NIGHT CHỦ ĐỘNG</button></span></div>
+        <div class="row"><span>Chế độ Night</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">TỰ ĐỘNG</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">BẬT NIGHT</button><button class="btn sm ctl nightmode" data-m="2" onclick="cmd('night_off')">TẮT NIGHT</button></span></div>
       </div>
     </div>
     <div class="card section">
@@ -1405,8 +1405,8 @@ function render(d){
   const thr=Number(d.fanThresh||38).toFixed(1)+' °C';
   setText('fanThreshVal',thr); setText('fanThrInfo',thr);
   document.querySelectorAll('.fanmode').forEach(b=>b.classList.toggle('solid',Number(b.dataset.m)===Number(d.fanMode||0)));
-  document.querySelectorAll('.nightmode').forEach(b=>b.classList.toggle('solid',(Number(b.dataset.m)===1)===!!d.nightForce));
-  const nightTxt=d.isNight?(d.nightForce?'ĐANG Ở NIGHT (chủ động)':'ĐANG Ở NIGHT (tự động)'):'BAN NGÀY (đang bám nắng)';
+  document.querySelectorAll('.nightmode').forEach(b=>b.classList.toggle('solid',Number(b.dataset.m)===Number(d.nightMode!==undefined?d.nightMode:(d.nightForce?1:0))));
+  const nightTxt=d.isNight?(d.nightMode===1?'ĐANG Ở NIGHT (chủ động)':'ĐANG Ở NIGHT (tự động)'):(d.nightMode===2?'BAN NGÀY (chủ động tắt Night)':'BAN NGÀY (đang bám nắng)');
   setText('nightState',nightTxt); setCls('nightState',d.isNight?'status-warn':'status-ok'); setText('msNight',nightTxt);
   setText('nightPv',pvOk?f(d.solarVoltage,2)+' V (ngưỡng '+Number(d.pvNightV||5).toFixed(1)+' V)':'Không khả dụng (INA219 PV)');
   setText('outT',d.wxOK?f(d.outTemp,1)+' °C':'— (chưa có)'); setText('outH',d.wxOK?f(d.outHumi,0)+' %':'— (chưa có)');

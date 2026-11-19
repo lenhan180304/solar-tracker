@@ -3,432 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- st-env: "esp32" khi nhúng vào firmware, "cloud" khi phục vụ từ Cloud Backend (thay tự động) -->
 <meta name="st-env" content="cloud">
-<meta name="theme-color" content="#F7F9FC">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="color-scheme" content="light dark">
-<title>Solar Tracker - Giám sát &amp; bám nắng</title>
-<style>
-@font-face{font-family:"Inter";font-weight:100 900;font-display:swap;src:local("Inter"),url(/fonts/inter-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"Inter";font-weight:100 900;font-display:swap;src:local("Inter"),url(/fonts/inter-vietnamese.woff2) format("woff2");unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
-/* ===================== SOLAR TRACKER – DESIGN SYSTEM =====================
-   Nguyên tắc: 70% quản lý năng lượng (SolisCloud) + 30% SCADA công nghiệp.
-   Không gradient, không glassmorphism, không phát sáng, không hoạt ảnh trang trí.
-   Xanh lá = hoạt động bình thường / năng lượng. Vàng = cảnh báo. Đỏ = lỗi nghiêm trọng / E-STOP. Xám = chưa xác định / mất dữ liệu. */
-:root{
-  --bg:#F7F9FC;--surface:#FFFFFF;--surface2:#F1F5F9;--line:#E2E8F0;--line2:#EDF1F6;
-  --text:#1E293B;--text2:#475569;--muted:#64748B;
-  --primary:#2563EB;--primary-hover:#1D4ED8;--primary-soft:#EFF6FF;--primary-line:#BFDBFE;--on-primary:#FFFFFF;
-  --info:#2563EB;
-  /* màu chuỗi biểu đồ: Công suất PV = xanh dương, Ắc quy = xanh lá, Điện áp = tím, Dòng điện = cyan, Cảnh báo = hổ phách */
-  --pv:#2563EB;--bat:#16A34A;--c-volt:#7C3AED;--c-curr:#0891B2;--c-warn:#F59E0B;
-  --energy:#16A34A;--energy-soft:#ECFDF3;
-  /* trạng thái: màu nền/chấm (đúng quy ước) và màu chữ đậm hơn để đạt tương phản AA trên nền sáng */
-  --ok:#16A34A;--ok-t:#15803D;--ok-soft:#ECFDF3;--ok-line:#BBF7D0;
-  --warn:#F59E0B;--warn-t:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;
-  --red:#DC2626;--red-t:#B91C1C;--red-soft:#FEF2F2;--red-line:#FECACA;
-  --gray:#94A3B8;--gray-soft:#F1F5F9;
-  --side:#FFFFFF;--side-text:#475569;
-  --r:8px;--sw:224px;--hh:56px;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --font:"Inter","IBM Plex Sans","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
-}
-:root[data-theme="dark"]{
-  --bg:#111827;--surface:#1F2937;--surface2:#273449;--line:#374151;--line2:#2F3B4D;
-  --text:#F8FAFC;--text2:#CBD5E1;--muted:#9CA3AF;
-  --primary:#60A5FA;--primary-hover:#93C5FD;--primary-soft:#1E3A5F;--primary-line:#2F5A91;--on-primary:#0B1220;
-  --info:#60A5FA;
-  --pv:#60A5FA;--bat:#4ADE80;--c-volt:#A78BFA;--c-curr:#22D3EE;--c-warn:#FBBF24;
-  --energy:#4ADE80;--energy-soft:#16322A;
-  --ok:#22C55E;--ok-t:#4ADE80;--ok-soft:#16322A;--ok-line:#24633F;
-  --warn:#F59E0B;--warn-t:#FBBF24;--warn-soft:#3A2F14;--warn-line:#6B5316;
-  --red:#EF4444;--red-t:#F87171;--red-soft:#3B1D20;--red-line:#7A2C30;
-  --gray:#94A3B8;--gray-soft:#273449;
-  --side:#161F2E;--side-text:#9CA3AF;
-  color-scheme:dark;
-}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;-webkit-tap-highlight-color:transparent}
-button,select,input{font-family:inherit}
-.num{font-variant-numeric:tabular-nums}
-.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-a{color:var(--primary)}
-:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-
-/* ===================== APP SHELL ===================== */
-.app{display:flex;min-height:100vh}
-.side{width:var(--sw);flex:none;background:var(--side);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;z-index:40;transition:width .15s ease}
-.side-brand{height:var(--hh);display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line)}
-.logo{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;background:var(--primary);color:var(--on-primary);flex:none}
-.logo .ic{width:19px;height:19px}
-.brand{font-weight:700;letter-spacing:.6px;font-size:14px;white-space:nowrap}
-.subbrand{font-size:10px;letter-spacing:.2px;color:var(--muted);font-weight:500;white-space:nowrap}
-nav.tabs{padding:12px 8px;display:grid;gap:2px;flex:1;align-content:start}
-.nav-cap{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:600;padding:8px 12px 6px;text-transform:uppercase}
-.tab{display:flex;align-items:center;gap:12px;border:0;border-left:3px solid transparent;background:none;color:var(--side-text);padding:10px 12px;border-radius:0 6px 6px 0;font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;white-space:nowrap}
-.tab:hover{background:var(--surface2);color:var(--text)}
-.tab.active{background:var(--primary-soft);color:var(--primary);border-left-color:var(--primary);font-weight:600}
-.side-foot{padding:8px;border-top:1px solid var(--line)}
-.collapse-btn{width:100%;display:flex;align-items:center;gap:12px;border:0;background:none;color:var(--muted);padding:9px 12px;border-radius:6px;cursor:pointer;font-weight:500;font-size:12.5px}
-.collapse-btn:hover{background:var(--surface2)}
-body.side-collapsed{--sw:60px}
-body.side-collapsed .lbl,body.side-collapsed .brand-t,body.side-collapsed .nav-cap{display:none}
-body.side-collapsed .tab,body.side-collapsed .collapse-btn{justify-content:center;padding-left:0;padding-right:0}
-body.side-collapsed .side-brand{justify-content:center;padding:0}
-body.side-collapsed .collapse-btn .ic{transform:rotate(180deg)}
-.scrim{display:none}
-
-.main{flex:1;min-width:0;display:flex;flex-direction:column}
-header.top{height:var(--hh);background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:0 20px}
-.menu-btn{display:none;border:1px solid var(--line);background:var(--surface);color:var(--text);width:36px;height:36px;border-radius:6px;cursor:pointer;place-items:center}
-.page-title{font-size:15px;font-weight:700;white-space:nowrap}
-.top-c{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:8px;min-width:0;overflow:hidden}
-.top-r{margin-left:auto;display:flex;align-items:center;gap:10px}
-.upd-box{font-size:11px;color:var(--muted);font-weight:500;text-align:right;line-height:1.3;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;flex:none}
-.upd-box b{display:block;color:var(--text);font-size:12.5px;font-weight:600}
-.upd-box.stale b{color:var(--red-t)}
-.clock{font-size:11px;color:var(--muted);font-weight:500;text-align:right;line-height:1.3;white-space:nowrap}
-.clock b{display:block;color:var(--text);font-size:12.5px;font-weight:600}
-.sw3{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
-.sw3 button{border:0;background:none;color:var(--muted);width:32px;height:30px;display:grid;place-items:center;cursor:pointer;border-right:1px solid var(--line)}
-.sw3 button:last-child{border-right:0}
-.sw3 button:hover{background:var(--surface2);color:var(--text)}
-.sw3 button.on{background:var(--primary);color:var(--on-primary)}
-.sw3 .ic{width:16px;height:16px}
-.icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--text2);width:34px;height:34px;border-radius:6px;display:grid;place-items:center;cursor:pointer}
-.icon-btn:hover{background:var(--surface2)}
-.userbox{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted)}
-.userbox select{font:inherit;font-weight:500;border:1px solid var(--line);border-radius:6px;padding:5px 6px;background:var(--surface);color:var(--text);max-width:130px}
-.linkbtn{background:none;border:0;color:var(--primary);font-weight:600;font-size:12px;cursor:pointer;padding:4px}
-.top-sep{width:1px;height:28px;background:var(--line);margin:0 2px}
-.estop{border:1.5px solid var(--red);background:var(--surface);color:var(--red-t);padding:8px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.3px;white-space:nowrap}
-.estop:hover{background:var(--red-soft)}
-.estop.active{background:var(--red);color:#fff}
-
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:4px;border:1px solid var(--line);background:var(--gray-soft);color:var(--muted);white-space:nowrap}
-.chip i{width:7px;height:7px;border-radius:50%;background:var(--gray)}
-.chip.ok{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok-t)}.chip.ok i{background:var(--ok)}
-.chip.warn{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn-t)}.chip.warn i{background:var(--warn)}
-.chip.bad{background:var(--red-soft);border-color:var(--red-line);color:var(--red-t)}.chip.bad i{background:var(--red)}
-.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px}
-.seg a{padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:.3px;cursor:pointer}
-.seg a.on{background:var(--primary);color:var(--on-primary);cursor:default}
-.seg a.on.sim{background:var(--warn);color:#1E293B}
-.seg.ro a{cursor:not-allowed;opacity:.65}
-#simSeg a,#chipSim b{white-space:nowrap}
-
-.content{padding:20px 24px 40px;max-width:1400px;width:100%;margin:0 auto}
-.page{display:none}
-.page.active{display:block}
-.page-head{margin:0 0 16px}
-.page-head h2{margin:0;font-size:19px;font-weight:700}
-.page-head p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
-.grid{display:grid;gap:14px;margin-bottom:14px}
-.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.g12{grid-template-columns:1fr 1.45fr}.g6{grid-template-columns:repeat(6,1fr)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
-.section{padding:16px 18px}
-.section-title{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);margin:-2px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line2)}
-.section-title .ic{color:var(--primary);width:16px;height:16px}
-.section-title .sub{margin-left:auto;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none}
-.group-cap{display:flex;align-items:center;gap:10px;margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-.group-cap::after{content:"";flex:1;height:1px;background:var(--line)}
-.group-cap:first-child{margin-top:0}
-.alert{display:none;background:var(--red-soft);border:1.5px solid var(--red);color:var(--red-t);padding:12px 18px;border-radius:var(--r);font-weight:700;font-size:13.5px;margin-bottom:14px;text-align:center}
-.alert.sim{background:var(--warn-soft);border-color:var(--warn-t);color:var(--warn-t)}
-.banner{display:none;align-items:center;gap:10px;background:var(--gray-soft);border:1px solid var(--line);border-left:4px solid var(--gray);color:var(--text2);padding:10px 14px;border-radius:var(--r);font-size:12.5px;font-weight:500;margin-bottom:14px}
-.banner.show{display:flex}
-.banner.bad{border-left-color:var(--red-t);background:var(--red-soft);color:var(--red-t)}
-.banner.warn{border-left-color:var(--warn-t);background:var(--warn-soft);color:var(--warn-t)}
-.banner b{font-weight:700}
-.note{font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:12px;line-height:1.5}
-.viewer-banner{display:none;margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--warn-t);font-size:12.5px;font-weight:600}
-body.role-viewer .viewer-banner{display:block}
-
-/* ===================== SYSTEM OVERVIEW ===================== */
-.ovgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);margin-bottom:14px;overflow:hidden}
-.ov{padding:12px 14px;border-right:1px solid var(--line);min-width:0}
-.ov:last-child{border-right:0}
-.ov .k{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
-.ov .v{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ov .v i{width:8px;height:8px;border-radius:50%;background:var(--gray);flex:none}
-.ov .v.ok i{background:var(--ok)}.ov .v.ok{color:var(--ok-t)}
-.ov .v.warn i{background:var(--warn)}.ov .v.warn{color:var(--warn-t)}
-.ov .v.bad i{background:var(--red)}.ov .v.bad{color:var(--red-t)}
-.ov .v.na{color:var(--muted)}
-.ov .d{font-size:11px;color:var(--muted);margin-top:3px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* ===================== STAT TILES ===================== */
-.stat{padding:14px 16px;position:relative;min-height:112px;display:flex;flex-direction:column}
-.stat-top{display:flex;align-items:center;gap:8px}
-.bubble{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;flex:none;background:var(--primary-soft);color:var(--primary)}
-.bubble .ic{width:15px;height:15px}
-.bubble.pv{background:var(--primary-soft);color:var(--pv)}.bubble.bat{background:var(--energy-soft);color:var(--bat)}
-.label{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:600;text-transform:uppercase}
-.dotst{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--ok)}
-.dotst.na{background:var(--gray)}
-body.stale .dotst{background:var(--gray)}
-.value{font-size:26px;font-weight:700;margin-top:10px;line-height:1.1}
-.value.sm{font-size:17px;line-height:1.25;margin-top:12px}
-.unit{font-size:12.5px;color:var(--muted);font-weight:600;margin-left:4px}
-.statsub{font-size:11px;color:var(--muted);font-weight:500;margin-top:auto;padding-top:8px;display:flex;justify-content:space-between;gap:8px}
-body.stale .stat .value{opacity:.45}
-.bar{height:4px;background:var(--line2);border-radius:2px;margin-top:10px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--primary);width:0%;transition:width .3s ease}
-.bar.yellow i{background:var(--c-curr)}.bar.green i{background:var(--bat)}.bar.volt i{background:var(--c-volt)}
-.ring{position:absolute;right:14px;top:14px;font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:2px 7px}
-.ring span{position:static}
-.grp{margin-bottom:14px}
-.grp-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px}
-.grp-head h3{margin:0;font-size:12px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;color:var(--text2)}
-.grp-head .grow{flex:1}
-
-/* ===================== ROWS / STATUS ===================== */
-.rows{margin-top:4px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13px;color:var(--text2);font-weight:500}
-.row:last-child{border-bottom:0}
-.status-ok{color:var(--ok-t);font-weight:700;font-size:12px;text-align:right}
-.status-warn{color:var(--warn-t);font-weight:700;font-size:12px;text-align:right}
-.status-bad{color:var(--red-t);font-weight:700;font-size:12px;text-align:right}
-.status-na{color:var(--muted);font-weight:600;font-size:12px;text-align:right}
-.stat-num{font-weight:700;color:var(--text);font-size:13.5px}
-.kv{font-weight:600;color:var(--text);font-size:13px;text-align:right}
-
-/* ===================== TABLE (SCADA) ===================== */
-table.log,table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
-table.log th,table.tbl th{text-align:left;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:8px 8px;border-bottom:1px solid var(--line);background:var(--surface2)}
-table.log td,table.tbl td{padding:9px 8px;border-bottom:1px solid var(--line2);vertical-align:middle}
-table.tbl td.k{font-weight:600;color:var(--text)}
-table.tbl td.k small{display:block;font-weight:500;color:var(--muted);font-size:11px;margin-top:1px}
-table.tbl td.d{color:var(--text2)}
-table.log td.mono{font-family:var(--mono);font-size:12px}
-.scroll{overflow-x:auto}
-
-/* ===================== POWER FLOW ===================== */
-.flow{display:flex;align-items:stretch;margin-top:12px}
-.node{flex:1.1;border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--surface2);min-width:0}
-.node.mppt{flex:.9}
-.node-h{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
-.node-h .bubble{width:24px;height:24px}
-.node .big{font-size:21px;font-weight:700;margin-top:8px}
-.node .big small{font-size:12px;color:var(--muted);font-weight:600;margin-left:3px}
-.node .kvs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:500}
-.node .kvs b{color:var(--text);font-size:13px;display:block;font-weight:600}
-.link{position:relative;flex:0 0 72px;align-self:center;height:3px;margin:0 10px;background:var(--line);border-radius:2px}
-.link::after{content:"";position:absolute;right:-1px;top:-4px;border-left:8px solid var(--line);border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
-.link.flow-on{background:var(--pv)}.link.flow-on::after{border-left-color:var(--pv)}
-.link.b.flow-on{background:var(--bat)}.link.b.flow-on::after{border-left-color:var(--bat)}
-.link.flow-rev{background:var(--warn)}.link.flow-rev::after{right:auto;left:-1px;border-left:0;border-right:8px solid var(--warn)}
-.link.flow-unk{background:repeating-linear-gradient(90deg,var(--gray) 0 5px,transparent 5px 10px)}
-.link.flow-unk::after{display:none}
-.flow-cap{font-size:12px;color:var(--muted);font-weight:500;margin-top:12px;text-align:center;line-height:1.5}
-.flow-cap b{color:var(--text);font-weight:600}
-
-/* ===================== TRACKER MONITOR ===================== */
-.gauges{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
-.gauge{text-align:center;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);padding:10px 8px 12px}
-.gauge svg{width:100%;max-width:140px;height:auto}
-.gauge .arc{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:round}
-.gauge .needle{stroke:var(--primary);stroke-width:2.5;stroke-linecap:round}
-.gauge .hub{fill:var(--primary)}
-.gauge .gname{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.5px}
-.gauge .gval{font-size:23px;font-weight:700;margin-top:2px}
-.gauge .gval small{font-size:13px;color:var(--muted);font-weight:600}
-.gauge .gst{font-size:11px;font-weight:700;color:var(--muted);margin-top:3px}
-.gauge .gst.run{color:var(--ok-t)}
-.ldrmini{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
-.ldrmini div{border:1px solid var(--line);border-radius:6px;padding:7px 4px;text-align:center;background:var(--surface2);font-size:10.5px;color:var(--muted);font-weight:600}
-.ldrmini b{display:block;color:var(--text);font-size:14px;margin-top:2px;font-weight:700}
-
-/* ===================== SƠ ĐỒ 4 LDR ===================== */
-.ldr-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:12px;align-items:center}
-.ldr-compass{position:relative;height:250px;background:var(--surface2);border-radius:var(--r);border:2px solid var(--text2);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;overflow:hidden}
-.ldr-compass::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:25% 25%;opacity:.7}
-.cross-line{position:absolute;background:var(--muted);z-index:1;opacity:.55}
-.cross-line.h{top:50%;left:0;right:0;height:1px}.cross-line.v{left:50%;top:0;bottom:0;width:1px}
-.ldr-quad{padding:10px 14px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
-.ldr-quad.tr,.ldr-quad.br{text-align:right}
-.ldr-quad.tl{justify-content:flex-start}.ldr-quad.tr{justify-content:flex-start}.ldr-quad.bl{justify-content:flex-end}.ldr-quad.br{justify-content:flex-end}
-.ldr-tag{font-size:10px;color:var(--text2);font-weight:600;letter-spacing:.4px}
-.ldr-val{font-size:20px;font-weight:700;margin:2px 0}
-.ldr-bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
-.ldr-bar i{display:block;height:100%;background:var(--pv);width:0%;transition:width .3s}
-.ldr-st{font-size:10px;font-weight:700;margin-top:3px;color:var(--muted);letter-spacing:.4px}
-.ldr-st.ok{color:var(--ok-t)}.ldr-st.warn{color:var(--warn-t)}.ldr-st.bad{color:var(--red-t)}
-.sun-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--primary);color:var(--primary);display:grid;place-items:center;z-index:3;transition:transform .4s ease}
-.sun-center .ic{width:15px;height:15px}
-.axis-cap{position:absolute;font-size:9.5px;font-weight:600;letter-spacing:.8px;color:var(--muted);z-index:2}
-.axis-cap.t{top:4px;left:50%;transform:translateX(-50%)}.axis-cap.b{bottom:4px;left:50%;transform:translateX(-50%)}
-
-/* ===================== BUTTONS ===================== */
-.badge-btn{padding:5px 12px;border-radius:5px;font-size:11.5px;font-weight:700;cursor:pointer;background:var(--ok-soft);color:var(--ok-t);border:1px solid var(--ok-line);white-space:nowrap}
-.badge-btn.manual{background:var(--warn-soft);color:var(--warn-t);border-color:var(--warn-line)}
-.badge-btn.cal{background:var(--surface);color:var(--text);border-color:var(--line)}
-.badge-btn.cal:hover{background:var(--surface2)}
-.badge-btn.spd{background:var(--surface);color:var(--text);border-color:var(--line);padding:8px 12px;min-width:56px}
-.badge-btn.spd.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
-.motor{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-.motor h3{font-size:11px;color:var(--text2);letter-spacing:.6px;font-weight:700;display:flex;justify-content:space-between;margin:0 0 10px;text-transform:uppercase}
-.motor-state{color:var(--muted);font-weight:700}
-.motor-state.run{color:var(--ok-t)}
-.motor .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
-.motor .mgrid div{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.3px}
-.motor .mgrid b{display:block;color:var(--text);font-size:13px;font-weight:700;margin-top:2px;letter-spacing:0}
-.angle-big{text-align:center;margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px}
-.angle-big b.n{font-size:28px;color:var(--text);font-weight:700}
-.buttons{display:flex;justify-content:center;gap:10px}
-.btn{height:42px;min-width:70px;padding:0 16px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-.btn:hover{background:var(--surface2);border-color:var(--primary-line)}
-.btn:active{background:var(--primary-soft)}
-.seg a.on:hover,.cpill.active:hover{background:var(--primary-hover)}
-.btn.stop{font-size:12px;color:var(--red-t);border-color:var(--red-line);background:var(--surface)}
-.btn.stop:hover{background:var(--red-soft)}
-.btn.primary{color:var(--primary)}
-.btn.sm{height:34px;min-width:36px;font-size:12.5px;padding:0 10px}
-.btn.wide{font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
-.btn.solid{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
-.btn.solid:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
-.btn[disabled]{opacity:.5;cursor:not-allowed}
-.speedbar{margin-top:14px;padding:12px 14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.speed-badge{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-soft);padding:3px 10px;border-radius:4px;border:1px solid var(--primary-line)}
-.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.cloud-hint{display:none;font-size:11.5px;color:var(--warn-t);font-weight:600;margin-top:10px;text-align:center}
-.env-cloud .cloud-hint{display:block}
-body.cmd-pending .ctl:not(.safety){opacity:.55;pointer-events:none}
-body.role-viewer .ctl{opacity:.45;pointer-events:none}
-.ctlbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
-
-/* ===================== CHART ===================== */
-.chart-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.pillgroup{display:flex;gap:8px;flex-wrap:wrap}
-.chart-pills{display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:6px;border:1px solid var(--line)}
-.cpill{padding:6px 11px;border-radius:4px;font-size:11.5px;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
-.cpill.active{background:var(--primary);color:var(--on-primary)}
-.chartbox canvas{width:100%;display:block;margin-top:8px}
-#chart{height:300px}#miniChart{height:170px}
-.legend{display:flex;gap:18px;font-size:12px;font-weight:600;color:var(--text2);margin-top:12px}
-.legend span{display:flex;align-items:center;gap:6px}
-.legend span:before{content:"";display:inline-block;width:12px;height:3px;border-radius:2px;background:var(--lc,var(--pv))}
-.legend .batDot:before{background:var(--lc,var(--bat))}
-.exportbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px;padding:12px 14px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);font-size:13px}
-.exportbar .sub2{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500}
-.env-esp32 .exportbar{display:none}
-
-/* ===================== BÁO CÁO EXCEL ===================== */
-.rpt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-.rpt-grid label{font-size:11.5px;font-weight:600;color:var(--muted);display:grid;gap:5px}
-.rpt-grid input,.rpt-grid select{font:inherit;font-size:13px;font-weight:500;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);width:100%}
-.rpt-quick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted);font-weight:500}
-.rpt-quick .cpill{border:1px solid var(--line);background:var(--surface)}
-.rpt-quick .cpill.active{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
-.rpt-prev{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);padding:12px 14px}
-.rpt-st{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:10px}
-.rpt-st.ok{color:var(--ok-t)}.rpt-st.warn{color:var(--warn-t)}.rpt-st.bad{color:var(--red-t)}
-.rpt-kv{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.rpt-kv div{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.3px}
-.rpt-kv b{display:block;color:var(--text);font-size:14px;margin-top:3px;font-weight:700;letter-spacing:0}
-@media(max-width:900px){.rpt-grid{grid-template-columns:1fr 1fr}.rpt-kv{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.rpt-grid{grid-template-columns:1fr}.exportbar .inline{flex-wrap:wrap}.exportbar .inline select,.exportbar .inline .btn{flex:1 1 140px}}
-.rpt-grid input,.rpt-grid select{min-width:0}
-
-/* ===================== FORMS ===================== */
-.form{display:grid;gap:10px;margin-top:12px}
-.form label{font-size:11.5px;font-weight:600;color:var(--muted);display:grid;gap:5px}
-.form input,.form select,.exportbar select,.opt select,.row input,.row select{font:inherit;font-size:13px;font-weight:500;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);width:100%}
-.row input{width:auto}
-.exportbar select{width:auto}
-.form input:focus,.form select:focus,.row input:focus{outline:2px solid var(--primary-line);border-color:var(--primary)}
-.form .inline,.inline{display:flex;gap:10px;align-items:center}
-.f2{display:grid;grid-template-columns:2fr 1fr;gap:10px}
-.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:13px;font-weight:500;color:var(--text2)}
-.opt:last-child{border-bottom:0}
-.opt select{width:auto;max-width:220px}
-.opt small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:2px}
-
-.env-esp32 .only-cloud{display:none!important}
-.env-cloud .only-esp32{display:none!important}
-.only-admin{display:none!important}
-body.role-admin .only-admin{display:block!important}
-
-#toasts{position:fixed;right:16px;bottom:16px;z-index:80;display:grid;gap:8px;max-width:min(360px,calc(100vw - 32px))}
-.toast{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:6px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.18)}
-.toast.ok{border-left-color:var(--ok-t)}.toast.warn{border-left-color:var(--warn-t)}.toast.bad{border-left-color:var(--red-t)}.toast.info{border-left-color:var(--primary)}
-#login{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;place-items:center;padding:16px}
-#login.show{display:grid}
-#login .card{width:min(380px,100%);padding:28px}
-#login h2{margin:14px 0 4px;font-size:19px}
-#login p{margin:0;color:var(--muted);font-size:13px}
-#loginErr{color:var(--red-t);font-size:12.5px;font-weight:600;min-height:16px}
-footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px;padding:18px 0 4px;text-transform:uppercase}
-
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-
-/* ===================== RESPONSIVE ===================== */
-@media(max-width:1280px){.g6,.ovgrid{grid-template-columns:repeat(3,1fr)}.ov:nth-child(3){border-right:0}.ov:nth-child(-n+3){border-bottom:1px solid var(--line)}}
-@media(max-width:1180px){
-  :root{--sw:60px}
-  .lbl,.brand-t,.nav-cap{display:none}
-  .tab,.collapse-btn{justify-content:center;padding-left:0;padding-right:0}
-  .side-brand{justify-content:center;padding:0}
-  .collapse-btn{display:none}
-  .g4{grid-template-columns:repeat(2,1fr)}
-  .g12{grid-template-columns:1fr}
-}
-@media(min-width:701px) and (max-width:1500px){#chipNet,.clock,#chipOwner{display:none}}
-@media(min-width:701px) and (max-width:1250px){#chipSim{display:none!important}}
-@media(min-width:701px) and (max-width:1050px){.upd-box{display:none}}
-@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}.g2,.controls,.ldr-grid{grid-template-columns:1fr}.clock{display:none}}
-@media(max-width:700px){
-  :root{--hh:54px}
-  .side{position:fixed;left:0;top:0;width:250px;transform:translateX(-102%);transition:transform .2s ease;box-shadow:0 8px 28px rgba(0,0,0,.3)}
-  body.nav-open .side{transform:none}
-  body.nav-open .lbl,body.nav-open .brand-t,body.nav-open .nav-cap{display:inline}
-  body.nav-open .tab{justify-content:flex-start;padding:10px 12px}
-  body.nav-open .side-brand{justify-content:flex-start;padding:0 16px}
-  .scrim{display:block;position:fixed;inset:0;background:rgba(10,18,14,.5);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
-  body.nav-open .scrim{opacity:1;pointer-events:auto}
-  .menu-btn{display:grid}
-  header.top{flex-wrap:wrap;height:auto;padding:8px 12px;gap:8px}
-  .page-title{font-size:14.5px}
-  .top-c{order:3;width:100%;margin:0;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-  .top-c::-webkit-scrollbar{display:none}
-  .top-r{gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:100%;min-width:0}
-  .top-sep{display:none}
-  .upd-box{order:9;flex-basis:100%;text-align:left;display:flex;gap:8px;align-items:baseline}
-  .upd-box b{display:inline}
-  .userbox .uname,.userbox.only-esp32{display:none}
-  .estop{padding:7px 8px;font-size:10.5px;letter-spacing:0}
-  .content{padding:14px 12px 32px}
-  .grid{gap:10px}.g4{gap:8px}
-  .g6,.ovgrid{grid-template-columns:1fr 1fr}.ov{border-bottom:1px solid var(--line)}.ov:nth-child(odd){border-right:1px solid var(--line)}.ov:nth-child(even){border-right:0}
-  .stat{padding:12px;min-height:104px}.value{font-size:22px}.value.sm{font-size:15px}
-  .g3{grid-template-columns:1fr}
-  .flow{flex-direction:column}
-  .link{flex:0 0 32px;width:3px;height:32px;margin:8px auto}
-  .link::after{right:auto;left:-4px;top:auto;bottom:-1px;border-left:5.5px solid transparent;border-right:5.5px solid transparent;border-top:8px solid var(--line);border-bottom:0}
-  .link.flow-on::after{border-top-color:var(--pv);border-left-color:transparent}
-  .link.b.flow-on::after{border-top-color:var(--bat);border-left-color:transparent}
-  .link.flow-rev::after{left:-4px;top:-1px;bottom:auto;border-right:5.5px solid transparent;border-bottom:8px solid var(--warn);border-top:0}
-  .buttons{gap:8px}.btn{min-width:64px;padding:0 10px;height:46px}
-  #chart{height:240px}#miniChart{height:150px}
-  .f2{grid-template-columns:1fr}
-  .section{padding:14px}
-  .motor .mgrid{grid-template-columns:1fr 1fr 1fr}
-  .pillgroup{width:100%}.chart-pills{flex-wrap:wrap;max-width:100%}
-  table.tbl .d{display:none}
-  #toasts{bottom:12px}
-}
-@media(max-width:380px){.g4{grid-template-columns:1fr}.g6,.ovgrid{grid-template-columns:1fr}.ov,.ov:nth-child(odd){border-right:0}}
-
-.grp.na .dotst{background:var(--gray)}
-.grp.na .stat .value{color:var(--muted)}
-</style>
-<link rel="stylesheet" href="/cloud-ui.css">
-<link rel="stylesheet" href="/cloud-ui.css">
+<title>Solar Tracker Cloud</title>
+<link rel="stylesheet" href="/app.css">
 </head>
 <body class="env-esp32">
 
-<!-- ===================== ICON SPRITE (nét đơn, đồng bộ) ===================== -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
   <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
@@ -444,599 +26,560 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-temp" viewBox="0 0 24 24"><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></symbol>
   <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.5a11 11 0 0 1 14 0M1.4 9a16 16 0 0 1 21.2 0M8.5 16.1a6 6 0 0 1 7 0M12 20h.01"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></symbol>
   <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
   <symbol id="i-act" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
   <symbol id="i-log" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M12 2v6M8.5 5.5 12 2l3.5 3.5M4 18h16M6 14a6 6 0 0 1 12 0M2 22h20"/></symbol>
+  <symbol id="i-sunset" viewBox="0 0 24 24"><path d="M12 8V2M8.5 4.5 12 8l3.5-3.5M4 18h16M6 14a6 6 0 0 1 12 0M2 22h20"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><path d="M4 4h16l-2 10H6L4 4Z"/><path d="M12 4v10M5 9h14M12 14v6M8 20h8"/></symbol>
 </svg>
 
 <div class="app">
 
-<!-- ===================== SIDEBAR ===================== -->
 <aside class="side" id="side">
   <div class="side-brand">
-    <div class="logo"><svg class="ic"><use href="#i-sun"/></svg></div>
-    <div class="brand-t"><div class="brand">SOLAR TRACKER</div><div class="subbrand">Giám sát &amp; bám nắng thông minh</div></div>
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14l-1.6 8H6.6L5 6Z"/><path d="M12 14v5M9 19h6"/></svg></div>
+    <div class="brand-t"><div class="brand">Solar Tracker</div><div class="subbrand">Cloud Monitoring</div></div>
   </div>
-  <nav class="tabs" id="tabs">
+  <nav class="tabs" id="tabs" aria-label="Điều hướng">
     <div class="nav-cap">Giám sát</div>
     <button class="tab active" data-tab="dash" title="Tổng quan"><svg class="ic"><use href="#i-dash"/></svg><span class="lbl">Tổng quan</span></button>
     <button class="tab" data-tab="measure" title="Đo lường"><svg class="ic"><use href="#i-zap"/></svg><span class="lbl">Đo lường</span></button>
-    <button class="tab" data-tab="graph" title="Biểu đồ"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">Biểu đồ</span></button>
+    <button class="tab" data-tab="graph" title="Biểu đồ và báo cáo"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">Biểu đồ &amp; báo cáo</span></button>
     <div class="nav-cap">Vận hành</div>
     <button class="tab" data-tab="tracking" title="Bám nắng"><svg class="ic"><use href="#i-target"/></svg><span class="lbl">Bám nắng</span></button>
-    <button class="tab" data-tab="device" title="Thiết bị &amp; Hệ thống"><svg class="ic"><use href="#i-cpu"/></svg><span class="lbl">Thiết bị &amp; Hệ thống</span></button>
+    <button class="tab" data-tab="device" title="Thiết bị"><svg class="ic"><use href="#i-cpu"/></svg><span class="lbl">Thiết bị</span></button>
     <button class="tab" data-tab="setting" title="Cài đặt"><svg class="ic"><use href="#i-gear"/></svg><span class="lbl">Cài đặt</span></button>
   </nav>
-  <div class="side-foot"><button class="collapse-btn" id="collapseBtn" title="Thu gọn / mở rộng menu"><svg class="ic"><use href="#i-chev"/></svg><span class="lbl">Thu gọn menu</span></button></div>
+  <div class="side-foot">
+    <button class="collapse-btn" id="collapseBtn" title="Thu gọn / mở rộng menu"><svg class="ic"><use href="#i-chev"/></svg><span class="lbl">Thu gọn</span></button>
+  </div>
 </aside>
 <div class="scrim" id="scrim"></div>
 
 <div class="main">
-<!-- ===================== HEADER ===================== -->
 <header class="top">
   <button class="menu-btn" id="menuBtn" aria-label="Mở menu"><svg class="ic"><use href="#i-menu"/></svg></button>
-  <div class="page-title" id="pageTitle">Tổng quan</div>
-  <div class="top-c" id="chips">
-    <div class="seg" id="modeSeg" title="Nguồn kết nối">
-      <a id="segLocal" href="#" target="_blank" rel="noopener">LOCAL</a>
-      <a id="cloudLink" href="#" target="_blank" rel="noopener">CLOUD</a>
-    </div>
-    <span class="chip" id="chipEsp" title="Trạng thái kết nối ESP32"><i></i><b>ESP32 --</b></span>
-    <span class="chip" id="chipNet" title="Internet của ESP32"><i></i><b>INTERNET --</b></span>
-    <span class="chip" id="chipOwner" title="Nguồn đang giữ quyền điều khiển (30 s)"><i></i><b>QUYỀN ĐK: --</b></span>
-    <span class="seg ctl" id="simSeg" title="Chế độ hệ thống: THẬT (AUTO, cảm biến ánh sáng thật) hoặc MÔ PHỎNG (liên kết MATLAB)"><a id="btnSimReal" class="on" role="button">THẬT</a><a id="btnSimOn" role="button">MÔ PHỎNG</a></span>
-    <span class="chip" id="chipSim" style="display:none" title="Liên kết MATLAB trong chế độ mô phỏng"><i></i><b>MATLAB --</b></span>
-  </div>
+  <div class="ttl"><div class="crumb">Solar Tracker</div><h1 class="page-title" id="pageTitle">Tổng quan</h1></div>
   <div class="top-r">
+    <span class="chip" id="chipEsp" title="Trạng thái kết nối ESP32"><i></i><b>ESP32 --</b></span>
     <div class="upd-box num" id="updBox" title="Thời điểm nhận gói dữ liệu gần nhất từ ESP32"><b id="lastUpdT">--:--:--</b><span id="lastUpdS">Chưa có dữ liệu</span></div>
-    <div class="clock num"><b id="clockT">--:--:--</b><span id="clockD">--/--/----</span></div>
+    <span class="userbox only-cloud">
+      <select id="devSel" title="Chọn thiết bị" aria-label="Chọn thiết bị"></select>
+    </span>
     <div class="sw3" id="themeSw" role="group" aria-label="Giao diện">
       <button id="thLight" title="Giao diện sáng" aria-label="Giao diện sáng"><svg class="ic"><use href="#i-sun"/></svg></button>
       <button id="thDark" title="Giao diện tối" aria-label="Giao diện tối"><svg class="ic"><use href="#i-moon"/></svg></button>
       <button id="thSys" title="Theo hệ điều hành" aria-label="Theo hệ điều hành"><svg class="ic"><use href="#i-monitor"/></svg></button>
     </div>
-    <span class="userbox only-cloud">
-      <select id="devSel" title="Chọn thiết bị"></select>
-      <span class="uname" id="userName">--</span>
+    <span class="userbox only-cloud user">
+      <span class="avatar" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span><span class="uname" id="userName">--</span>
       <button class="icon-btn" onclick="logout()" title="Đăng xuất" aria-label="Đăng xuất"><svg class="ic"><use href="#i-logout"/></svg></button>
     </span>
-    <span class="userbox only-esp32" title="Điều khiển trực tiếp trong mạng nội bộ, không cần đăng nhập"><svg class="ic"><use href="#i-user"/></svg><span class="uname">Local</span></span>
-    <span class="top-sep"></span>
-    <button class="estop ctl safety" id="btnEstopHeader" onclick="cmd('estop_toggle')">DỪNG KHẨN CẤP (E-STOP)</button>
+    <span class="userbox only-esp32" title="Điều khiển trực tiếp trong mạng nội bộ"><span class="uname">Local</span></span>
+    <button class="estop ctl safety" id="btnEstopHeader" onclick="cmd('estop_toggle')">Dừng khẩn cấp</button>
   </div>
 </header>
 
+<div class="statusbar" id="chips">
+  <div class="sb-item"><span class="sb-k">Nguồn</span>
+    <div class="seg" id="modeSeg" title="Nguồn kết nối"><a id="segLocal" href="#" target="_blank" rel="noopener">LOCAL</a><a id="cloudLink" href="#" target="_blank" rel="noopener">CLOUD</a></div>
+  </div>
+  <div class="sb-item"><span class="sb-k">Chế độ</span>
+    <span class="seg ctl" id="simSeg" title="THẬT: bám nắng bằng cảm biến thật. MÔ PHỎNG: liên kết MATLAB (chỉ bật tại thiết bị)"><a id="btnSimReal" class="on" role="button">THẬT</a><a id="btnSimOn" role="button">MÔ PHỎNG</a></span>
+    <span class="chip" id="chipSim" style="display:none" title="Liên kết MATLAB"><i></i><b>MATLAB --</b></span>
+  </div>
+  <div class="sb-item"><span class="chip" id="chipNet" title="Internet của ESP32"><i></i><b>INTERNET --</b></span></div>
+  <div class="sb-item"><span class="chip" id="chipOwner" title="Nguồn đang giữ quyền điều khiển (30 s)"><i></i><b>QUYỀN ĐK: --</b></span></div>
+  <div class="sb-grow"></div>
+  <div class="clock num"><b id="clockT">--:--:--</b><span id="clockD">--/--/----</span></div>
+</div>
+
 <div class="content">
 
-<div class="alert" id="estopAlert">⚠ CẢNH BÁO: HỆ THỐNG ĐANG DỪNG KHẨN CẤP (EMERGENCY STOP). TOÀN BỘ ĐỘNG CƠ VÀ THIẾT BỊ ĐÃ ĐƯỢC NGẮT AN TOÀN.</div>
-<div class="alert sim" id="simAlert">ĐANG Ở CHẾ ĐỘ MÔ PHỎNG – cảm biến ánh sáng thật bị bỏ qua, hệ thống chạy theo MATLAB. Bấm "THẬT" (hoặc nút REAL trên màn hình TFT) để quay về bám nắng thật; mất MATLAB 10 giây thì tự quay về.</div>
-<div class="banner" id="connBanner"><span id="connBannerText">--</span></div>
-<div class="viewer-banner">Tài khoản của bạn chỉ có quyền GIÁM SÁT. Các nút điều khiển đã bị khoá.</div>
+<div class="alert" id="estopAlert" role="alert"><svg class="ic"><use href="#i-zap"/></svg><div><b>Hệ thống đang dừng khẩn cấp</b><span>Toàn bộ động cơ và thiết bị đã được ngắt an toàn. Bấm "Dừng khẩn cấp" một lần nữa để nhả.</span></div></div>
+<div class="alert sim" id="simAlert" role="status"><svg class="ic"><use href="#i-cpu"/></svg><div><b>Đang ở chế độ mô phỏng</b><span>Cảm biến ánh sáng thật bị bỏ qua, hệ thống chạy theo MATLAB. Mất liên kết MATLAB 10 giây thì tự quay về chế độ thật.</span></div></div>
+<div class="banner" id="connBanner" role="status"><span id="connBannerText">--</span></div>
+<div class="viewer-banner">Tài khoản của bạn chỉ có quyền giám sát. Các nút điều khiển đã bị khoá.</div>
 
 <!-- ======================= TỔNG QUAN ======================= -->
 <section class="page active" id="page-dash">
-  <section class="card scene3d" id="scene3d" aria-label="Mô hình 3D tấm pin theo góc motor">
-    <div class="s3-stage"><canvas id="s3Canvas"></canvas>
-      <div class="s3-fallback">Trình duyệt không hỗ trợ WebGL nên không hiển thị được mô hình 3D. Số liệu bên cạnh vẫn cập nhật bình thường.</div>
-      <div class="s3-note">Kéo để xoay, cuộn để phóng to. Mô hình minh họa theo góc motor đo được; quy ước góc chưa xác nhận trên hệ thật.</div></div>
-    <div class="s3-info">
-      <div><div class="s3-k">Công suất tấm pin (PV)</div><div class="s3-big"><span class="n" id="s3P">—</span><span class="u">W</span></div><div class="s3-sub" id="s3Sub">Chờ dữ liệu</div></div>
-      <div class="s3-state" id="s3State"><i></i><b>Chờ dữ liệu</b></div>
-      <div class="s3-rows"><div>Motor 1<b id="s3M1">—</b></div><div>Motor 2<b id="s3M2">—</b></div><div>Điện áp ắc quy<b id="s3Bat">—</b></div><div>Chế độ<b id="s3Mode">—</b></div></div>
-      <div class="s3-cta"><button class="btn solid" type="button" onclick="document.querySelector('.tab[data-tab=&quot;graph&quot;]').click()">Biểu đồ và báo cáo Excel</button></div>
-    </div>
-  </section>
+  <div class="dash-hero">
+    <section class="panel pv-hero" id="grpPv">
+      <div class="ph"><h2>Tấm pin mặt trời</h2><span class="chip" id="chipPv"><i></i><b>INA219 --</b></span></div>
+      <div class="kpi-xl"><span class="num" id="pvP">—</span><span class="u">W</span></div>
+      <div class="kpi-note"><span id="powerRingWrap" title="So với công suất định mức 30 W"><span class="num" id="powerRing">--%</span> công suất định mức 30 W</span></div>
+      <dl class="kv-grid">
+        <div><dt>Điện áp</dt><dd><span class="num" id="pvV">—</span><small>V</small></dd></div>
+        <div><dt>Dòng điện</dt><dd><span class="num" id="pvI">—</span><small>A</small></dd></div>
+        <div class="wide"><dt>MPPT</dt><dd class="txt" id="mpptState">—</dd></div>
+      </dl>
+    </section>
 
-
-  <div class="group-cap">Tình trạng hệ thống</div>
-  <div class="ovgrid" id="overview">
-    <div class="ov"><div class="k">ESP32</div><div class="v na" id="ovEspV"><i></i><span>Đang chờ</span></div><div class="d" id="ovEspD">--</div></div>
-    <div class="ov"><div class="k">Wi-Fi</div><div class="v na" id="ovWifiV"><i></i><span>--</span></div><div class="d" id="ovWifiD">--</div></div>
-    <div class="ov"><div class="k">Cloud</div><div class="v na" id="ovCloudV"><i></i><span>--</span></div><div class="d" id="ovCloudD">--</div></div>
-    <div class="ov"><div class="k">MPPT</div><div class="v na" id="ovMpptV"><i></i><span>--</span></div><div class="d" id="ovMpptD">--</div></div>
-    <div class="ov"><div class="k">Bám nắng</div><div class="v na" id="ovTrackV"><i></i><span>--</span></div><div class="d" id="ovTrackD">--</div></div>
-    <div class="ov"><div class="k">Ắc quy</div><div class="v na" id="ovBatV"><i></i><span>--</span></div><div class="d" id="ovBatD">--</div></div>
-  </div>
-
-  <div class="group-cap">Giám sát năng lượng</div>
-  <div class="grp" id="grpPv">
-    <div class="grp-head"><h3>Tấm pin mặt trời (PV)</h3><span class="chip" id="chipPv"><i></i><b>INA219 --</b></span><span class="grow"></span><span style="font-size:12px;color:var(--muted);font-weight:500">MPPT: <b id="mpptState" style="color:var(--text);font-weight:600">N/A</b></span></div>
-    <div class="grid g3" style="margin-bottom:0">
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-zap"/></svg></div><div class="label">Điện áp PV</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="pvV">N/A</span><span class="unit">V</span></div>
-        <div class="bar volt"><i id="pvVbar"></i></div>
-        <div class="statsub"><span>Điện áp tấm pin</span><span class="upd">N/A</span></div>
-      </div>
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-act"/></svg></div><div class="label">Dòng điện PV</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="pvI">N/A</span><span class="unit">A</span></div>
-        <div class="bar yellow"><i id="pvIbar"></i></div>
-        <div class="statsub"><span>Dòng điện tấm pin</span><span class="upd">N/A</span></div>
-      </div>
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble pv"><svg class="ic"><use href="#i-sun"/></svg></div><div class="label">Công suất PV</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="pvP">N/A</span><span class="unit">W</span></div>
-        <div class="ring" id="powerRingWrap" title="So với công suất định mức 30 W"><span id="powerRing">--%</span> / 30 W</div>
-        <div class="statsub"><span>Công suất tấm pin</span><span class="upd">N/A</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="grp" id="grpBat">
-    <div class="grp-head"><h3>Ắc quy</h3><span class="chip" id="chipBat"><i></i><b>INA219 --</b></span><span class="grow"></span><span style="font-size:12px;color:var(--muted);font-weight:500">Trạng thái: <b id="chgState" style="color:var(--text);font-weight:600">N/A</b> • <span id="chgSub">SOC: N/A</span></span></div>
-    <div class="grid g3" style="margin-bottom:0">
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble bat"><svg class="ic"><use href="#i-battery"/></svg></div><div class="label">Điện áp ắc quy</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="batV">N/A</span><span class="unit">V</span></div>
-        <div class="bar green"><i id="batVbar"></i></div>
-        <div class="statsub"><span>Điện áp ắc quy</span><span class="upd">N/A</span></div>
-      </div>
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble bat"><svg class="ic"><use href="#i-act"/></svg></div><div class="label">Dòng điện ắc quy</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="batI">N/A</span><span class="unit">A</span></div>
-        <div class="statsub"><span>Dòng điện ắc quy</span><span class="upd">N/A</span></div>
-      </div>
-      <div class="card stat">
-        <div class="stat-top"><div class="bubble bat"><svg class="ic"><use href="#i-zap"/></svg></div><div class="label">Công suất ắc quy</div><i class="dotst"></i></div>
-        <div class="value"><span class="num" id="batP">N/A</span><span class="unit">W</span></div>
-        <div class="statsub"><span>Công suất ắc quy</span><span class="upd">N/A</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="group-cap">Sơ đồ dòng năng lượng</div>
-  <div class="grid">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-zap"/></svg> Tấm pin → Bộ điều khiển MPPT → Ắc quy <span class="sub">Chiều mũi tên chỉ hiện khi xác định được từ dữ liệu</span></div>
+    <section class="panel flow-panel">
+      <div class="ph"><h2>Dòng năng lượng</h2><span class="ph-sub">Mũi tên chỉ chạy khi xác định được chiều dòng từ dữ liệu đo</span></div>
       <div class="flow">
-        <div class="node">
-          <div class="node-h"><div class="bubble pv"><svg class="ic"><use href="#i-sun"/></svg></div>Tấm pin mặt trời</div>
-          <div class="big num"><span id="pfPvP">N/A</span><small>W</small></div>
-          <div class="kvs"><div>Điện áp<b class="num" id="pfPvV">N/A</b></div><div>Dòng điện<b class="num" id="pfPvI">N/A</b></div></div>
+        <div class="node pv">
+          <div class="node-ic"><svg class="ic"><use href="#i-sun"/></svg></div>
+          <div class="node-k">Tấm pin</div>
+          <div class="node-v num"><span id="pfPvP">—</span><small>W</small></div>
+          <div class="node-s num"><span id="pfPvV">—</span> · <span id="pfPvI">—</span></div>
         </div>
-        <div class="link" id="pfLinkA"></div>
+        <div class="link" id="pfLinkA" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
         <div class="node mppt">
-          <div class="node-h"><div class="bubble"><svg class="ic"><use href="#i-gauge"/></svg></div>Bộ điều khiển MPPT</div>
-          <div class="big" style="font-size:14.5px;line-height:1.35" id="pfMppt">N/A</div>
-          <div class="kvs"><div style="grid-column:1/3">Thuật toán chạy trên ESP32</div></div>
+          <div class="node-ic"><svg class="ic"><use href="#i-cpu"/></svg></div>
+          <div class="node-k">Bộ điều khiển</div>
+          <div class="node-t" id="pfMppt">—</div>
+          <div class="node-s">MPPT chạy trên ESP32</div>
         </div>
-        <div class="link b" id="pfLinkB"></div>
-        <div class="node">
-          <div class="node-h"><div class="bubble bat"><svg class="ic"><use href="#i-battery"/></svg></div>Ắc quy</div>
-          <div class="big num"><span id="pfBatV">N/A</span><small>V</small></div>
-          <div class="kvs"><div>Dòng điện<b class="num" id="pfBatI">N/A</b></div><div>Công suất<b class="num" id="pfBatP">N/A</b></div></div>
+        <div class="link b" id="pfLinkB" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
+        <div class="node bat">
+          <div class="node-ic"><svg class="ic"><use href="#i-battery"/></svg></div>
+          <div class="node-k">Ắc quy</div>
+          <div class="node-v num"><span id="pfBatV">—</span><small>V</small></div>
+          <div class="node-s num"><span id="pfBatI">—</span> · <span id="pfBatP">—</span></div>
         </div>
       </div>
       <div class="flow-cap" id="pfCap">Chờ dữ liệu từ ESP32...</div>
-    </div>
+    </section>
   </div>
 
-  <div class="group-cap">Môi trường &amp; mặt trời</div>
-  <div class="card section" style="margin-bottom:14px">
-    <div class="section-title"><svg class="ic"><use href="#i-sun"/></svg> Thời tiết ngoài trời &amp; mặt trời <span class="sub" id="wxSub">--</span></div>
-    <div class="grid g4" style="margin-bottom:0">
-      <div class="card stat"><div class="stat-top"><div class="bubble"><svg class="ic"><use href="#i-temp"/></svg></div><div class="label">Nhiệt độ ngoài trời</div></div><div class="value"><span class="num" id="wxT">--</span><span class="unit">°C</span></div></div>
-      <div class="card stat"><div class="stat-top"><div class="bubble"><svg class="ic"><use href="#i-temp"/></svg></div><div class="label">Độ ẩm ngoài trời</div></div><div class="value"><span class="num" id="wxH">--</span><span class="unit">%</span></div></div>
-      <div class="card stat"><div class="stat-top"><div class="bubble"><svg class="ic"><use href="#i-sun"/></svg></div><div class="label">Mặt trời mọc</div></div><div class="value"><span class="num" id="wxSr">--</span></div></div>
-      <div class="card stat"><div class="stat-top"><div class="bubble"><svg class="ic"><use href="#i-moon"/></svg></div><div class="label">Mặt trời lặn</div></div><div class="value"><span class="num" id="wxSs">--</span></div></div>
-    </div>
-    <div class="bar yellow" style="margin-top:14px"><i id="sunBar"></i></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:12.5px;color:var(--text2);flex-wrap:wrap"><span id="sunInfo">--</span><button class="btn sm ctl" onclick="cmd('wx_refresh')">Làm mới</button></div>
+  <section class="panel bat-strip" id="grpBat">
+    <div class="bs-head"><h2>Ắc quy</h2><span class="chip" id="chipBat"><i></i><b>INA219 --</b></span></div>
+    <div class="bs-cell"><span class="k">Điện áp</span><span class="v"><span class="num" id="batV">—</span><small>V</small></span></div>
+    <div class="bs-cell"><span class="k">Dòng điện</span><span class="v"><span class="num" id="batI">—</span><small>A</small></span></div>
+    <div class="bs-cell"><span class="k">Công suất</span><span class="v"><span class="num" id="batP">—</span><small>W</small></span></div>
+    <div class="bs-cell state"><span class="k">Trạng thái</span><span class="v txt"><span id="chgState">—</span><small id="chgSub">SOC: —</small></span></div>
+  </section>
+
+  <div class="dash-grid">
+    <section class="panel chart-panel">
+      <div class="ph"><h2>Công suất thời gian thực</h2>
+        <div class="legend"><span class="lg pv">Tấm pin</span><span class="lg bat">Ắc quy</span></div>
+        <button class="linkbtn" type="button" onclick="document.querySelector('.tab[data-tab=&quot;graph&quot;]').click()">Lịch sử &amp; báo cáo<svg class="ic"><use href="#i-arrow"/></svg></button>
+      </div>
+      <canvas id="miniChart"></canvas>
+    </section>
+
+    <section class="panel health">
+      <div class="ph"><h2>Tình trạng hệ thống</h2></div>
+      <ul class="health-list" id="overview">
+        <li><span class="hk"><svg class="ic"><use href="#i-cpu"/></svg>ESP32</span><span class="v na" id="ovEspV"><i></i><span>Đang chờ</span></span><span class="hd" id="ovEspD">--</span></li>
+        <li><span class="hk"><svg class="ic"><use href="#i-wifi"/></svg>Wi-Fi</span><span class="v na" id="ovWifiV"><i></i><span>--</span></span><span class="hd" id="ovWifiD">--</span></li>
+        <li><span class="hk"><svg class="ic"><use href="#i-cloud"/></svg>Cloud</span><span class="v na" id="ovCloudV"><i></i><span>--</span></span><span class="hd" id="ovCloudD">--</span></li>
+        <li><span class="hk"><svg class="ic"><use href="#i-gauge"/></svg>MPPT</span><span class="v na" id="ovMpptV"><i></i><span>--</span></span><span class="hd" id="ovMpptD">--</span></li>
+        <li><span class="hk"><svg class="ic"><use href="#i-target"/></svg>Bám nắng</span><span class="v na" id="ovTrackV"><i></i><span>--</span></span><span class="hd" id="ovTrackD">--</span></li>
+        <li><span class="hk"><svg class="ic"><use href="#i-battery"/></svg>Ắc quy</span><span class="v na" id="ovBatV"><i></i><span>--</span></span><span class="hd" id="ovBatD">--</span></li>
+      </ul>
+    </section>
   </div>
 
-  <div class="group-cap">Bám nắng &amp; công suất theo thời gian</div>
-  <div class="grid g12">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-target"/></svg> Tổng quan bám nắng <span class="sub" id="trackStatDash">N/A</span></div>
-      <div class="gauges">
-        <div class="gauge">
-          <svg viewBox="0 0 120 72"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g1"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="5"/></svg>
-          <div class="gname">MOTOR 1 · TRỤC ĐỨNG (X)</div>
-          <div class="gval num"><span id="a1">N/A</span><small>°</small></div>
+  <div class="dash-grid">
+    <section class="panel track-sum">
+      <div class="ph"><h2>Bám nắng</h2><span class="ph-sub" id="trackStatDash">—</span>
+        <button class="badge-btn ctl" id="modeBtnTop" onclick="toggleAuto()">AUTO</button></div>
+      <div class="axes">
+        <div class="axis">
+          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g1"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
+          <div class="ax-v num"><span id="a1">—</span><small>°</small></div>
+          <div class="ax-k">Motor 1 · trục đứng</div>
           <div class="gst" id="m1">STOP</div>
         </div>
-        <div class="gauge">
-          <svg viewBox="0 0 120 72"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g2"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="5"/></svg>
-          <div class="gname">MOTOR 2 · TRỤC NGANG (Y)</div>
-          <div class="gval num"><span id="a2">N/A</span><small>°</small></div>
+        <div class="axis">
+          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g2"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
+          <div class="ax-v num"><span id="a2">—</span><small>°</small></div>
+          <div class="ax-k">Motor 2 · trục ngang</div>
           <div class="gst" id="m2">STOP</div>
         </div>
+        <div class="ldr-mini">
+          <div class="lm-k">Cảm biến LDR</div>
+          <div class="lm-grid"><div>TL<b class="num" id="qTL">—</b></div><div>TR<b class="num" id="qTR">—</b></div><div>BL<b class="num" id="qBL">—</b></div><div>BR<b class="num" id="qBR">—</b></div></div>
+          <div class="lm-own">Quyền điều khiển <b id="ownerInfo2">—</b></div>
+        </div>
       </div>
-      <div class="ldrmini">
-        <div>TL<b class="num" id="qTL">N/A</b></div><div>TR<b class="num" id="qTR">N/A</b></div>
-        <div>BL<b class="num" id="qBL">N/A</b></div><div>BR<b class="num" id="qBR">N/A</b></div>
-      </div>
-      <div class="rows">
-        <div class="row"><span>Chế độ hệ thống</span><button class="badge-btn ctl" id="modeBtnTop" onclick="toggleAuto()">AUTO</button></div>
-        <div class="row"><span>Quyền điều khiển</span><span class="kv" id="ownerInfo2">N/A</span></div>
-      </div>
-    </div>
+    </section>
 
-    <div class="card section chartbox">
-      <div class="section-title"><svg class="ic"><use href="#i-chart"/></svg> Công suất thời gian thực <span class="sub">Pin PV &amp; Ắc quy (W)</span></div>
-      <div class="legend"><span>Công suất PV</span><span class="batDot">Công suất ắc quy</span></div>
-      <canvas id="miniChart"></canvas>
-    </div>
+    <section class="panel weather">
+      <div class="ph"><h2>Thời tiết &amp; mặt trời</h2><button class="icon-btn ctl" onclick="cmd('wx_refresh')" title="Làm mới thời tiết" aria-label="Làm mới thời tiết"><svg class="ic"><use href="#i-refresh"/></svg></button></div>
+      <div class="wx-main"><div class="wx-t"><span class="num" id="wxT">--</span><small>°C</small></div><div class="wx-h"><svg class="ic"><use href="#i-drop"/></svg><span class="num" id="wxH">--</span>%</div></div>
+      <div class="sunline">
+        <div class="sun-end"><svg class="ic"><use href="#i-sunrise"/></svg><span class="num" id="wxSr">--:--</span></div>
+        <div class="sun-track"><i id="sunBar"></i></div>
+        <div class="sun-end r"><span class="num" id="wxSs">--:--</span><svg class="ic"><use href="#i-sunset"/></svg></div>
+      </div>
+      <div class="wx-info" id="sunInfo">--</div>
+      <div class="wx-src" id="wxSub">--</div>
+    </section>
   </div>
 </section>
 
 <!-- ======================= ĐO LƯỜNG ======================= -->
 <section class="page" id="page-measure">
-  <div class="page-head"><h2>Đo lường</h2><p>Thông số đo từ INA219 (PV 0x40, ắc quy 0x41), trạng thái MPPT và môi trường. Giá trị không khả dụng được hiển thị là "—", không được thay bằng số 0.</p></div>
-  <div class="grid g3">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-sun"/></svg> Đo lường PV <span class="sub" id="msPvSt">--</span></div>
-      <div class="rows">
-        <div class="row"><span>Điện áp</span><span class="kv num" id="msPvV">N/A</span></div>
-        <div class="row"><span>Dòng điện</span><span class="kv num" id="msPvI">N/A</span></div>
-        <div class="row"><span>Công suất</span><span class="kv num" id="msPvP">N/A</span></div>
-        <div class="row"><span>Điện năng PV (Wh)</span><span class="kv num" id="pvWh">N/A</span></div>
-        <div class="row"><span>Trạng thái INA219 PV</span><span class="status-na" id="msPvIna">--</span></div>
-        <div class="row"><span>Cập nhật</span><span class="kv upd">N/A</span></div>
-      </div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-battery"/></svg> Đo lường ắc quy <span class="sub" id="msBatSt">--</span></div>
-      <div class="rows">
-        <div class="row"><span>Điện áp</span><span class="kv num" id="msBatV">N/A</span></div>
-        <div class="row"><span>Dòng điện</span><span class="kv num" id="msBatI">N/A</span></div>
-        <div class="row"><span>Công suất</span><span class="kv num" id="msBatP">N/A</span></div>
-        <div class="row"><span>Dung lượng ước tính (SOC)</span><span class="kv num" id="batSOC">N/A</span></div>
-        <div class="row"><span>Điện năng ắc quy (Wh)</span><span class="kv num" id="msBatWh">N/A</span></div>
-        <div class="row"><span>Trạng thái INA219 ắc quy</span><span class="status-na" id="msBatIna">--</span></div>
-        <div class="row"><span>Cập nhật</span><span class="kv upd">N/A</span></div>
-      </div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-gauge"/></svg> Giám sát MPPT <span class="sub">Thuật toán chạy trên ESP32</span></div>
-      <div class="rows">
-        <div class="row"><span>Trạng thái MPPT</span><span class="kv" id="msMppt">N/A</span></div>
-        <div class="row"><span>Trạng thái bám nắng</span><span class="kv" id="msTrack">N/A</span></div>
-        <div class="row"><span>Công suất PV hiện tại</span><span class="kv num" id="msMpptP">N/A</span></div>
-        <div class="row"><span>Sai lệch quang học</span><span class="kv num" id="msErr">N/A</span></div>
-        <div class="row"><span>Chế độ</span><span class="kv" id="msMode">N/A</span></div>
-        <div class="row"><span>Ban đêm (Night)</span><span class="kv" id="msNight">N/A</span></div>
-      </div>
-    </div>
+  <div class="page-head"><h2>Đo lường</h2><p>Thông số từ cảm biến INA219 (PV 0x40, ắc quy 0x41). Giá trị không khả dụng hiển thị "—", không bao giờ thay bằng 0.</p></div>
+  <div class="readouts">
+    <section class="panel readout pv">
+      <div class="ph"><h2><svg class="ic"><use href="#i-sun"/></svg>Tấm pin (PV)</h2><span class="ph-sub" id="msPvSt">--</span></div>
+      <div class="ro-main"><span class="ro-k">Điện áp</span><span class="ro-v num" id="msPvV">—</span></div>
+      <dl class="ro-list">
+        <div><dt>Dòng điện</dt><dd class="num" id="msPvI">—</dd></div>
+        <div><dt>Công suất</dt><dd class="num" id="msPvP">—</dd></div>
+        <div><dt>Điện năng tích lũy</dt><dd class="num" id="pvWh">—</dd></div>
+        <div><dt>Cảm biến INA219</dt><dd><span class="status-na" id="msPvIna">--</span></dd></div>
+      </dl>
+      <div class="ro-foot">Cập nhật <span class="upd">N/A</span></div>
+    </section>
+    <section class="panel readout bat">
+      <div class="ph"><h2><svg class="ic"><use href="#i-battery"/></svg>Ắc quy</h2><span class="ph-sub" id="msBatSt">--</span></div>
+      <div class="ro-main"><span class="ro-k">Điện áp</span><span class="ro-v num" id="msBatV">—</span></div>
+      <dl class="ro-list">
+        <div><dt>Dòng điện</dt><dd class="num" id="msBatI">—</dd></div>
+        <div><dt>Công suất</dt><dd class="num" id="msBatP">—</dd></div>
+        <div><dt>Dung lượng ước tính (SOC)</dt><dd class="num" id="batSOC">—</dd></div>
+        <div><dt>Điện năng tích lũy</dt><dd class="num" id="msBatWh">—</dd></div>
+        <div><dt>Cảm biến INA219</dt><dd><span class="status-na" id="msBatIna">--</span></dd></div>
+      </dl>
+      <div class="ro-foot">Cập nhật <span class="upd">N/A</span></div>
+    </section>
   </div>
-  <div class="grid g2">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> Môi trường &amp; tản nhiệt</div>
-      <div class="rows">
-        <div class="row"><span>Nhiệt độ tủ (DHT11)</span><span class="kv num" id="dhtT">N/A</span></div>
-        <div class="row"><span>Độ ẩm tủ (DHT11)</span><span class="kv num" id="dhtH">N/A</span></div>
-        <div class="row"><span>Quạt tản nhiệt (relay 5 V)</span><span class="status-na" id="fanStatus">N/A</span></div>
-        <div class="row"><span>Đèn báo nguồn</span><span class="kv" id="ledStatus">N/A</span></div>
-      </div>
-    </div>
+  <div class="split">
+    <section class="panel">
+      <div class="ph"><h2><svg class="ic"><use href="#i-gauge"/></svg>MPPT &amp; bám nắng</h2></div>
+      <dl class="dl">
+        <div><dt>Trạng thái MPPT</dt><dd id="msMppt">—</dd></div>
+        <div><dt>Trạng thái bám nắng</dt><dd id="msTrack">—</dd></div>
+        <div><dt>Công suất PV hiện tại</dt><dd class="num" id="msMpptP">—</dd></div>
+        <div><dt>Sai lệch quang học</dt><dd class="num" id="msErr">—</dd></div>
+        <div><dt>Chế độ</dt><dd id="msMode">—</dd></div>
+        <div><dt>Ban đêm (Night)</dt><dd id="msNight">—</dd></div>
+      </dl>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2><svg class="ic"><use href="#i-temp"/></svg>Tủ điện</h2></div>
+      <dl class="dl">
+        <div><dt>Nhiệt độ (DHT11)</dt><dd class="num" id="dhtT">—</dd></div>
+        <div><dt>Độ ẩm (DHT11)</dt><dd class="num" id="dhtH">—</dd></div>
+        <div><dt>Quạt tản nhiệt</dt><dd><span class="status-na" id="fanStatus">—</span></dd></div>
+        <div><dt>Đèn báo nguồn</dt><dd id="ledStatus">—</dd></div>
+      </dl>
+    </section>
   </div>
 </section>
 
-<!-- ======================= BIỂU ĐỒ ======================= -->
+<!-- ======================= BIỂU ĐỒ & BÁO CÁO ======================= -->
 <section class="page" id="page-graph">
-  <div class="page-head"><h2>Biểu đồ &amp; Phân tích</h2><p>Trực tiếp: các mẫu gần nhất. Lịch sử 1 giờ → 30 ngày lấy từ Cloud Backend. Rê chuột (hoặc chạm) lên biểu đồ để xem giá trị. Khi cảm biến không khả dụng, biểu đồ để trống thay vì vẽ số 0.</p></div>
-  <div class="card section chartbox">
+  <div class="page-head"><h2>Biểu đồ &amp; báo cáo</h2><p>Trực tiếp: các mẫu gần nhất. Lịch sử từ 1 giờ đến 30 ngày lấy từ Cloud. Rê chuột hoặc chạm lên biểu đồ để xem giá trị; khi cảm biến không khả dụng, biểu đồ để trống thay vì vẽ số 0.</p></div>
+  <section class="panel chart-main">
     <div class="chart-top">
-      <div class="section-title" style="margin:0;border:0;padding:0"><svg class="ic"><use href="#i-chart"/></svg> <span id="chartTitle">Công suất theo thời gian thực (W)</span></div>
-      <div class="pillgroup">
-        <div class="chart-pills">
-          <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất (W)</button>
-          <button class="cpill" id="mpillV" onclick="setChartMetric('volt')">Điện áp (V)</button>
-          <button class="cpill" id="mpillI" onclick="setChartMetric('curr')">Dòng điện (A)</button>
-        </div>
-        <div class="chart-pills">
-          <button class="cpill" id="cpillPV" onclick="setChartChannel('pv')">Tấm pin PV</button>
-          <button class="cpill" id="cpillBat" onclick="setChartChannel('bat')">Ắc quy</button>
-          <button class="cpill active" id="cpillBoth" onclick="setChartChannel('both')">Cả hai</button>
-        </div>
-        <div class="chart-pills only-cloud">
-          <button class="cpill active" id="rpillLive" onclick="setChartRange('live')">Trực tiếp</button>
-          <button class="cpill" id="rpill1h" onclick="setChartRange('1h')">1 giờ</button>
-          <button class="cpill" id="rpill6h" onclick="setChartRange('6h')">6 giờ</button>
-          <button class="cpill" id="rpill24h" onclick="setChartRange('24h')">24 giờ</button>
-          <button class="cpill" id="rpill7d" onclick="setChartRange('7d')">7 ngày</button>
-          <button class="cpill" id="rpill30d" onclick="setChartRange('30d')">30 ngày</button>
-        </div>
+      <h2 class="chart-title" id="chartTitle">Công suất thời gian thực (W)</h2>
+      <div class="legend"><span id="legPV" class="lg pv">Công suất PV (W)</span><span id="legBat" class="lg bat batDot">Công suất ắc quy (W)</span></div>
+    </div>
+    <div class="toolbar">
+      <div class="segc" role="group" aria-label="Đại lượng">
+        <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất</button>
+        <button class="cpill" id="mpillV" onclick="setChartMetric('volt')">Điện áp</button>
+        <button class="cpill" id="mpillI" onclick="setChartMetric('curr')">Dòng điện</button>
+      </div>
+      <div class="segc" role="group" aria-label="Kênh">
+        <button class="cpill" id="cpillPV" onclick="setChartChannel('pv')">Tấm pin</button>
+        <button class="cpill" id="cpillBat" onclick="setChartChannel('bat')">Ắc quy</button>
+        <button class="cpill active" id="cpillBoth" onclick="setChartChannel('both')">Cả hai</button>
+      </div>
+      <div class="segc only-cloud" role="group" aria-label="Khoảng thời gian">
+        <button class="cpill active" id="rpillLive" onclick="setChartRange('live')">Trực tiếp</button>
+        <button class="cpill" id="rpill1h" onclick="setChartRange('1h')">1 giờ</button>
+        <button class="cpill" id="rpill6h" onclick="setChartRange('6h')">6 giờ</button>
+        <button class="cpill" id="rpill24h" onclick="setChartRange('24h')">24 giờ</button>
+        <button class="cpill" id="rpill7d" onclick="setChartRange('7d')">7 ngày</button>
+        <button class="cpill" id="rpill30d" onclick="setChartRange('30d')">30 ngày</button>
       </div>
     </div>
-    <div class="legend">
-      <span id="legPV">Công suất PV (W)</span>
-      <span id="legBat" class="batDot">Công suất Ắc quy (W)</span>
-    </div>
     <canvas id="chart"></canvas>
-  </div>
+  </section>
 
-  <div class="card section only-cloud" id="rptCard" style="margin-top:14px">
-    <div class="section-title"><svg class="ic"><use href="#i-log"/></svg> Xuất báo cáo Excel (V · A · W) <span class="sub">PV và ắc quy • mỗi ngày (hoặc tháng) một sheet riêng có thống kê và biểu đồ • từ dữ liệu đo thực tế đã lưu trên Cloud</span></div>
-    <div class="rpt-quick" id="rptRanges" role="radiogroup" aria-label="Khoảng thời gian báo cáo"><span>Khoảng thời gian:</span>
-      <button class="cpill active" type="button" role="radio" aria-checked="true" data-r="7d" onclick="rptPick('7d')">7 ngày</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1m" onclick="rptPick('1m')">1 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="6m" onclick="rptPick('6m')">6 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1y" onclick="rptPick('1y')">1 năm</button>
+  <section class="panel report only-cloud" id="rptCard">
+    <div class="rp-intro">
+      <h2><svg class="ic"><use href="#i-down"/></svg>Xuất báo cáo Excel</h2>
+      <p>Điện áp, dòng điện, công suất của tấm pin và ắc quy. Mỗi ngày (hoặc tháng) một sheet có bảng thống kê và biểu đồ, lấy từ dữ liệu đo thực tế đã lưu trên Cloud.</p>
+      <div class="segc rpt-quick" id="rptRanges" role="radiogroup" aria-label="Khoảng thời gian báo cáo">
+        <button class="cpill active" type="button" role="radio" aria-checked="true" data-r="7d" onclick="rptPick('7d')">7 ngày</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1m" onclick="rptPick('1m')">1 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="6m" onclick="rptPick('6m')">6 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1y" onclick="rptPick('1y')">1 năm</button>
+      </div>
     </div>
-    <div class="rpt-prev" id="rptPrev"><div class="rpt-st" id="rptSt">Đang kiểm tra dữ liệu...</div>
-      <div class="rpt-kv"><div>Ngày bắt đầu<b class="num" id="rptFrom">--</b></div><div>Ngày kết thúc<b class="num" id="rptTo">--</b></div><div>Tổng số mẫu đo<b class="num" id="rptN">--</b></div><div>Điện áp PV trung bình<b class="num" id="rptPv">--</b></div><div>Điện áp ắc quy trung bình<b class="num" id="rptBat">--</b></div></div>
+    <div class="rp-prev" id="rptPrev">
+      <div class="rpt-st" id="rptSt">Đang kiểm tra dữ liệu...</div>
+      <dl class="rp-kv">
+        <div><dt>Từ ngày</dt><dd class="num" id="rptFrom">--</dd></div>
+        <div><dt>Đến ngày</dt><dd class="num" id="rptTo">--</dd></div>
+        <div><dt>Số mẫu đo</dt><dd class="num" id="rptN">--</dd></div>
+        <div><dt>PV trung bình</dt><dd class="num" id="rptPv">--</dd></div>
+        <div><dt>Ắc quy trung bình</dt><dd class="num" id="rptBat">--</dd></div>
+      </dl>
+      <div class="rp-act"><button class="btn solid" id="btnExport" onclick="downloadReport()"><svg class="ic"><use href="#i-down"/></svg>Xuất báo cáo Excel</button><span class="rp-msg" id="rptMsg"></span></div>
     </div>
-    <div class="inline" style="margin-top:14px;flex-wrap:wrap"><button class="btn solid wide" id="btnExport" onclick="downloadReport()">Xuất báo cáo Excel</button><span id="rptMsg" style="font-size:12px;color:var(--muted)"></span></div>
-  </div>
-  <div class="note only-esp32" style="margin-top:14px">Dữ liệu lịch sử dài hạn và xuất báo cáo Excel nằm trên Cloud. Ở chế độ LOCAL biểu đồ hiển thị các mẫu gần nhất (1 mẫu/giây).</div>
+  </section>
+  <div class="note only-esp32">Dữ liệu lịch sử dài hạn và xuất báo cáo Excel nằm trên Cloud.</div>
 </section>
 
 <!-- ======================= BÁM NẮNG ======================= -->
 <section class="page" id="page-tracking">
-  <div class="page-head"><h2>Bám nắng</h2><p>Sơ đồ 4 cảm biến LDR (module LM393), giám sát hai động cơ và khu vực điều khiển. Giá trị ADC hiển thị theo thang 0–1000 của firmware.</p></div>
+  <div class="page-head row-head"><div><h2>Bám nắng</h2><p>Bốn cảm biến LDR (thang 0–1000 của firmware), hai trục động cơ và các lệnh điều khiển.</p></div>
+    <div class="head-act"><span class="hk">Chế độ</span><button class="badge-btn ctl" id="modeBtn" onclick="toggleAuto()">AUTO TRACKING</button><button class="btn stop ctl safety" onclick="cmd('stop')">Dừng động cơ</button></div>
+  </div>
 
-  <div class="grid g2" style="grid-template-columns:1.25fr 1fr">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-sun"/></svg> Sơ đồ tấm pin &amp; 4 cảm biến LDR <span class="sub" id="trackStatDash2">--</span></div>
-      <div class="ldr-compass" style="margin-top:10px">
+  <div class="track-top">
+    <section class="panel">
+      <div class="ph"><h2>Cảm biến ánh sáng</h2><span class="ph-sub" id="trackStatDash2">--</span></div>
+      <div class="ldr-compass">
         <div class="cross-line h"></div><div class="cross-line v"></div>
-        <div class="axis-cap t">PHÍA TRÊN</div><div class="axis-cap b">PHÍA DƯỚI</div>
-        <div class="ldr-quad tl"><div class="ldr-tag">TOP LEFT · GPIO 36</div><div class="ldr-val num" id="ldrTL">N/A</div><div class="ldr-bar"><i id="bTL"></i></div><div class="ldr-st" id="stTL">--</div></div>
-        <div class="ldr-quad tr"><div class="ldr-tag">TOP RIGHT · GPIO 39</div><div class="ldr-val num" id="ldrTR">N/A</div><div class="ldr-bar"><i id="bTR"></i></div><div class="ldr-st" id="stTR">--</div></div>
-        <div class="ldr-quad bl"><div class="ldr-tag">BOTTOM LEFT · GPIO 32</div><div class="ldr-val num" id="ldrBL">N/A</div><div class="ldr-bar"><i id="bBL"></i></div><div class="ldr-st" id="stBL">--</div></div>
-        <div class="ldr-quad br"><div class="ldr-tag">BOTTOM RIGHT · GPIO 33</div><div class="ldr-val num" id="ldrBR">N/A</div><div class="ldr-bar"><i id="bBR"></i></div><div class="ldr-st" id="stBR">--</div></div>
+        <div class="axis-cap t">Phía trên</div><div class="axis-cap b">Phía dưới</div>
+        <div class="ldr-quad tl"><div class="ldr-tag">Trên trái · GPIO 36</div><div class="ldr-val num" id="ldrTL">—</div><div class="ldr-bar"><i id="bTL"></i></div><div class="ldr-st" id="stTL">--</div></div>
+        <div class="ldr-quad tr"><div class="ldr-tag">Trên phải · GPIO 39</div><div class="ldr-val num" id="ldrTR">—</div><div class="ldr-bar"><i id="bTR"></i></div><div class="ldr-st" id="stTR">--</div></div>
+        <div class="ldr-quad bl"><div class="ldr-tag">Dưới trái · GPIO 32</div><div class="ldr-val num" id="ldrBL">—</div><div class="ldr-bar"><i id="bBL"></i></div><div class="ldr-st" id="stBL">--</div></div>
+        <div class="ldr-quad br"><div class="ldr-tag">Dưới phải · GPIO 33</div><div class="ldr-val num" id="ldrBR">—</div><div class="ldr-bar"><i id="bBR"></i></div><div class="ldr-st" id="stBR">--</div></div>
         <div class="sun-center" id="sunCenter"><svg class="ic"><use href="#i-sun"/></svg></div>
       </div>
-      <div class="note" style="margin-top:10px">Điểm tròn ở giữa thể hiện hướng lệch của ánh sáng (dịch về phía cảm biến sáng hơn). Về giữa tâm = đã cân bằng.</div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-act"/></svg> Phân tích sai lệch</div>
-      <div class="rows">
-        <div class="row"><span>Trạng thái bám</span><span class="status-ok" id="trackStat">N/A</span></div>
-        <div class="row"><span>Chế độ vận hành</span><span class="kv" id="modeInfoT">N/A</span></div>
-        <div class="row"><span>Chênh lệch ngang (&Delta;H = R &minus; L)</span><span class="stat-num num" id="dH">N/A</span></div>
-        <div class="row"><span>Chênh lệch dọc (&Delta;V = T &minus; B)</span><span class="stat-num num" id="dV">N/A</span></div>
-        <div class="row"><span>Sai số bám (Tracking Error)</span><span class="stat-num num" id="trkErr">N/A</span></div>
-        <div class="row"><span>Cường độ sáng trung bình</span><span class="stat-num num" id="avgL">N/A</span></div>
-        <div class="row"><span>ADC thô (TL / TR / BL / BR)</span><span class="kv num" id="ldrRaw">N/A</span></div>
-        <div class="row"><span>Trạng thái cảm biến</span><span class="kv" id="ldrSens">N/A</span></div>
-        <div class="row"><span>Vùng chết sai số (Tolerance)</span><span class="kv num">&plusmn;80</span></div>
-      </div>
-    </div>
+      <p class="hint">Chấm ở giữa dịch về phía cảm biến sáng hơn; nằm giữa tâm là đã cân bằng.</p>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Phân tích sai lệch</h2></div>
+      <dl class="dl">
+        <div><dt>Trạng thái bám</dt><dd><span class="status-ok" id="trackStat">—</span></dd></div>
+        <div><dt>Chế độ vận hành</dt><dd id="modeInfoT">—</dd></div>
+        <div><dt>Chênh lệch ngang (ΔH = R − L)</dt><dd><span class="stat-num num" id="dH">—</span></dd></div>
+        <div><dt>Chênh lệch dọc (ΔV = T − B)</dt><dd><span class="stat-num num" id="dV">—</span></dd></div>
+        <div><dt>Sai số bám</dt><dd><span class="stat-num num" id="trkErr">—</span></dd></div>
+        <div><dt>Cường độ sáng trung bình</dt><dd><span class="stat-num num" id="avgL">—</span></dd></div>
+        <div><dt>ADC thô (TL / TR / BL / BR)</dt><dd class="num" id="ldrRaw">—</dd></div>
+        <div><dt>Trạng thái cảm biến</dt><dd><span class="kv" id="ldrSens">—</span></dd></div>
+        <div><dt>Vùng chết sai số</dt><dd class="num">±80</dd></div>
+      </dl>
+    </section>
   </div>
 
-  <div class="card section">
-    <div class="section-title"><svg class="ic"><use href="#i-target"/></svg> Giám sát &amp; điều khiển động cơ <span class="sub only-esp32">Nhấn: ±10° • Giữ: quay liên tục</span><span class="sub only-cloud">CLOUD: chỉ bấm từng bước ±10°</span></div>
-    <div class="controls">
+  <section class="panel motors">
+    <div class="ph"><h2>Động cơ</h2><span class="ph-sub only-esp32">Nhấn: ±10° · Giữ: quay liên tục</span><span class="ph-sub only-cloud">Qua Cloud mỗi lần bấm quay đúng 10°</span></div>
+    <div class="motor-row">
       <div class="motor">
-        <h3>Motor 1 · Trục đứng (X) <span class="motor-state" id="m1x">STOP</span></h3>
-        <div class="angle-big">GÓC HIỆN TẠI <b class="n num" id="a1x">--.-</b><b style="font-size:16px">°</b></div>
-        <div class="mgrid"><div>HƯỚNG QUAY<b id="dir1">--</b></div><div>TỐC ĐỘ<b id="spd1">--</b></div><div>DRIVER<b id="drv1">--</b></div></div>
-        <div class="buttons">
-          <button class="btn primary ctl" id="btnM1L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
-          <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
-          <button class="btn primary ctl" id="btnM1R" title="Nhấn 1 lần: +10° | Giữ: Quay nhanh liên tục">10° ▶</button>
+        <div class="mt-head"><span>Motor 1 · trục đứng</span><span class="motor-state" id="m1x">STOP</span></div>
+        <div class="mt-angle num"><b id="a1x">--.-</b><small>°</small></div>
+        <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir1">--</dd></div><div><dt>Tốc độ</dt><dd id="spd1">--</dd></div><div><dt>Driver</dt><dd id="drv1">--</dd></div></dl>
+        <div class="mt-btns">
+          <button class="btn primary ctl" id="btnM1L" title="Nhấn 1 lần: −10°"><svg class="ic"><use href="#i-left"/></svg>10°</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')">Dừng</button>
+          <button class="btn primary ctl" id="btnM1R" title="Nhấn 1 lần: +10°">10°<svg class="ic"><use href="#i-right"/></svg></button>
         </div>
       </div>
       <div class="motor">
-        <h3>Motor 2 · Trục ngang (Y) <span class="motor-state" id="m2x">STOP</span></h3>
-        <div class="angle-big">GÓC HIỆN TẠI <b class="n num" id="a2x">--.-</b><b style="font-size:16px">°</b></div>
-        <div class="mgrid"><div>HƯỚNG QUAY<b id="dir2">--</b></div><div>TỐC ĐỘ<b id="spd2">--</b></div><div>DRIVER<b id="drv2">--</b></div></div>
-        <div class="buttons">
-          <button class="btn primary ctl" id="btnM2L" title="Nhấn 1 lần: -10° | Giữ: Quay nhanh liên tục">◀ 10°</button>
-          <button class="btn stop ctl safety" onclick="cmd('stop')">STOP</button>
-          <button class="btn primary ctl" id="btnM2R" title="Nhấn 1 lần: +10° | Giữ: Quay nhanh liên tục">10° ▶</button>
+        <div class="mt-head"><span>Motor 2 · trục ngang</span><span class="motor-state" id="m2x">STOP</span></div>
+        <div class="mt-angle num"><b id="a2x">--.-</b><small>°</small></div>
+        <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir2">--</dd></div><div><dt>Tốc độ</dt><dd id="spd2">--</dd></div><div><dt>Driver</dt><dd id="drv2">--</dd></div></dl>
+        <div class="mt-btns">
+          <button class="btn primary ctl" id="btnM2L" title="Nhấn 1 lần: −10°"><svg class="ic"><use href="#i-left"/></svg>10°</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')">Dừng</button>
+          <button class="btn primary ctl" id="btnM2R" title="Nhấn 1 lần: +10°">10°<svg class="ic"><use href="#i-right"/></svg></button>
         </div>
       </div>
     </div>
-    <div class="cloud-hint">Điều khiển qua Internet: chức năng "giữ để quay liên tục" bị tắt để đảm bảo an toàn — mỗi lần bấm quay đúng 10°.</div>
+    <div class="cloud-hint">Điều khiển qua Internet: chức năng "giữ để quay liên tục" bị tắt để đảm bảo an toàn.</div>
     <div class="speedbar">
-      <div class="inline"><b style="font-size:12.5px">Tốc độ xoay động cơ</b><span class="speed-badge" id="speedBadge">MỨC 3 (100% - CHUẨN)</span></div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <button class="btn sm ctl" onclick="cmd('speed_down')" title="Giảm tốc độ">◀ -</button>
-        <button class="badge-btn spd ctl" id="spdBtn1" onclick="setSpeed(1)">50%</button>
-        <button class="badge-btn spd ctl" id="spdBtn2" onclick="setSpeed(2)">75%</button>
-        <button class="badge-btn spd ctl" id="spdBtn3" onclick="setSpeed(3)">100%</button>
-        <button class="badge-btn spd ctl" id="spdBtn4" onclick="setSpeed(4)">150%</button>
-        <button class="badge-btn spd ctl" id="spdBtn5" onclick="setSpeed(5)">200%</button>
-        <button class="btn sm ctl" onclick="cmd('speed_up')" title="Tăng tốc độ">+ ▶</button>
+      <div class="sp-k">Tốc độ xoay <span class="speed-badge" id="speedBadge">--</span></div>
+      <div class="sp-ctl">
+        <button class="btn sm ctl" onclick="cmd('speed_down')" title="Giảm tốc độ" aria-label="Giảm tốc độ"><svg class="ic"><use href="#i-left"/></svg></button>
+        <div class="segc"><button class="badge-btn spd ctl" id="spdBtn1" onclick="setSpeed(1)">50%</button><button class="badge-btn spd ctl" id="spdBtn2" onclick="setSpeed(2)">75%</button><button class="badge-btn spd ctl" id="spdBtn3" onclick="setSpeed(3)">100%</button><button class="badge-btn spd ctl" id="spdBtn4" onclick="setSpeed(4)">150%</button><button class="badge-btn spd ctl" id="spdBtn5" onclick="setSpeed(5)">200%</button></div>
+        <button class="btn sm ctl" onclick="cmd('speed_up')" title="Tăng tốc độ" aria-label="Tăng tốc độ"><svg class="ic"><use href="#i-right"/></svg></button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="card section" style="margin-top:14px">
-    <div class="section-title"><svg class="ic"><use href="#i-gear"/></svg> Khu vực điều khiển bám nắng</div>
-    <div class="rows">
-      <div class="row"><span>Chế độ bám hướng (AUTO / MANUAL)</span><button class="badge-btn ctl" id="modeBtn" onclick="toggleAuto()">AUTO TRACKING</button></div>
-      <div class="row"><span>Dừng toàn bộ động cơ</span><button class="btn sm stop ctl safety" onclick="cmd('stop')">STOP</button></div>
-      <div class="row"><span>Hiệu chuẩn cân bằng LDR (đặt cả 4 cảm biến ở cùng một độ sáng, không bão hòa)</span><button class="badge-btn cal ctl" onclick="cmd('cal_zero')">CALIBRATE ZERO</button></div>
-      <div class="row"><span>Gốc cơ khí (đặt vị trí hiện tại = 90°)</span><button class="badge-btn manual ctl" onclick="cmd('set_home')">SET HOME (90°)</button></div>
+  <section class="panel">
+    <div class="ph"><h2>Hiệu chuẩn</h2></div>
+    <div class="set-list">
+      <div class="set-row"><div class="sr-t">Cân bằng 4 cảm biến LDR<small>Đặt cả 4 cảm biến ở cùng độ sáng, không bão hòa, rồi bấm.</small></div><button class="btn ctl" onclick="cmd('cal_zero')">Hiệu chuẩn cân bằng</button></div>
+      <div class="set-row"><div class="sr-t">Gốc cơ khí<small>Lấy vị trí hiện tại làm 90°.</small></div><button class="btn ctl" onclick="cmd('set_home')">Đặt gốc 90°</button></div>
     </div>
-    <div class="note">Dừng khẩn cấp (E-STOP) luôn nằm ở góc phải thanh tiêu đề trên mọi trang.</div>
-  </div>
+  </section>
 </section>
 
-<!-- ======================= THIẾT BỊ & HỆ THỐNG ======================= -->
+<!-- ======================= THIẾT BỊ ======================= -->
 <section class="page" id="page-device">
-  <div class="page-head"><h2>Thiết bị &amp; Hệ thống</h2><p>Bảng giám sát phần cứng. Chỉ hiển thị ONLINE khi đã xác nhận được từ dữ liệu thực; phần ESP32 không đọc được phản hồi thì ghi rõ là "không xác minh".</p></div>
-  <div class="card section" style="margin-bottom:14px">
-    <div class="section-title"><svg class="ic"><use href="#i-cpu"/></svg> Bảng giám sát phần cứng <span class="sub">Cập nhật: <span class="upd">N/A</span></span></div>
+  <div class="page-head"><h2>Thiết bị</h2><p>Chỉ hiển thị ONLINE khi xác nhận được từ dữ liệu thực. Thành phần ESP32 không đọc được phản hồi được ghi rõ là không xác minh. Cập nhật <span class="upd">N/A</span>.</p></div>
+  <section class="panel table-panel">
     <div class="scroll">
     <table class="tbl">
-      <thead><tr><th style="width:30%">Thành phần</th><th style="width:22%">Trạng thái</th><th>Chi tiết</th></tr></thead>
+      <thead><tr><th>Thành phần</th><th>Trạng thái</th><th>Chi tiết</th></tr></thead>
       <tbody>
-        <tr><td class="k">ESP32 Controller<small>Vi điều khiển chính</small></td><td><span class="status-na" id="espStatus">N/A</span></td><td class="d">IP trong mạng AP: <span class="num" id="ip">192.168.4.1</span></td></tr>
-        <tr><td class="k">INA219 PV<small>I2C 0x40 · đo pin mặt trời</small></td><td><span id="pvStatus" class="status-na">N/A</span></td><td class="d" id="pvStatusD">--</td></tr>
-        <tr><td class="k">INA219 Ắc quy<small>I2C 0x41 · đo ắc quy</small></td><td><span id="batStatus" class="status-na">N/A</span></td><td class="d" id="batStatusD">--</td></tr>
-        <tr><td class="k">Driver động cơ 1 (TMC2208)<small>Trục đứng · STEP/DIR</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
-        <tr><td class="k">Driver động cơ 2 (TMC2208)<small>Trục ngang · STEP/DIR</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
-        <tr><td class="k">Giao tiếp I2C<small>SDA 21 · SCL 22</small></td><td><span class="status-na" id="i2cStat">N/A</span></td><td class="d">Địa chỉ tìm thấy: <b class="num" id="i2cFound">--</b> <button class="badge-btn ctl" id="btnI2cScan" style="margin-left:8px">QUÉT I2C</button></td></tr>
-        <tr><td class="k">Wi-Fi AP<small>Điểm phát của ESP32</small></td><td><span class="status-na" id="apStat">N/A</span></td><td class="d">SSID: SOLAR_TRACKER (192.168.4.1)</td></tr>
-        <tr><td class="k">Wi-Fi Router (STA)<small>Kết nối Internet</small></td><td><span class="status-na" id="staStat">N/A</span></td><td class="d">IP: <span class="num" id="staIp">N/A</span> • Sóng: <span class="num" id="rssi">N/A</span></td></tr>
-        <tr><td class="k">Cloud (MQTT/TLS)<small>Tự động kết nối</small></td><td><span class="status-na" id="cloudStat">N/A</span></td><td class="d only-esp32">Mã thiết bị: <span class="num" id="devIdShow">N/A</span></td></tr>
-        <tr><td class="k">Quạt tản nhiệt<small>Relay GPIO 12</small></td><td><span class="status-na" id="fanStatus2">N/A</span></td><td class="d">Ngưỡng bật: <span class="num" id="fanThrInfo">N/A</span> • <span style="display:inline-flex;gap:6px;flex-wrap:wrap"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></td></tr>
-        <tr><td class="k">Tấm pin mặt trời<small>Nguồn năng lượng</small></td><td><span class="status-na" id="solarState">N/A</span></td><td class="d">Phụ thuộc INA219 PV</td></tr>
+        <tr><td class="k">ESP32 Controller<small>Vi điều khiển chính</small></td><td><span class="status-na" id="espStatus">N/A</span></td><td class="d">IP mạng AP <span class="num" id="ip">192.168.4.1</span></td></tr>
+        <tr><td class="k">INA219 PV<small>I2C 0x40 · đo tấm pin</small></td><td><span id="pvStatus" class="status-na">N/A</span></td><td class="d" id="pvStatusD">--</td></tr>
+        <tr><td class="k">INA219 ắc quy<small>I2C 0x41 · đo ắc quy</small></td><td><span id="batStatus" class="status-na">N/A</span></td><td class="d" id="batStatusD">--</td></tr>
+        <tr><td class="k">Driver động cơ 1<small>TMC2208 · trục đứng</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
+        <tr><td class="k">Driver động cơ 2<small>TMC2208 · trục ngang</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
+        <tr><td class="k">Bus I2C<small>SDA 21 · SCL 22</small></td><td><span class="status-na" id="i2cStat">N/A</span></td><td class="d">Địa chỉ tìm thấy <b class="num" id="i2cFound">--</b><button class="btn sm ctl" id="btnI2cScan">Quét I2C</button></td></tr>
+        <tr><td class="k">Wi-Fi AP<small>Điểm phát của ESP32</small></td><td><span class="status-na" id="apStat">N/A</span></td><td class="d">SOLAR_TRACKER · 192.168.4.1</td></tr>
+        <tr><td class="k">Wi-Fi Router<small>Kết nối Internet</small></td><td><span class="status-na" id="staStat">N/A</span></td><td class="d">IP <span class="num" id="staIp">N/A</span> · sóng <span class="num" id="rssi">N/A</span></td></tr>
+        <tr><td class="k">Cloud<small>MQTT/TLS, tự kết nối</small></td><td><span class="status-na" id="cloudStat">N/A</span></td><td class="d"><span class="only-esp32">Mã thiết bị <span class="num" id="devIdShow">N/A</span></span></td></tr>
+        <tr><td class="k">Quạt tản nhiệt<small>Relay GPIO 12</small></td><td><span class="status-na" id="fanStatus2">N/A</span></td><td class="d">Ngưỡng bật <span class="num" id="fanThrInfo">N/A</span></td></tr>
+        <tr><td class="k">Tấm pin mặt trời<small>Nguồn năng lượng</small></td><td><span class="status-na" id="solarState">N/A</span></td><td class="d">Theo cảm biến INA219 PV</td></tr>
       </tbody>
     </table>
     </div>
-  </div>
-
-  <div class="grid g2">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-wifi"/></svg> Liên kết</div>
-      <div class="rows">
-        <div class="row"><span>Trình duyệt ↔ thiết bị</span><span class="chip" id="chipLink"><i></i><b>--</b></span></div>
-        <div class="row"><span>Thiết bị ↔ Cloud</span><span class="chip" id="chipCloud"><i></i><b>--</b></span></div>
-        <div class="row"><span>Nguồn đang giữ quyền điều khiển (30 s)</span><span class="kv" id="ownerInfo">N/A</span></div>
-        <div class="row"><span>Chế độ bám</span><span class="kv" id="modeInfo">N/A</span></div>
-        <div class="row"><span>E-STOP</span><span class="kv" id="estopInfo">N/A</span></div>
-      </div>
-      <div class="note">Khi có thao tác tại chỗ (web LOCAL, màn TFT), lệnh từ Cloud tạm bị từ chối trong 30 giây để tránh xung đột. STOP và E-STOP luôn được chấp nhận.</div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> Môi trường</div>
-      <div class="rows">
-        <div class="row"><span>Nhiệt độ trong tủ (DHT11)</span><span class="kv num" id="dhtT2">N/A</span></div>
-        <div class="row"><span>Nhiệt độ ngoài trời</span><span class="kv num" id="outT">N/A</span></div>
-        <div class="row"><span>Độ ẩm ngoài trời</span><span class="kv num" id="outH">N/A</span></div>
-        <div class="row"><span>Mặt trời mọc / lặn</span><span class="kv num" id="sunTimes">N/A</span></div>
-        <div class="row"><span>Nguồn thời tiết (Open-Meteo)</span><span class="kv" id="wxStatus">N/A</span></div>
-      </div>
-    </div>
+  </section>
+  <div class="split">
+    <section class="panel">
+      <div class="ph"><h2><svg class="ic"><use href="#i-wifi"/></svg>Liên kết</h2></div>
+      <dl class="dl">
+        <div><dt>Trình duyệt ↔ thiết bị</dt><dd><span class="chip" id="chipLink"><i></i><b>--</b></span></dd></div>
+        <div><dt>Thiết bị ↔ Cloud</dt><dd><span class="chip" id="chipCloud"><i></i><b>--</b></span></dd></div>
+        <div><dt>Đang giữ quyền điều khiển</dt><dd id="ownerInfo">—</dd></div>
+        <div><dt>Chế độ bám</dt><dd id="modeInfo">—</dd></div>
+        <div><dt>Dừng khẩn cấp</dt><dd id="estopInfo">—</dd></div>
+      </dl>
+      <p class="hint">Khi có thao tác tại chỗ (web LOCAL, màn TFT), lệnh từ Cloud tạm bị từ chối 30 giây để tránh xung đột. Lệnh dừng luôn được chấp nhận.</p>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2><svg class="ic"><use href="#i-temp"/></svg>Môi trường</h2></div>
+      <dl class="dl">
+        <div><dt>Nhiệt độ trong tủ</dt><dd class="num" id="dhtT2">—</dd></div>
+        <div><dt>Nhiệt độ ngoài trời</dt><dd class="num" id="outT">—</dd></div>
+        <div><dt>Độ ẩm ngoài trời</dt><dd class="num" id="outH">—</dd></div>
+        <div><dt>Mặt trời mọc / lặn</dt><dd class="num" id="sunTimes">—</dd></div>
+        <div><dt>Nguồn thời tiết</dt><dd id="wxStatus">—</dd></div>
+      </dl>
+    </section>
   </div>
 </section>
 
 <!-- ======================= CÀI ĐẶT ======================= -->
 <section class="page" id="page-setting">
-  <div class="page-head"><h2>Cài đặt</h2><p>Cấu hình bám nắng, hiệu chuẩn, ban đêm, quạt, màn hình, mạng và giao diện. Mỗi thao tác lưu đều có thông báo thành công hoặc thất bại.</p></div>
+  <div class="page-head"><h2>Cài đặt</h2><p>Mỗi thay đổi được gửi tới thiết bị và có thông báo kết quả.</p></div>
+  <div class="settings">
+    <section class="set-group">
+      <h3>Bám nắng &amp; hiệu chuẩn</h3>
+      <div class="panel set-list">
+        <div class="set-row"><div class="sr-t">Tốc độ xoay động cơ<small>Đổi ở trang Bám nắng.</small></div><span class="sr-v" id="setSpeed">—</span></div>
+        <div class="set-row"><div class="sr-t">Chế độ<small>AUTO bám theo cảm biến, MANUAL điều khiển tay.</small></div><span class="sr-v" id="setMode">—</span></div>
+        <div class="set-row"><div class="sr-t">Vùng chết sai số<small>Ngưỡng thuật toán nằm trong firmware.</small></div><span class="sr-v num">±80</span></div>
+        <div class="set-row"><div class="sr-t">Offset LDR<small>TL / TR / BL / BR</small></div><span class="sr-v num" id="offsets">—</span></div>
+        <div class="set-row"><div class="sr-t">Hệ số cân bằng<small>TL / TR / BL / BR</small></div><span class="sr-v num" id="calGains">—</span></div>
+        <div class="set-row"><div class="sr-t">Kết quả cân bằng gần nhất</div><span class="sr-v" id="calMsg">--</span></div>
+        <div class="set-row"><div class="sr-t">Hiệu chuẩn</div><div class="sr-act"><button class="btn sm ctl" onclick="cmd('set_home')">Đặt gốc 90°</button><button class="btn sm ctl" onclick="cmd('cal_zero')">Cân bằng LDR</button><button class="btn sm ctl danger" onclick="cmd('reset_cal')">Xóa hiệu chuẩn</button></div></div>
+      </div>
+    </section>
 
-  <div class="group-cap">Bám nắng &amp; hiệu chuẩn</div>
-  <div class="grid g2">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-target"/></svg> Cấu hình bám nắng</div>
-      <div class="rows">
-        <div class="row"><span>Tốc độ xoay động cơ</span><span class="kv" id="setSpeed">N/A</span></div>
-        <div class="row"><span>Vùng chết sai số (Tolerance)</span><span class="kv num">&plusmn;80</span></div>
-        <div class="row"><span>Chế độ</span><span class="kv" id="setMode">N/A</span></div>
+    <section class="set-group">
+      <h3>Ban đêm</h3>
+      <div class="panel set-list">
+        <div class="set-row"><div class="sr-t">Trạng thái</div><span class="status-ok" id="nightState">—</span></div>
+        <div class="set-row"><div class="sr-t">Điện áp PV hiện tại<small>Tự vào ban đêm sau giờ mặt trời lặn và khi PV dưới 5 V.</small></div><span class="sr-v num" id="nightPv">—</span></div>
+        <div class="set-row"><div class="sr-t">Chế độ ban đêm</div><div class="segc"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">Tự động</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">Bật</button><button class="btn sm ctl nightmode" data-m="2" onclick="cmd('night_off')">Tắt</button></div></div>
       </div>
-      <div class="note">Điều chỉnh tốc độ và AUTO/MANUAL ở trang Bám nắng. Các ngưỡng thuật toán nằm trong firmware.</div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-gauge"/></svg> Hiệu chuẩn &amp; vị trí gốc (Home)</div>
-      <div class="btnrow">
-        <button class="btn wide ctl" onclick="cmd('set_home')">Đặt gốc (SET HOME 90°)</button>
-        <button class="btn wide ctl" onclick="cmd('cal_zero')">Hiệu chuẩn cân bằng (CAL ZERO)</button>
-        <button class="btn wide ctl" style="color:var(--red)" onclick="cmd('reset_cal')">Xóa calib về 0</button>
-      </div>
-      <div class="rows">
-        <div class="row"><span>Offset LDR (TL / TR / BL / BR)</span><span class="kv num" id="offsets">N/A</span></div>
-        <div class="row"><span>Hệ số cân bằng (TL / TR / BL / BR)</span><span class="kv num" id="calGains">N/A</span></div>
-        <div class="row"><span>Kết quả cân bằng sáng gần nhất</span><span class="kv" id="calMsg">--</span></div>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="group-cap">Ban đêm &amp; tản nhiệt</div>
-  <div class="grid g2">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-moon"/></svg> Chế độ ban đêm (Night)</div>
-      <div class="rows">
-        <div class="row"><span>Trạng thái</span><span class="status-ok" id="nightState">N/A</span></div>
-        <div class="row"><span>Tự động vào Night khi</span><span class="kv">sau giờ mặt trời lặn &amp; PV &lt; 5 V</span></div>
-        <div class="row"><span>Điện áp PV hiện tại</span><span class="kv num" id="nightPv">N/A</span></div>
-        <div class="row"><span>Chế độ Night</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">TỰ ĐỘNG</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">BẬT NIGHT</button><button class="btn sm ctl nightmode" data-m="2" onclick="cmd('night_off')">TẮT NIGHT</button></span></div>
+    <section class="set-group">
+      <h3>Quạt tản nhiệt</h3>
+      <div class="panel set-list">
+        <div class="set-row"><div class="sr-t">Ngưỡng bật quạt<small>Ở chế độ tự động, quạt bật khi nhiệt độ tủ vượt ngưỡng.</small></div><div class="stepper"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')" aria-label="Giảm ngưỡng">−</button><b id="fanThreshVal" class="num">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')" aria-label="Tăng ngưỡng">+</button></div></div>
+        <div class="set-row"><div class="sr-t">Điều khiển quạt</div><div class="segc"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">Tự động</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">Bật</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">Tắt</button></div></div>
       </div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-temp"/></svg> Quạt tản nhiệt</div>
-      <div class="rows">
-        <div class="row"><span>Ngưỡng bật quạt</span><span style="display:flex;align-items:center;gap:6px"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')">-</button><b id="fanThreshVal" class="num" style="min-width:64px;text-align:center">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')">+</button></span></div>
-        <div class="row"><span>Bật/tắt quạt chủ động</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">TỰ ĐỘNG</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">BẬT</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">TẮT</button></span></div>
+    </section>
+
+    <section class="set-group">
+      <h3>Màn hình TFT &amp; vị trí</h3>
+      <div class="panel set-list">
+        <div class="set-row only-esp32"><div class="sr-t">Tự tắt màn hình sau<small>Phút, 0 = không tắt.</small></div><div class="sr-act"><input id="tftSleepIn" type="number" min="0" max="240" step="1"><button class="btn sm ctl" onclick="setTftSleep()">Lưu</button></div></div>
+        <div class="set-row only-esp32"><div class="sr-t">Vị trí lắp đặt<small>Vĩ độ / kinh độ, dùng cho giờ mặt trời và thời tiết.</small></div><div class="sr-act"><input id="latIn" type="number" step="0.0001"><input id="lonIn" type="number" step="0.0001"><button class="btn sm ctl" onclick="setLoc()">Lưu</button></div></div>
+        <div class="set-row only-cloud"><div class="sr-t">Chỉ chỉnh tại mạng nội bộ<small>Thời gian tắt màn hình TFT và vị trí lắp đặt chỉnh ở giao diện LOCAL (Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN).</small></div></div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="group-cap">Màn hình TFT &amp; vị trí</div>
-  <div class="grid g2">
-    <div class="card section only-esp32">
-      <div class="section-title"><svg class="ic"><use href="#i-monitor"/></svg> Màn hình TFT &amp; vị trí lắp đặt</div>
-      <div class="rows">
-        <div class="row"><span>Tự tắt màn hình TFT sau (phút, 0 = không tắt)</span><span style="display:flex;gap:6px;align-items:center"><input id="tftSleepIn" type="number" min="0" max="240" step="1" style="width:72px"><button class="btn sm ctl" onclick="setTftSleep()">LƯU</button></span></div>
-        <div class="row"><span>Vị trí: vĩ độ / kinh độ (giờ mặt trời lặn &amp; thời tiết)</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><input id="latIn" type="number" step="0.0001" style="width:92px"><input id="lonIn" type="number" step="0.0001" style="width:92px"><button class="btn sm ctl" onclick="setLoc()">LƯU</button></span></div>
+    <section class="set-group">
+      <h3>Mạng &amp; Cloud</h3>
+      <div class="panel set-list">
+        <div class="set-row"><div class="sr-t">Thiết bị ↔ Cloud</div><span class="sr-v" id="setCloud">—</span></div>
+        <div class="set-row"><div class="sr-t">Mã thiết bị</div><span class="sr-v num" id="setDevId">—</span></div>
+        <div class="set-row only-esp32 col"><div class="sr-t">Wi-Fi Router<small>Lưu vào bộ nhớ ESP32. Wi-Fi SOLAR_TRACKER luôn hoạt động; mất Internet không ảnh hưởng bám nắng.</small></div>
+          <form class="form" id="wifiForm" onsubmit="saveWifi(event)">
+            <label>Tên Wi-Fi (SSID)<div class="inline"><input id="wSsid" list="wList" maxlength="32" autocomplete="off" required><button type="button" class="btn sm" onclick="scanWifi()" id="scanBtn">Quét</button></div><datalist id="wList"></datalist></label>
+            <label>Mật khẩu<input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
+            <div class="inline"><button class="btn solid" type="submit">Lưu và kết nối</button><button class="btn" type="button" onclick="clearWifi()">Xóa cấu hình</button></div>
+          </form>
+        </div>
       </div>
-    </div>
-    <div class="card section only-cloud">
-      <div class="section-title"><svg class="ic"><use href="#i-monitor"/></svg> Màn hình TFT &amp; vị trí lắp đặt</div>
-      <div class="note" style="margin-top:6px">Thời gian tắt màn hình TFT và vị trí lắp đặt chỉ chỉnh được ở giao diện LOCAL (mạng Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN), không điều chỉnh qua Cloud.</div>
-    </div>
-  </div>
+    </section>
 
-  <div class="group-cap">Mạng &amp; Cloud</div>
-  <div class="grid g2">
-    <div class="card section only-esp32">
-      <div class="section-title"><svg class="ic"><use href="#i-wifi"/></svg> Wi-Fi Router (kết nối Internet)</div>
-      <form class="form" id="wifiForm" onsubmit="saveWifi(event)">
-        <label>Tên Wi-Fi (SSID)
-          <div class="inline"><input id="wSsid" list="wList" maxlength="32" autocomplete="off" required><button type="button" class="btn sm" onclick="scanWifi()" id="scanBtn">QUÉT</button></div>
-          <datalist id="wList"></datalist>
-        </label>
-        <label>Mật khẩu<input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
-        <div class="inline"><button class="btn solid wide" type="submit">Lưu &amp; kết nối</button><button class="btn wide" type="button" onclick="clearWifi()">Xóa cấu hình</button></div>
-      </form>
-      <div class="note">Lưu vào bộ nhớ NVS của ESP32. Wi-Fi <b>SOLAR_TRACKER</b> (192.168.4.1) vẫn luôn hoạt động; mất Internet không ảnh hưởng tới bám nắng. Cấu hình Cloud đã được nhúng sẵn trong firmware.</div>
-    </div>
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-cloud"/></svg> Cloud</div>
-      <div class="rows">
-        <div class="row"><span>Trạng thái thiết bị ↔ Cloud</span><span class="kv" id="setCloud">N/A</span></div>
-        <div class="row"><span>Mã thiết bị</span><span class="kv num" id="setDevId">N/A</span></div>
+    <section class="set-group only-cloud">
+      <h3>Nhật ký điều khiển từ xa</h3>
+      <div class="panel table-panel">
+        <div class="tp-head"><span>50 lệnh gần nhất</span><button class="btn sm" onclick="loadLogs()"><svg class="ic"><use href="#i-refresh"/></svg>Làm mới</button></div>
+        <div class="scroll"><table class="log"><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Lệnh</th><th>Kết quả</th></tr></thead><tbody id="logBody"><tr><td colspan="4">N/A</td></tr></tbody></table></div>
       </div>
-      <div class="note">Cấu hình Cloud (MQTT/TLS, địa chỉ Cloud) được nhúng sẵn trong firmware và tự động kết nối khi có Internet.</div>
-    </div>
-  </div>
+    </section>
 
-  <div class="group-cap only-cloud">Tài khoản &amp; nhật ký hệ thống</div>
-  <div class="grid g2">
-    <div class="card section only-cloud">
-      <div class="section-title"><svg class="ic"><use href="#i-log"/></svg> Nhật ký điều khiển từ xa <button class="linkbtn" style="margin-left:auto" onclick="loadLogs()">Làm mới</button></div>
-      <div class="scroll"><table class="log"><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Lệnh</th><th>Kết quả</th></tr></thead><tbody id="logBody"><tr><td colspan="4">N/A</td></tr></tbody></table></div>
-    </div>
-    <div class="card section only-cloud only-admin">
-      <div class="section-title"><svg class="ic"><use href="#i-user"/></svg> Người dùng &amp; phân quyền</div>
-      <div class="scroll"><table class="log"><thead><tr><th>Tài khoản</th><th>Quyền</th><th></th></tr></thead><tbody id="userBody"></tbody></table></div>
-      <form class="form" onsubmit="addUser(event)">
-        <div class="f2"><label>Tài khoản<input id="nuName" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" required></label>
-        <label>Quyền<select id="nuRole"><option value="viewer">viewer (giám sát)</option><option value="operator">operator (điều khiển)</option><option value="admin">admin</option></select></label></div>
-        <label>Mật khẩu (≥ 8 ký tự)<input id="nuPass" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></label>
-        <div class="inline"><button class="btn solid wide" type="submit">Thêm người dùng</button></div>
-      </form>
-    </div>
-  </div>
+    <section class="set-group only-cloud only-admin">
+      <h3>Người dùng &amp; phân quyền</h3>
+      <div class="panel table-panel">
+        <div class="scroll"><table class="log"><thead><tr><th>Tài khoản</th><th>Quyền</th><th></th></tr></thead><tbody id="userBody"></tbody></table></div>
+        <form class="form user-form" onsubmit="addUser(event)">
+          <label>Tài khoản<input id="nuName" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" required></label>
+          <label>Quyền<select id="nuRole"><option value="viewer">viewer (giám sát)</option><option value="operator">operator (điều khiển)</option><option value="admin">admin</option></select></label>
+          <label>Mật khẩu (≥ 8 ký tự)<input id="nuPass" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></label>
+          <button class="btn solid" type="submit">Thêm người dùng</button>
+        </form>
+      </div>
+    </section>
 
-  <div class="group-cap">Giao diện</div>
-  <div class="grid g2">
-    <div class="card section">
-      <div class="section-title"><svg class="ic"><use href="#i-gear"/></svg> Giao diện &amp; hiển thị</div>
-      <div class="opt"><div>Giao diện<small>Sáng, Tối hoặc theo hệ điều hành. Lưu trên trình duyệt này, áp dụng ngay không tải lại trang.</small></div><select id="optTheme"><option value="light">Sáng (Light)</option><option value="dark">Tối (Dark)</option><option value="system">Theo hệ thống (System)</option></select></div>
-      <div class="opt"><div>Chiều dòng điện ắc quy<small>Chỉ để hiển thị "đang sạc / đang xả". Phụ thuộc cách nối cảm biến INA219 #2, hãy kiểm tra thực tế rồi chọn.</small></div>
-        <select id="optChg"><option value="unk">Chưa xác định</option><option value="pos">Dòng dương = đang sạc</option><option value="neg">Dòng âm = đang sạc</option></select></div>
-    </div>
+    <section class="set-group">
+      <h3>Giao diện</h3>
+      <div class="panel set-list">
+        <div class="set-row"><div class="sr-t">Giao diện<small>Lưu trên trình duyệt này, áp dụng ngay.</small></div><select id="optTheme"><option value="light">Sáng</option><option value="dark">Tối</option><option value="system">Theo hệ thống</option></select></div>
+        <div class="set-row"><div class="sr-t">Chiều dòng điện ắc quy<small>Để hiển thị đúng "đang sạc / đang xả", tùy cách nối INA219 #2.</small></div><select id="optChg"><option value="unk">Chưa xác định</option><option value="pos">Dòng dương = đang sạc</option><option value="neg">Dòng âm = đang sạc</option></select></div>
+      </div>
+    </section>
   </div>
 </section>
 
-<footer>SOLAR TRACKER • Hệ thống giám sát và bám nắng • LOCAL + CLOUD</footer>
-</div><!-- /content -->
-</div><!-- /main -->
-</div><!-- /app -->
+<div hidden aria-hidden="true"><i id="pvVbar"></i><i id="pvIbar"></i><i id="batVbar"></i></div>
+<footer>Solar Tracker Cloud · Giám sát và bám nắng</footer>
+</div>
+</div>
+</div>
 
 <div id="toasts" aria-live="polite"></div>
 
 <div id="login">
-  <canvas id="lgCanvas" aria-hidden="true"></canvas>
-  <div class="lg-hero"><div class="k">Solar Tracker</div><h1>Bám nắng chính xác, giám sát từ mọi nơi</h1><p>Theo dõi công suất tấm pin, ắc quy và vị trí hai trục theo thời gian thực. Xuất báo cáo Excel từ dữ liệu đo thật.</p></div>
-
-  <form class="card" onsubmit="doLogin(event)">
-    <div class="logo"><svg class="ic"><use href="#i-sun"/></svg></div>
-    <h2>SOLAR TRACKER CLOUD</h2>
-    <p>Đăng nhập để giám sát và điều khiển từ xa.</p>
-    <div class="form">
-      <label>Tài khoản<input id="lgUser" autocomplete="username" required></label>
-      <label>Mật khẩu<input id="lgPass" type="password" autocomplete="current-password" required></label>
-      <div id="loginErr"></div>
-      <button class="btn solid" type="submit">Đăng nhập</button>
+  <div class="lg-brand">
+    <div class="lg-logo"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 6h14l-1.6 8H6.6L5 6Z"/><path d="M12 14v5M9 19h6"/></svg></div><span>Solar Tracker</span></div>
+    <div class="lg-copy">
+      <h1>Giám sát hệ thống bám nắng từ xa</h1>
+      <p>Công suất tấm pin, trạng thái ắc quy và vị trí hai trục theo thời gian thực. Báo cáo Excel từ dữ liệu đo thật.</p>
     </div>
-  </form>
+    <svg class="lg-art" viewBox="0 0 320 200" aria-hidden="true">
+      <circle cx="252" cy="44" r="16"/>
+      <path class="ray" d="M252 16v-8M252 80v-8M224 44h-8M288 44h-8M232 24l-6-6M278 70l-6-6M232 64l-6 6M278 18l-6 6"/>
+      <path d="M70 92 210 64l22 46-140 28z"/><path class="cell" d="M116 83l22 46M162 74l22 46M80 114l140-28"/>
+      <path d="M156 124v52M128 176h56M40 176h240"/>
+    </svg>
+    <div class="lg-foot">Solar Tracker Cloud</div>
+  </div>
+  <div class="lg-side">
+    <form class="lg-form" onsubmit="doLogin(event)">
+      <h2>Đăng nhập</h2>
+      <p>Dùng tài khoản được cấp để giám sát và điều khiển thiết bị.</p>
+      <div class="form">
+        <label>Tài khoản<input id="lgUser" autocomplete="username" required></label>
+        <label>Mật khẩu<input id="lgPass" type="password" autocomplete="current-password" required></label>
+        <div id="loginErr" role="alert"></div>
+        <button class="btn solid lg-btn" type="submit">Đăng nhập</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -1080,7 +623,7 @@ function applyTheme(){
   document.documentElement.setAttribute('data-theme',t);
   [['thLight','light'],['thDark','dark'],['thSys','system']].forEach(([id,m])=>{const b=$(id);if(b){b.classList.toggle('on',themeMode===m);b.setAttribute('aria-pressed',themeMode===m?'true':'false')}});
   const s=$('optTheme'); if(s&&s.value!==themeMode)s.value=themeMode;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m)m.content=t==='dark'?'#111827':'#F7F9FC';
+  const m=document.querySelector('meta[name="theme-color"]'); if(m)m.content=t==='dark'?'#15181D':'#FFFFFF';
   requestAnimationFrame(()=>{drawChart();drawMini()});   // chỉ vẽ lại canvas, không tải lại trang, không đụng tới kết nối
 }
 function setThemeMode(m){themeMode=m;lsSet(THEME_KEY,m);applyTheme()}
@@ -1441,7 +984,7 @@ function render(d){
 
   // --- E-STOP ---
   const al=$('estopAlert'); const disp=d.eStop?'block':'none'; if(al.style.display!==disp)al.style.display=disp;
-  setText('btnEstopHeader',d.eStop?'⚠ ĐANG E-STOP (BẤM ĐỂ MỞ)':'DỪNG KHẨN CẤP (E-STOP)');
+  setText('btnEstopHeader',d.eStop?'Đang dừng khẩn cấp · bấm để nhả':'Dừng khẩn cấp');
   setCls('btnEstopHeader','estop ctl safety'+(d.eStop?' active':''));
   setText('estopInfo',d.eStop?'ĐANG DỪNG KHẨN CẤP':'Bình thường');
 
@@ -1644,8 +1187,8 @@ function cmd(c, val){
     const tt=setTimeout(()=>toast('Đang gửi "'+c+'" tới ESP32...','info',1500),400);
     return T.send(c,val).then(a=>{
       clearTimeout(tt);
-      if(a.ok) toast('✓ ESP32 đã xác nhận: '+c,'ok',1800);
-      else toast('✗ '+c+': '+(REASONS[a.reason]||a.reason||'Thất bại'),a.reason==='TIMEOUT'||a.reason==='OFFLINE'?'bad':'warn',4500);
+      if(a.ok) toast('ESP32 đã xác nhận: '+c,'ok',1800);
+      else toast(c+': '+(REASONS[a.reason]||a.reason||'Thất bại'),a.reason==='TIMEOUT'||a.reason==='OFFLINE'?'bad':'warn',4500);
       return a;
     }).finally(()=>{pendingCount=Math.max(0,pendingCount-1); if(!pendingCount)document.body.classList.remove('cmd-pending')});
   }
@@ -1788,7 +1331,6 @@ updateChartHeaders(); updateChips({});
 {const t=lsGet('st_tab','');if(t&&$('page-'+t))showTab(t)}   // khôi phục tab đã chọn (sau khi mọi biến đã khai báo)
 T.start();
 </script>
-<script type="module" src="/cloud3d.js"></script>
 <script src="/cloud-fx.js"></script>
 </body>
 </html>

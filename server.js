@@ -231,14 +231,17 @@ app.get('/healthz', (req, res) => res.json({ ok: true, mqtt: mq.connected, db: s
 
 app.post('/api/login', sameOrigin, async (req, res) => {
   if (loginLimited(req.ip)) return res.status(429).json({ error: 'Quá nhiều lần thử, vui lòng chờ 15 phút' });
-  const { username, password } = req.body || {};
+  const { username, password, remember } = req.body || {};
   if (typeof username !== 'string' || typeof password !== 'string') return res.status(400).json({ error: 'Thiếu thông tin' });
   const u = await store.getUser(username);
   // luôn so sánh bcrypt (kể cả khi user không tồn tại) để không lộ tài khoản qua thời gian phản hồi
   const ok = await bcrypt.compare(password, u ? u.password_hash : DUMMY_HASH);
   if (!u || !ok) return res.status(401).json({ error: 'Sai tài khoản hoặc mật khẩu' });
   const tok = jwt.sign({ sub: u.username, role: u.role }, JWT_SECRET, { algorithm: 'HS256', expiresIn: SESSION_HOURS * 3600 });
-  res.cookie('st_sess', tok, { httpOnly: true, secure: COOKIE_SECURE, sameSite: 'strict', maxAge: SESSION_HOURS * 3600000, path: '/' });
+  // "Ghi nhớ đăng nhập": có -> cookie giữ SESSION_HOURS; không -> cookie phiên (mất khi đóng trình duyệt). Hạn của token không đổi.
+  const ck = { httpOnly: true, secure: COOKIE_SECURE, sameSite: 'strict', path: '/' };
+  if (remember !== false) ck.maxAge = SESSION_HOURS * 3600000;
+  res.cookie('st_sess', tok, ck);
   res.json({ username: u.username, role: u.role });
 });
 app.post('/api/logout', (req, res) => { res.clearCookie('st_sess', { path: '/' }); res.json({ ok: true }); });

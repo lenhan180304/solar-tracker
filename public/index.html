@@ -554,32 +554,49 @@
 <div id="toasts" aria-live="polite"></div>
 
 <div id="login">
-  <div class="lg-brand">
-    <div class="lg-logo"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 6h14l-1.6 8H6.6L5 6Z"/><path d="M12 14v5M9 19h6"/></svg></div><span>Solar Tracker</span></div>
-    <div class="lg-copy">
-      <h1>Giám sát hệ thống bám nắng từ xa</h1>
-      <p>Công suất tấm pin, trạng thái ắc quy và vị trí hai trục theo thời gian thực. Báo cáo Excel từ dữ liệu đo thật.</p>
+  <header class="lg-top">
+    <div class="lg-brand">
+      <svg class="lg-logo" viewBox="0 0 96 72" aria-hidden="true">
+        <g stroke="#FFB52E" stroke-width="4" stroke-linecap="round"><path d="M48 4v8M27 12l5 6M69 12l-5 6M18 30h8M70 30h8"/></g>
+        <path d="M30 34a18 18 0 0 1 36 0z" fill="#FFB52E"/>
+        <path d="M14 40h70l-10 28H4z" fill="#FFFFFF"/>
+        <g stroke="#2C6AB8" stroke-width="3"><path d="M37 40 31 68M60 40l-6 28M9 54h70"/></g>
+      </svg>
+      <span class="lg-div" aria-hidden="true"></span>
+      <div><div class="lg-name">Solar Tracker</div><div class="lg-tag">Smart Energy • Greener Future</div></div>
     </div>
-    <svg class="lg-art" viewBox="0 0 320 200" aria-hidden="true">
-      <circle cx="252" cy="44" r="16"/>
-      <path class="ray" d="M252 16v-8M252 80v-8M224 44h-8M288 44h-8M232 24l-6-6M278 70l-6-6M232 64l-6 6M278 18l-6 6"/>
-      <path d="M70 92 210 64l22 46-140 28z"/><path class="cell" d="M116 83l22 46M162 74l22 46M80 114l140-28"/>
-      <path d="M156 124v52M128 176h56M40 176h240"/>
-    </svg>
-    <div class="lg-foot">Solar Tracker Cloud</div>
+    <div class="lg-eco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 3 4 8.5 4 15c0 1.6.4 3.2 1 4.6C7 13 11 9.5 16 8c-4.6 2.4-7.9 6.3-9.5 11.6C7.8 20.5 9.3 21 11 21c6.5 0 10-5.5 9-18Z" fill="#3FBF5F"/></svg>Clean Energy. Sustainable Tomorrow.</div>
+  </header>
+
+  <div class="lg-hero">
+    <h1><span>Hệ thống giám sát</span><b>và điều khiển Pin năng lượng mặt trời</b></h1>
+    <i class="lg-rule" aria-hidden="true"></i>
+    <p>Bám nắng thông minh<span>•</span>Tối ưu hiệu suất<span>•</span>Vì một tương lai xanh</p>
   </div>
-  <div class="lg-side">
-    <form class="lg-form" onsubmit="doLogin(event)">
-      <h2>Đăng nhập</h2>
-      <p>Dùng tài khoản được cấp để giám sát và điều khiển thiết bị.</p>
-      <div class="form">
-        <label>Tài khoản<input id="lgUser" autocomplete="username" required></label>
-        <label>Mật khẩu<input id="lgPass" type="password" autocomplete="current-password" required></label>
-        <div id="loginErr" role="alert"></div>
-        <button class="btn solid lg-btn" type="submit">Đăng nhập</button>
-      </div>
-    </form>
-  </div>
+
+  <form class="lg-card" onsubmit="doLogin(event)" novalidate>
+    <div class="lg-mark" aria-hidden="true">
+      <svg viewBox="0 0 96 80">
+        <g stroke="#FFB52E" stroke-width="3.5" stroke-linecap="round"><path d="M66 6v7M50 14l4 5M82 14l-4 5M44 30h7M81 30h7"/></g>
+        <circle cx="66" cy="32" r="12" fill="#FFB52E"/>
+        <path d="M22 34h52l-8 26H12z" fill="#1F5FAE"/>
+        <g stroke="#FFFFFF" stroke-width="2.4"><path d="M39 34l-6 26M56 34l-6 26M17 47h53"/></g>
+        <path d="M40 60v10M30 72h20" stroke="#1F5FAE" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h2>Đăng nhập hệ thống</h2>
+    <p class="lg-sub">Vui lòng nhập thông tin để tiếp tục</p>
+    <label class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21a8.5 8.5 0 0 1 17 0z"/></svg><input id="lgUser" placeholder="Tài khoản" aria-label="Tài khoản" autocomplete="username" required></label>
+    <label class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="11" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.2"/></svg><input id="lgPass" type="password" placeholder="Mật khẩu" aria-label="Mật khẩu" autocomplete="current-password" required>
+      <button type="button" class="lg-eye" id="lgEye" aria-label="Hiện mật khẩu" aria-pressed="false"><svg class="eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c5 0 8.7 3.6 10 6-.6 1.1-1.6 2.5-3 3.7M6.4 6.5C4.4 7.8 2.8 9.8 2 12c1.3 2.4 5 6 10 6 1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><svg class="eye-on" viewBox="0 0 24 24"><path d="M2 12c1.3-2.4 5-6 10-6s8.7 3.6 10 6c-1.3 2.4-5 6-10 6S3.3 14.4 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </label>
+    <div class="lg-row">
+      <label class="lg-chk"><input type="checkbox" id="lgRemember"><span>Ghi nhớ đăng nhập</span></label>
+      <a href="#" class="lg-forgot" id="lgForgot">Quên mật khẩu?</a>
+    </div>
+    <div id="loginErr" role="alert"></div>
+    <button class="lg-btn" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/></svg>Đăng nhập</button>
+  </form>
 </div>
 
 <script>
@@ -1267,7 +1284,7 @@ function scanWifi(){
 /* ---------------- CLOUD: đăng nhập, nhật ký, người dùng, báo cáo ---------------- */
 function doLogin(e){
   e.preventDefault(); setText('loginErr','');
-  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('lgUser').value,password:$('lgPass').value})})
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('lgUser').value,password:$('lgPass').value,remember:!!($('lgRemember')&&$('lgRemember').checked)})})
     .then(r=>r.json().then(j=>({r,j}))).then(({r,j})=>{
       if(!r.ok){setText('loginErr',j.error||'Đăng nhập thất bại');return}
       $('lgPass').value=''; $('login').classList.remove('show'); Cloud.start();
@@ -1332,5 +1349,6 @@ updateChartHeaders(); updateChips({});
 T.start();
 </script>
 <script src="/cloud-fx.js"></script>
+<script src="/cloud-login.js"></script>
 </body>
 </html>

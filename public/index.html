@@ -423,6 +423,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 .grp.na .dotst{background:var(--gray)}
 .grp.na .stat .value{color:var(--muted)}
 </style>
+<link rel="stylesheet" href="/cloud-ui.css">
 </head>
 <body class="env-esp32">
 
@@ -516,6 +517,17 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 
 <!-- ======================= TỔNG QUAN ======================= -->
 <section class="page active" id="page-dash">
+  <section class="card hero3d" id="hero3d" aria-label="Mô hình 3D tấm pin theo góc motor">
+    <div class="h3-stage"><canvas id="h3Canvas"></canvas>
+      <div class="h3-fallback">Trình duyệt không hỗ trợ WebGL nên không hiển thị được mô hình 3D. Số liệu bên cạnh vẫn cập nhật bình thường.</div>
+      <div class="h3-note">Kéo để xoay, cuộn để phóng to. Mô hình minh họa theo góc motor đo được; quy ước góc chưa xác nhận trên hệ thật.</div></div>
+    <div class="h3-info">
+      <div><div class="h3-k">Công suất tấm pin (PV)</div><div class="h3-big"><span class="n" id="h3P">—</span><span class="u">W</span></div><div class="h3-sub" id="h3Sub">Chờ dữ liệu</div></div>
+      <div class="h3-state" id="h3State"><i></i><b>Chờ dữ liệu</b></div>
+      <div class="h3-rows"><div>Motor 1<b id="h3M1">—</b></div><div>Motor 2<b id="h3M2">—</b></div><div>Chế độ<b id="h3Mode">—</b></div><div>Trạng thái bám<b id="h3Trk">—</b></div></div>
+    </div>
+  </section>
+
 
   <div class="group-cap">Tình trạng hệ thống</div>
   <div class="ovgrid" id="overview">
@@ -1771,5 +1783,6 @@ updateChartHeaders(); updateChips({});
 {const t=lsGet('st_tab','');if(t&&$('page-'+t))showTab(t)}   // khôi phục tab đã chọn (sau khi mọi biến đã khai báo)
 T.start();
 </script>
+<script type="module" src="/hero3d.js"></script>
 </body>
 </html>

@@ -1,0 +1,69 @@
+/* ===================== SOLAR TRACKER – BẢN CLOUD (lớp thiết kế phủ lên giao diện chung) =====================
+   Chỉ nạp ở bản Cloud (cloud/public/cloud-ui.css). Bản ESP32 giữ nguyên giao diện cũ.
+   Hướng: chính xác, điềm tĩnh, như đồng hồ đo ngoài trời. Nền trung tính, màu nằm ở số liệu, biểu đồ và khối 3D.
+   Dữ liệu, id, lệnh KHÔNG đổi – chỉ đổi cách trình bày. */
+
+/* ---- Chữ: thang gọn, chữ thường đầu câu, độ đậm 400/500 ---- */
+.env-cloud .nav-cap,.env-cloud .section-title,.env-cloud .group-cap,.env-cloud .ov .k,.env-cloud .label,
+.env-cloud .grp-head h3,.env-cloud table.log th,.env-cloud table.tbl th,.env-cloud .node-h,.env-cloud .motor h3,
+.env-cloud footer,.env-cloud .chip,.env-cloud .badge,.env-cloud .cpill{text-transform:none;letter-spacing:0}
+.env-cloud .nav-cap{font-size:12px;font-weight:500;padding:12px 12px 4px}
+.env-cloud .section-title,.env-cloud .group-cap,.env-cloud .grp-head h3{font-size:13px;font-weight:500;color:var(--text2)}
+.env-cloud .group-cap{margin:24px 0 8px}
+.env-cloud .ov .k,.env-cloud .label,.env-cloud .node-h,.env-cloud .motor h3{font-size:12px;font-weight:500;color:var(--muted)}
+.env-cloud table.log th,.env-cloud table.tbl th{font-size:12px;font-weight:500}
+.env-cloud .page-head h2{font-size:20px;font-weight:500}
+.env-cloud .page-title{font-size:15px;font-weight:500}
+.env-cloud .brand{font-weight:500;letter-spacing:0;font-size:14px}
+.env-cloud .tab,.env-cloud .tab.active{font-weight:500}
+.env-cloud .chip{font-weight:500;font-size:12px;border-radius:6px}
+.env-cloud .status-ok,.env-cloud .status-warn,.env-cloud .status-bad,.env-cloud .status-na,.env-cloud .stat-num{font-weight:500}
+.env-cloud .value,.env-cloud .unit{font-weight:500}
+.env-cloud footer{font-size:12px}
+.env-cloud .num{font-feature-settings:"tnum" 1}
+
+/* ---- Thẻ số liệu: chỉ nhãn + số + đơn vị (bỏ ô icon, thanh màu, chấm, dòng lặp) ---- */
+.env-cloud .stat{min-height:0;padding:16px 20px}
+.env-cloud .stat .bubble,.env-cloud .stat .bar,.env-cloud .stat .dotst,.env-cloud .stat .statsub{display:none}
+.env-cloud .stat .value{font-size:28px;margin-top:8px;line-height:1.1}
+.env-cloud .stat .unit{font-size:14px;margin-left:6px}
+.env-cloud .grp{margin-bottom:16px}
+
+/* ---- Dải trạng thái hệ thống: một dòng gọn có chấm màu ---- */
+.env-cloud .ovgrid{display:flex;flex-wrap:wrap;gap:8px 28px;border:0;background:none;border-radius:0;padding:0;margin:0 0 4px;overflow:visible}
+.env-cloud .ov{padding:0;border:0;display:flex;align-items:center;gap:8px;min-width:0}
+.env-cloud .ov .k{font-size:13px}
+.env-cloud .ov .v{margin:0;font-size:13px;font-weight:500}
+.env-cloud .ov .d{display:none}
+
+/* ---- Khối 3D (Three.js): một điểm nhấn duy nhất của trang Tổng quan ---- */
+.hero3d{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);overflow:hidden;margin-bottom:8px}
+.h3-stage{position:relative;min-height:360px;background:var(--surface2);border-right:1px solid var(--line);touch-action:pan-y}
+.h3-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.h3-stage canvas:active{cursor:grabbing}
+.h3-note{position:absolute;left:16px;bottom:12px;font-size:12px;color:var(--muted);pointer-events:none}
+.h3-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted);font-size:13px}
+.hero3d.nogl .h3-fallback{display:flex}
+.hero3d.nogl canvas,.hero3d.nogl .h3-note{display:none}
+.h3-info{padding:24px 28px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.h3-k{font-size:13px;font-weight:500;color:var(--muted)}
+.h3-big{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.h3-big .n{font-size:56px;line-height:1;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+.h3-big .u{font-size:18px;color:var(--muted);font-weight:500}
+.h3-sub{font-size:13px;color:var(--muted);margin-top:8px}
+.h3-rows{display:grid;gap:0;border-top:1px solid var(--line)}
+.h3-rows div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:13px;color:var(--text2)}
+.h3-rows b{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
+.h3-state{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.h3-state i{width:8px;height:8px;border-radius:50%;background:var(--gray)}
+.h3-state.ok{color:var(--ok-t)}.h3-state.ok i{background:var(--ok)}
+.h3-state.warn{color:var(--warn-t)}.h3-state.warn i{background:var(--warn)}
+.h3-state.bad{color:var(--red-t)}.h3-state.bad i{background:var(--red)}
+.hero3d.stale .h3-stage canvas{opacity:.45}
+@media(max-width:900px){
+  .hero3d{grid-template-columns:1fr}
+  .h3-stage{min-height:280px;border-right:0;border-bottom:1px solid var(--line)}
+  .h3-info{padding:20px}
+  .h3-big .n{font-size:44px}
+}
+@media(prefers-reduced-motion:reduce){.h3-stage canvas{cursor:default}}

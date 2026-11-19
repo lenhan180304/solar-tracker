@@ -517,17 +517,6 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 
 <!-- ======================= TỔNG QUAN ======================= -->
 <section class="page active" id="page-dash">
-  <section class="card hero3d" id="hero3d" aria-label="Mô hình 3D tấm pin theo góc motor">
-    <div class="h3-stage"><canvas id="h3Canvas"></canvas>
-      <div class="h3-fallback">Trình duyệt không hỗ trợ WebGL nên không hiển thị được mô hình 3D. Số liệu bên cạnh vẫn cập nhật bình thường.</div>
-      <div class="h3-note">Kéo để xoay, cuộn để phóng to. Mô hình minh họa theo góc motor đo được; quy ước góc chưa xác nhận trên hệ thật.</div></div>
-    <div class="h3-info">
-      <div><div class="h3-k">Công suất tấm pin (PV)</div><div class="h3-big"><span class="n" id="h3P">—</span><span class="u">W</span></div><div class="h3-sub" id="h3Sub">Chờ dữ liệu</div></div>
-      <div class="h3-state" id="h3State"><i></i><b>Chờ dữ liệu</b></div>
-      <div class="h3-rows"><div>Motor 1<b id="h3M1">—</b></div><div>Motor 2<b id="h3M2">—</b></div><div>Chế độ<b id="h3Mode">—</b></div><div>Trạng thái bám<b id="h3Trk">—</b></div></div>
-    </div>
-  </section>
-
 
   <div class="group-cap">Tình trạng hệ thống</div>
   <div class="ovgrid" id="overview">
@@ -718,7 +707,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
   <div class="page-head"><h2>Biểu đồ &amp; Phân tích</h2><p>Trực tiếp: các mẫu gần nhất. Lịch sử 1 giờ → 30 ngày lấy từ Cloud Backend. Rê chuột (hoặc chạm) lên biểu đồ để xem giá trị. Khi cảm biến không khả dụng, biểu đồ để trống thay vì vẽ số 0.</p></div>
   <div class="card section chartbox">
     <div class="chart-top">
-      <div class="section-title" style="margin:0;border:0;padding:0"><svg class="ic"><use href="#i-chart"/></svg> <span id="chartTitle">GIÁM SÁT CÔNG SUẤT THỜI GIAN THỰC (W)</span></div>
+      <div class="section-title" style="margin:0;border:0;padding:0"><svg class="ic"><use href="#i-chart"/></svg> <span id="chartTitle">Công suất theo thời gian thực (W)</span></div>
       <div class="pillgroup">
         <div class="chart-pills">
           <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất (W)</button>
@@ -755,7 +744,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
     <div class="rpt-prev" id="rptPrev"><div class="rpt-st" id="rptSt">Đang kiểm tra dữ liệu...</div>
       <div class="rpt-kv"><div>Ngày bắt đầu<b class="num" id="rptFrom">--</b></div><div>Ngày kết thúc<b class="num" id="rptTo">--</b></div><div>Tổng số mẫu đo<b class="num" id="rptN">--</b></div><div>Điện áp PV trung bình<b class="num" id="rptPv">--</b></div><div>Điện áp ắc quy trung bình<b class="num" id="rptBat">--</b></div></div>
     </div>
-    <div class="inline" style="margin-top:14px;flex-wrap:wrap"><button class="btn solid wide" id="btnExport" onclick="downloadReport()">XUẤT BÁO CÁO EXCEL</button><span id="rptMsg" style="font-size:12px;color:var(--muted)"></span></div>
+    <div class="inline" style="margin-top:14px;flex-wrap:wrap"><button class="btn solid wide" id="btnExport" onclick="downloadReport()">Xuất báo cáo Excel</button><span id="rptMsg" style="font-size:12px;color:var(--muted)"></span></div>
   </div>
   <div class="note only-esp32" style="margin-top:14px">Dữ liệu lịch sử dài hạn và xuất báo cáo Excel nằm trên Cloud. Ở chế độ LOCAL biểu đồ hiển thị các mẫu gần nhất (1 mẫu/giây).</div>
 </section>
@@ -1171,10 +1160,10 @@ function setChartRange(r){
   if(r!=='live') Cloud.history(r).then(h=>{if(chartRange===r){histData=h;drawChart()}}).catch(()=>toast('Không tải được dữ liệu lịch sử','bad'));
 }
 function updateChartHeaders() {
-  const mName = (chartMetric === 'power') ? 'CÔNG SUẤT' : ((chartMetric === 'volt') ? 'ĐIỆN ÁP' : 'DÒNG ĐIỆN');
+  const mName = (chartMetric === 'power') ? 'Công suất' : ((chartMetric === 'volt') ? 'Điện áp' : 'Dòng điện');
   const unit = (chartMetric === 'power') ? 'W' : ((chartMetric === 'volt') ? 'V' : 'A');
-  const when = chartRange==='live' ? 'THỜI GIAN THỰC' : ('LỊCH SỬ ' + chartRange.toUpperCase());
-  document.getElementById('chartTitle').textContent = 'GIÁM SÁT ' + mName + ' ' + when + ' (' + unit + ')';
+  const when = chartRange==='live' ? 'thời gian thực' : ('lịch sử ' + chartRange);
+  document.getElementById('chartTitle').textContent = mName + ' ' + when + ' (' + unit + ')';
   document.getElementById('legPV').textContent = mName + ' PV (' + unit + ')';
   document.getElementById('legBat').textContent = mName + ' Ắc quy (' + unit + ')';
   document.getElementById('legPV').style.display = (chartChannel === 'bat') ? 'none' : 'flex';
@@ -1746,7 +1735,7 @@ function rptPick(r){
 }
 async function downloadReport(){
   const b=$('btnExport'); if(!b||b.disabled||!rptOk)return;
-  const old=b.textContent; b.disabled=true; b.textContent='ĐANG TẠO BÁO CÁO...'; setText('rptMsg','Đang lấy dữ liệu, tính thống kê và tạo biểu đồ...');
+  const old=b.textContent; b.disabled=true; b.textContent='Đang tạo báo cáo...'; setText('rptMsg','Đang lấy dữ liệu, tính thống kê và tạo biểu đồ...');
   try{
     const r=await fetch('/api/report/voltage.xlsx?device='+encodeURIComponent(Cloud.device)+'&range='+rptRange,{credentials:'same-origin'});
     if(!r.ok){let m='Lỗi '+r.status;try{m=(await r.json()).error||m}catch(e){} throw new Error(m)}
@@ -1783,6 +1772,5 @@ updateChartHeaders(); updateChips({});
 {const t=lsGet('st_tab','');if(t&&$('page-'+t))showTab(t)}   // khôi phục tab đã chọn (sau khi mọi biến đã khai báo)
 T.start();
 </script>
-<script type="module" src="/hero3d.js"></script>
 </body>
 </html>

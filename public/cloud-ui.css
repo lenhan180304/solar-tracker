@@ -1,3 +1,92 @@
+
+/* ---- Tự sinh bởi tools/gen_cloud_css.py từ CSS chung (85 quy tắc) ---- */
+.env-cloud .brand{font-weight:500;letter-spacing:0}
+.env-cloud .subbrand{letter-spacing:0;font-size:12px}
+.env-cloud .nav-cap{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .tab{font-size:14px}
+.env-cloud .tab.active{font-weight:500}
+.env-cloud .collapse-btn{font-size:13px}
+.env-cloud .page-title{font-weight:500}
+.env-cloud .upd-box{font-size:12px}
+.env-cloud .upd-box b{font-weight:500;font-size:13px}
+.env-cloud .clock{font-size:12px}
+.env-cloud .clock b{font-weight:500;font-size:13px}
+.env-cloud .linkbtn{font-weight:500}
+.env-cloud .estop{font-weight:500;letter-spacing:0}
+.env-cloud .chip{font-weight:500;font-size:12px}
+.env-cloud .seg a{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .page-head h2{font-weight:500}
+.env-cloud .page-head p{font-size:13px}
+.env-cloud .section-title{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .section-title .sub{font-size:12px}
+.env-cloud .group-cap{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .alert{font-weight:500;font-size:14px}
+.env-cloud .banner{font-size:13px}
+.env-cloud .banner b{font-weight:500}
+.env-cloud .viewer-banner{font-weight:500;font-size:13px}
+.env-cloud .ov .k{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .ov .v{font-weight:500}
+.env-cloud .ov .d{font-size:12px}
+.env-cloud .label{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .value{font-weight:500}
+.env-cloud .unit{font-weight:500;font-size:13px}
+.env-cloud .statsub{font-size:12px}
+.env-cloud .ring{font-weight:500;font-size:12px}
+.env-cloud .grp-head h3{font-weight:500;text-transform:none;letter-spacing:0}
+.env-cloud .status-ok{font-weight:500}
+.env-cloud .status-warn{font-weight:500}
+.env-cloud .status-bad{font-weight:500}
+.env-cloud .status-na{font-weight:500}
+.env-cloud .stat-num{font-weight:500;font-size:14px}
+.env-cloud .kv{font-weight:500}
+.env-cloud table.log,.env-cloud table.tbl{font-size:13px}
+.env-cloud table.log th,.env-cloud table.tbl th{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud table.tbl td.k{font-weight:500}
+.env-cloud table.tbl td.k small{font-size:12px}
+.env-cloud .node-h{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .node .big{font-weight:500}
+.env-cloud .node .big small{font-weight:500}
+.env-cloud .node .kvs{font-size:12px}
+.env-cloud .node .kvs b{font-weight:500}
+.env-cloud .flow-cap b{font-weight:500}
+.env-cloud .gauge .gname{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .gauge .gval{font-weight:500}
+.env-cloud .gauge .gval small{font-weight:500}
+.env-cloud .gauge .gst{font-weight:500;font-size:12px}
+.env-cloud .ldrmini div{font-weight:500;font-size:12px}
+.env-cloud .ldrmini b{font-weight:500}
+.env-cloud .ldr-tag{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .ldr-val{font-weight:500}
+.env-cloud .ldr-st{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .axis-cap{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .badge-btn{font-weight:500;font-size:12px}
+.env-cloud .motor h3{font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .motor-state{font-weight:500}
+.env-cloud .motor .mgrid div{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .motor .mgrid b{font-weight:500}
+.env-cloud .angle-big{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .angle-big b.n{font-weight:500}
+.env-cloud .btn{font-weight:500}
+.env-cloud .btn.sm{font-size:13px}
+.env-cloud .btn.wide{font-size:13px}
+.env-cloud .speed-badge{font-weight:500;font-size:12px}
+.env-cloud .cloud-hint{font-weight:500;font-size:12px}
+.env-cloud .cpill{font-weight:500;font-size:12px}
+.env-cloud .legend{font-weight:500}
+.env-cloud .exportbar .sub2{font-size:12px}
+.env-cloud .rpt-grid label{font-weight:500;font-size:12px}
+.env-cloud .rpt-st{font-weight:500;font-size:13px}
+.env-cloud .rpt-kv div{font-weight:500;letter-spacing:0;font-size:12px}
+.env-cloud .rpt-kv b{font-weight:500}
+.env-cloud .form label{font-weight:500;font-size:12px}
+.env-cloud .opt small{font-size:12px}
+.env-cloud .toast{font-weight:500}
+.env-cloud #loginErr{font-weight:500;font-size:13px}
+.env-cloud footer{text-transform:none;letter-spacing:0;font-size:12px}
+.env-cloud .page-title{font-size:15px}
+.env-cloud .estop{font-size:12px}
+.env-cloud .side{transition:transform .2s ease}
+
 /* ===================== SOLAR TRACKER – BẢN CLOUD (lớp thiết kế phủ lên giao diện chung) =====================
    Chỉ nạp ở bản Cloud (cloud/public/cloud-ui.css). Bản ESP32 giữ nguyên giao diện cũ.
    Hướng: chính xác, điềm tĩnh, như đồng hồ đo ngoài trời. Nền trung tính, màu nằm ở số liệu, biểu đồ và khối 3D.
@@ -36,34 +125,14 @@
 .env-cloud .ov .v{margin:0;font-size:13px;font-weight:500}
 .env-cloud .ov .d{display:none}
 
-/* ---- Khối 3D (Three.js): một điểm nhấn duy nhất của trang Tổng quan ---- */
-.hero3d{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);overflow:hidden;margin-bottom:8px}
-.h3-stage{position:relative;min-height:360px;background:var(--surface2);border-right:1px solid var(--line);touch-action:pan-y}
-.h3-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
-.h3-stage canvas:active{cursor:grabbing}
-.h3-note{position:absolute;left:16px;bottom:12px;font-size:12px;color:var(--muted);pointer-events:none}
-.h3-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted);font-size:13px}
-.hero3d.nogl .h3-fallback{display:flex}
-.hero3d.nogl canvas,.hero3d.nogl .h3-note{display:none}
-.h3-info{padding:24px 28px;display:flex;flex-direction:column;gap:20px;min-width:0}
-.h3-k{font-size:13px;font-weight:500;color:var(--muted)}
-.h3-big{display:flex;align-items:baseline;gap:8px;margin-top:6px}
-.h3-big .n{font-size:56px;line-height:1;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
-.h3-big .u{font-size:18px;color:var(--muted);font-weight:500}
-.h3-sub{font-size:13px;color:var(--muted);margin-top:8px}
-.h3-rows{display:grid;gap:0;border-top:1px solid var(--line)}
-.h3-rows div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:13px;color:var(--text2)}
-.h3-rows b{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
-.h3-state{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
-.h3-state i{width:8px;height:8px;border-radius:50%;background:var(--gray)}
-.h3-state.ok{color:var(--ok-t)}.h3-state.ok i{background:var(--ok)}
-.h3-state.warn{color:var(--warn-t)}.h3-state.warn i{background:var(--warn)}
-.h3-state.bad{color:var(--red-t)}.h3-state.bad i{background:var(--red)}
-.hero3d.stale .h3-stage canvas{opacity:.45}
-@media(max-width:900px){
-  .hero3d{grid-template-columns:1fr}
-  .h3-stage{min-height:280px;border-right:0;border-bottom:1px solid var(--line)}
-  .h3-info{padding:20px}
-  .h3-big .n{font-size:44px}
-}
-@media(prefers-reduced-motion:reduce){.h3-stage canvas{cursor:default}}
+
+/* ---- Thanh trên cùng gọn hơn (cỡ chữ lớn hơn làm chật) ---- */
+.env-cloud header.top{gap:8px;padding:0 16px}
+.env-cloud .top-c{gap:4px;margin-left:4px}
+.env-cloud .top-c button,.env-cloud .top-c .chip,.env-cloud .top-c .sw3 button{font-size:11px}
+.env-cloud .side-brand{min-width:0}
+.env-cloud .brand-t{min-width:0;overflow:hidden}
+.env-cloud .subbrand{font-size:11px;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.env-cloud .top-c{overflow:visible}
+@media(max-width:900px){.env-cloud .top-c{overflow:hidden}}
+@media(max-width:1500px){.env-cloud .upd-box{display:none}}

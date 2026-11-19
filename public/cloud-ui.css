@@ -136,3 +136,202 @@
 .env-cloud .top-c{overflow:visible}
 @media(max-width:900px){.env-cloud .top-c{overflow:hidden}}
 @media(max-width:1500px){.env-cloud .upd-box{display:none}}
+
+
+/* ===================== SOLAR TRACKER CLOUD – GIAO DIỆN MỚI =====================
+   Hướng: chính xác, điềm tĩnh, như bảng đo ngoài trời. Nền trung tính, MÀU = ý nghĩa:
+   xanh dương = điểm nhấn và PV, xanh lá = ắc quy; đỏ/vàng chỉ cho cảnh báo.
+   Chỉ nạp ở bản Cloud. Dữ liệu, id, lệnh dùng chung với bản ESP32, không đổi. */
+:root{
+  --bg:#F3F5F8;--surface:#FFFFFF;--surface2:#EEF1F5;--line:#DDE3EA;--line2:#E8ECF1;
+  --text:#0F1722;--text2:#3B4757;--muted:#667385;
+  --primary:#1D6FE0;--primary-hover:#1558B8;--primary-soft:#E8F1FD;--primary-line:#B7D2F5;--on-primary:#FFFFFF;
+  --pv:#1D6FE0;--bat:#16A34A;--c-volt:#7C5CE0;--c-curr:#0E8FA8;
+  --energy:#16A34A;--energy-soft:#E8F7EE;
+  --r:14px;--sw:232px;--hh:60px;
+  --shadow:0 1px 2px rgba(15,23,34,.06),0 4px 16px rgba(15,23,34,.04);
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+:root[data-theme="dark"]{
+  --bg:#0B0F14;--surface:#121820;--surface2:#18202A;--line:#242F3D;--line2:#1C2632;
+  --text:#EAF0F7;--text2:#B2BECC;--muted:#8393A6;
+  --primary:#5AA6FF;--primary-hover:#8CC0FF;--primary-soft:#14283F;--primary-line:#24476E;--on-primary:#06101C;
+  --pv:#5AA6FF;--bat:#35D07F;--c-volt:#A99BFF;--c-curr:#3CC8E0;
+  --energy:#35D07F;--energy-soft:#10291E;
+  --shadow:none;
+  color-scheme:dark;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){
+  --bg:#0B0F14;--surface:#121820;--surface2:#18202A;--line:#242F3D;--line2:#1C2632;
+  --text:#EAF0F7;--text2:#B2BECC;--muted:#8393A6;
+  --primary:#5AA6FF;--primary-hover:#8CC0FF;--primary-soft:#14283F;--primary-line:#24476E;--on-primary:#06101C;
+  --pv:#5AA6FF;--bat:#35D07F;--c-volt:#A99BFF;--c-curr:#3CC8E0;--energy:#35D07F;--energy-soft:#10291E;--shadow:none;color-scheme:dark}}
+
+/* ---- Khung: thanh bên nổi, nội dung rộng thoáng ---- */
+.env-cloud .app{padding:12px;gap:12px;background:var(--bg)}
+.env-cloud .side{height:calc(100vh - 24px);top:12px;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.env-cloud .side-brand{border-bottom:0;height:68px}
+.env-cloud .side-foot{border-top:0}
+.env-cloud nav.tabs{padding:4px 10px}
+.env-cloud .tab{border-left:0;border-radius:12px;padding:11px 14px;transition:background-color .16s var(--ease),color .16s var(--ease),transform .16s var(--ease)}
+.env-cloud .tab:hover{transform:translateX(2px)}
+.env-cloud .tab.active{background:var(--primary-soft);color:var(--primary)}
+.env-cloud .logo{border-radius:10px;background:var(--primary);color:var(--on-primary)}
+.env-cloud header.top{height:var(--hh);background:transparent;border-bottom:0;padding:0 8px;position:static}
+.env-cloud .main{padding:0 4px 24px;max-width:1500px}
+.env-cloud .page{padding:4px}
+.env-cloud .card{border-radius:var(--r);box-shadow:var(--shadow)}
+.env-cloud .page-head{margin:8px 0 18px}
+.env-cloud .page-head h2{font-size:26px;font-weight:500;letter-spacing:-.2px}
+.env-cloud .page-head p{font-size:13.5px}
+
+/* ---- Nút: chuyển động có mục đích (rê, nhấn, đang chọn) ---- */
+.env-cloud .btn,.env-cloud .cpill,.env-cloud .badge-btn,.env-cloud .sw3 button,.env-cloud .seg a,.env-cloud .menu-btn,.env-cloud .collapse-btn{
+  transition:background-color .16s var(--ease),color .16s var(--ease),border-color .16s var(--ease),transform .12s var(--ease)}
+.env-cloud .btn,.env-cloud .badge-btn{border-radius:10px}
+.env-cloud .btn:hover:not(:disabled),.env-cloud .cpill:hover,.env-cloud .badge-btn:hover{transform:translateY(-1px)}
+.env-cloud .btn:active:not(:disabled),.env-cloud .cpill:active,.env-cloud .badge-btn:active,.env-cloud .sw3 button:active{transform:translateY(0) scale(.97)}
+.env-cloud .btn.solid{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.env-cloud .btn.solid:hover:not(:disabled){background:var(--primary-hover)}
+.env-cloud .btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---- Số liệu ---- */
+.env-cloud .stat{padding:18px 22px}
+.env-cloud .stat .value{font-size:34px;margin-top:10px}
+.env-cloud #grpPv .stat:nth-child(3) .value .num,.env-cloud #pvP{color:var(--pv)}
+.env-cloud #grpBat .value .num{color:var(--text)}
+.env-cloud .ring{display:none}
+
+/* ---- Sơ đồ dòng năng lượng: mũi tên chạy khi có dòng thật ---- */
+.env-cloud .flow{gap:0;margin-top:18px}
+.env-cloud .node{border-radius:var(--r);background:var(--surface2);border:1px solid var(--line)}
+.env-cloud .node .bubble{display:grid}
+.env-cloud .link{height:4px;flex:0 0 96px;margin:0 14px;background:var(--line);border-radius:2px;overflow:visible}
+.env-cloud .link.flow-on,.env-cloud .link.flow-rev{background-color:transparent;background-image:repeating-linear-gradient(90deg,var(--pv) 0 12px,transparent 12px 22px);background-size:22px 4px;animation:flowRun .9s linear infinite}
+.env-cloud .link.b.flow-on{background-image:repeating-linear-gradient(90deg,var(--bat) 0 12px,transparent 12px 22px)}
+.env-cloud .link.flow-rev{background-image:repeating-linear-gradient(90deg,var(--warn) 0 12px,transparent 12px 22px);animation-direction:reverse}
+@keyframes flowRun{to{background-position:22px 0}}
+.env-cloud .link.flow-on::after{border-left-color:var(--pv)}.env-cloud .link.b.flow-on::after{border-left-color:var(--bat)}
+
+/* ---- Khối cảnh 3D của trang Tổng quan ---- */
+.scene3d{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);margin-bottom:16px;overflow:hidden;min-height:420px}
+.s3-stage{position:relative;background:var(--surface2);border-right:1px solid var(--line);touch-action:pan-y}
+.s3-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.s3-stage canvas:active{cursor:grabbing}
+.s3-note{position:absolute;left:18px;bottom:14px;right:18px;font-size:12px;color:var(--muted);pointer-events:none}
+.s3-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted);font-size:13px}
+.scene3d.nogl .s3-fallback{display:flex}.scene3d.nogl canvas,.scene3d.nogl .s3-note{display:none}
+.s3-info{padding:28px 32px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.s3-k{font-size:13px;color:var(--muted);font-weight:500}
+.s3-big{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.s3-big .n{font-size:72px;line-height:1;font-weight:500;color:var(--pv);font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.s3-big .u{font-size:22px;color:var(--muted);font-weight:500}
+.s3-sub{font-size:13px;color:var(--muted);margin-top:10px}
+.s3-state{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.s3-state i{width:9px;height:9px;border-radius:50%;background:var(--gray)}
+.s3-state.ok{color:var(--ok-t)}.s3-state.ok i{background:var(--ok)}
+.s3-state.warn{color:var(--warn-t)}.s3-state.warn i{background:var(--warn)}
+.s3-state.bad{color:var(--red-t)}.s3-state.bad i{background:var(--red)}
+.s3-rows{border-top:1px solid var(--line)}
+.s3-rows div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2);font-size:13px;color:var(--text2)}
+.s3-rows b{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+.s3-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto}
+.scene3d.stale .s3-stage canvas{opacity:.4}
+
+/* ---- Biểu đồ và báo cáo nổi bật trên trang Tổng quan ---- */
+.env-cloud #miniChart{min-height:260px}
+.env-cloud #rptCard{border-color:var(--primary-line)}
+
+/* ---- Trang đăng nhập: cảnh 3D phía sau, biểu mẫu nổi ---- */
+#login{overflow:hidden}
+#login #lgCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+#login .lg-hero{position:absolute;left:6vw;top:50%;transform:translateY(-50%);max-width:480px;z-index:1;pointer-events:none}
+#login .lg-hero .k{font-size:13px;font-weight:500;color:var(--primary);margin-bottom:12px}
+#login .lg-hero h1{margin:0;font-size:clamp(30px,4.2vw,52px);line-height:1.08;font-weight:500;letter-spacing:-1px;color:var(--text)}
+#login .lg-hero p{margin:16px 0 0;font-size:15px;line-height:1.6;color:var(--text2);max-width:420px}
+#login form.card{position:relative;z-index:2;margin-left:auto;margin-right:6vw;width:min(380px,100%);padding:32px}
+#login h2{font-size:20px;font-weight:500;letter-spacing:0}
+#login .logo{background:var(--primary);color:var(--on-primary);border-radius:10px}
+@media(max-width:900px){
+  #login #lgCanvas,#login .lg-hero{display:none}
+  #login form.card{margin:0 auto}
+  .scene3d{grid-template-columns:1fr}
+  .s3-stage{min-height:300px;border-right:0;border-bottom:1px solid var(--line)}
+  .s3-info{padding:22px}.s3-big .n{font-size:52px}
+  .env-cloud .app{padding:0}.env-cloud .side{height:100vh;top:0;border-radius:0}
+}
+@media(prefers-reduced-motion:reduce){.env-cloud .link.flow-on,.env-cloud .link.flow-rev{animation:none}.env-cloud .btn:hover,.env-cloud .tab:hover{transform:none}}
+
+/* ===================== LÀM MỚI BỐ CỤC CÁC TRANG + CHUYỂN ĐỘNG ===================== */
+/* Tiêu đề trang: vạch nhấn + chữ lớn */
+.env-cloud .page-head{position:relative;padding-left:16px;margin:10px 0 22px}
+.env-cloud .page-head::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:4px;border-radius:2px;background:var(--primary)}
+.env-cloud .page-head p{max-width:760px}
+
+/* Thẻ: tiêu đề có vạch, nâng nhẹ khi rê (chỉ transform + đổi viền) */
+.env-cloud .card.section{padding:22px 24px}
+.env-cloud .section-title{border-bottom:0;padding-bottom:6px;margin:-2px 0 10px;font-size:14px;color:var(--text)}
+.env-cloud .section-title .ic{color:var(--primary);width:18px;height:18px}
+.env-cloud .card{transition:border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease)}
+.env-cloud .card:hover{border-color:var(--primary-line);transform:translateY(-2px)}
+.env-cloud .card.scene3d:hover,.env-cloud .card.section:has(canvas):hover{transform:none}
+@media(hover:none){.env-cloud .card:hover{transform:none}}
+
+/* Hàng số liệu: rê sáng nền; số đầu tiên của thẻ đo lường là số lớn */
+.env-cloud .row{border-radius:8px;padding:10px 10px;margin:0 -10px;transition:background-color .15s var(--ease)}
+.env-cloud .row:hover{background:var(--surface2)}
+.env-cloud .row .kv,.env-cloud .row b{font-variant-numeric:tabular-nums}
+.env-cloud #page-measure>.grid:nth-child(2)>.card:nth-child(-n+2) .rows .row:first-child{flex-direction:column;align-items:flex-start;gap:2px;padding-bottom:16px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.env-cloud #page-measure>.grid:nth-child(2)>.card:nth-child(-n+2) .rows .row:first-child>:last-child{font-size:38px;line-height:1.1;font-weight:500;text-align:left}
+.env-cloud #page-measure>.grid:nth-child(2)>.card:nth-child(1) .rows .row:first-child>:last-child{color:var(--pv)}
+.env-cloud #page-measure>.grid:nth-child(2)>.card:nth-child(2) .rows .row:first-child>:last-child{color:var(--bat)}
+
+/* Bám nắng: sơ đồ LDR và thẻ động cơ lớn, mềm hơn */
+.env-cloud .ldr-compass{border:1px solid var(--line);border-radius:20px;height:290px}
+.env-cloud .ldr-val{font-size:30px;font-weight:500;color:var(--text)}
+.env-cloud .ldr-bar{height:6px;border-radius:3px}.env-cloud .ldr-bar i{border-radius:3px;transition:width .5s var(--ease)}
+.env-cloud .ldr-tag,.env-cloud .ldr-st{font-size:12px;letter-spacing:0}
+.env-cloud .sun-center{border-color:var(--pv);color:var(--pv)}
+.env-cloud .motor{border-radius:18px;padding:20px}
+.env-cloud .motor h3{font-size:14px;color:var(--text);margin-bottom:14px}
+.env-cloud .motor .mgrid div,.env-cloud .gauge,.env-cloud .ldrmini div{border-radius:12px}
+.env-cloud .motor .mgrid b{font-size:14px}
+.env-cloud .gauge .gval{font-size:34px;font-weight:500}
+.env-cloud .gauge .needle{stroke:var(--pv)}.env-cloud .gauge .hub{fill:var(--pv)}
+.env-cloud .gauge .arc{stroke-width:8}
+.env-cloud .gauge .needle,.env-cloud g#g1,.env-cloud g#g2{transition:transform .6s var(--ease)}
+
+/* Ô nhập, chọn, bảng */
+.env-cloud .form input,.env-cloud .form select,.env-cloud .row input,.env-cloud .row select,.env-cloud .exportbar select,.env-cloud .opt select{border-radius:10px;padding:10px 12px;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+.env-cloud .form input:focus,.env-cloud .row input:focus,.env-cloud .form select:focus{outline:0;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.env-cloud table.log tr,.env-cloud table.tbl tr{transition:background-color .15s var(--ease)}
+.env-cloud table.log tbody tr:hover,.env-cloud table.tbl tbody tr:hover{background:var(--surface2)}
+.env-cloud .seg,.env-cloud .cpill{border-radius:10px}
+.env-cloud .rpt-quick .cpill.active,.env-cloud .cpill.active{box-shadow:none}
+
+/* Thanh bên: vạch nhấn trượt cho mục đang chọn */
+.env-cloud .tab{position:relative}
+.env-cloud .tab::before{content:"";position:absolute;left:-10px;top:50%;width:4px;height:0;border-radius:2px;background:var(--pv);transform:translateY(-50%);transition:height .22s var(--ease)}
+.env-cloud .tab.active::before{height:22px}
+
+/* Vào trang: các khối hiện lần lượt (opacity + transform) */
+@keyframes pgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.env-cloud .page.active>*{animation:pgIn .5s var(--ease) both}
+.env-cloud .page.active>*:nth-child(2){animation-delay:.05s}.env-cloud .page.active>*:nth-child(3){animation-delay:.1s}
+.env-cloud .page.active>*:nth-child(4){animation-delay:.15s}.env-cloud .page.active>*:nth-child(5){animation-delay:.2s}
+.env-cloud .page.active>*:nth-child(6){animation-delay:.25s}.env-cloud .page.active>*:nth-child(n+7){animation-delay:.3s}
+
+/* Gợn sóng khi bấm nút */
+.env-cloud .btn,.env-cloud .badge-btn,.env-cloud .cpill{position:relative;overflow:hidden}
+.fx-ripple{position:absolute;border-radius:50%;background:currentColor;opacity:.22;transform:scale(0);animation:fxRip .55s var(--ease) forwards;pointer-events:none}
+@keyframes fxRip{to{transform:scale(1);opacity:0}}
+/* Chấm trạng thái online nhịp thở nhẹ (chỉ khi đang online) */
+.env-cloud .chip.ok i,.env-cloud .ov .v.ok i{animation:dotPulse 2.4s ease-in-out infinite}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){
+  .env-cloud .page.active>*,.env-cloud .chip.ok i,.env-cloud .ov .v.ok i{animation:none}
+  .env-cloud .card:hover{transform:none}.fx-ripple{display:none}
+}
+.env-cloud .card.fx-flash{animation:cardFlash .9s var(--ease)}
+@keyframes cardFlash{0%{border-color:var(--primary)}100%{border-color:var(--line)}}
+@media(prefers-reduced-motion:reduce){.env-cloud .card.fx-flash{animation:none}}

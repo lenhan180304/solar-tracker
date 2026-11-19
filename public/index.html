@@ -424,6 +424,7 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 .grp.na .stat .value{color:var(--muted)}
 </style>
 <link rel="stylesheet" href="/cloud-ui.css">
+<link rel="stylesheet" href="/cloud-ui.css">
 </head>
 <body class="env-esp32">
 
@@ -517,6 +518,18 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 
 <!-- ======================= TỔNG QUAN ======================= -->
 <section class="page active" id="page-dash">
+  <section class="card scene3d" id="scene3d" aria-label="Mô hình 3D tấm pin theo góc motor">
+    <div class="s3-stage"><canvas id="s3Canvas"></canvas>
+      <div class="s3-fallback">Trình duyệt không hỗ trợ WebGL nên không hiển thị được mô hình 3D. Số liệu bên cạnh vẫn cập nhật bình thường.</div>
+      <div class="s3-note">Kéo để xoay, cuộn để phóng to. Mô hình minh họa theo góc motor đo được; quy ước góc chưa xác nhận trên hệ thật.</div></div>
+    <div class="s3-info">
+      <div><div class="s3-k">Công suất tấm pin (PV)</div><div class="s3-big"><span class="n" id="s3P">—</span><span class="u">W</span></div><div class="s3-sub" id="s3Sub">Chờ dữ liệu</div></div>
+      <div class="s3-state" id="s3State"><i></i><b>Chờ dữ liệu</b></div>
+      <div class="s3-rows"><div>Motor 1<b id="s3M1">—</b></div><div>Motor 2<b id="s3M2">—</b></div><div>Điện áp ắc quy<b id="s3Bat">—</b></div><div>Chế độ<b id="s3Mode">—</b></div></div>
+      <div class="s3-cta"><button class="btn solid" type="button" onclick="document.querySelector('.tab[data-tab=&quot;graph&quot;]').click()">Biểu đồ và báo cáo Excel</button></div>
+    </div>
+  </section>
+
 
   <div class="group-cap">Tình trạng hệ thống</div>
   <div class="ovgrid" id="overview">
@@ -1010,6 +1023,9 @@ footer{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.8px
 <div id="toasts" aria-live="polite"></div>
 
 <div id="login">
+  <canvas id="lgCanvas" aria-hidden="true"></canvas>
+  <div class="lg-hero"><div class="k">Solar Tracker</div><h1>Bám nắng chính xác, giám sát từ mọi nơi</h1><p>Theo dõi công suất tấm pin, ắc quy và vị trí hai trục theo thời gian thực. Xuất báo cáo Excel từ dữ liệu đo thật.</p></div>
+
   <form class="card" onsubmit="doLogin(event)">
     <div class="logo"><svg class="ic"><use href="#i-sun"/></svg></div>
     <h2>SOLAR TRACKER CLOUD</h2>
@@ -1772,5 +1788,7 @@ updateChartHeaders(); updateChips({});
 {const t=lsGet('st_tab','');if(t&&$('page-'+t))showTab(t)}   // khôi phục tab đã chọn (sau khi mọi biến đã khai báo)
 T.start();
 </script>
+<script type="module" src="/cloud3d.js"></script>
+<script src="/cloud-fx.js"></script>
 </body>
 </html>

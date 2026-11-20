@@ -18,3 +18,26 @@
   });
   if (form && err) form.addEventListener('submit', function () { err.className = ''; }, true);
 })();
+
+/* Đặt quầng sáng mặt trời và vệt phản chiếu đúng vị trí mặt trời trong ảnh nền (ảnh 1672x941, background-size: cover) */
+(function () {
+  var IW = 1672, IH = 941, SX = 812, SY = 672, GY = 770;
+  var sun = document.getElementById('lgSun'), glint = document.getElementById('lgGlint');
+  if (!sun) return;
+  function place() {
+    var W = innerWidth, H = innerHeight, s = Math.max(W / IW, H / IH);
+    var ox = (W - IW * s) / 2, oy = (H - IH * s) / 2;
+    sun.style.left = (ox + SX * s) + 'px'; sun.style.top = (oy + SY * s) + 'px';
+    if (glint) { glint.style.left = (ox + SX * s) + 'px'; glint.style.top = (oy + GY * s) + 'px'; }
+  }
+  place(); addEventListener('resize', place);
+})();
+
+/* Mây giữ đúng tỉ lệ ảnh (2048x640) ở mọi kích thước màn hình: bề rộng ô lặp = chiều cao lớp x 3.2 */
+(function () {
+  var layers = document.querySelectorAll('.lg-clouds i');
+  function size() { for (var i = 0; i < layers.length; i++) { var h = layers[i].offsetHeight; if (h) layers[i].style.setProperty('--tw', Math.max(innerWidth, Math.round(h * 2048 / 640)) + 'px'); } }
+  size(); addEventListener('resize', size);
+  var lg = document.getElementById('login');
+  if (lg && window.MutationObserver) new MutationObserver(size).observe(lg, { attributes: true, attributeFilter: ['class'] });
+})();

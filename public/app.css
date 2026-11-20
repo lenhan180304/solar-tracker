@@ -464,7 +464,7 @@ table.tbl,table.log{width:100%;border-collapse:collapse;font-size:13.5px}
 
 /* ============================ ĐĂNG NHẬP (theo solar_tracker_login_ui_spec.json) ============================ */
 #login{position:fixed;inset:0;z-index:90;display:none;min-height:100svh;overflow:auto;font-family:"Inter",system-ui,sans-serif;color:#17365D;
-  background:#2B5C9C url(/img/login-bg.jpg) center center/cover no-repeat}
+  background:#2B5C9C}
 #login.show{display:block}
 .lg-top{position:absolute;left:5.3vw;right:3.8vw;top:6vh;display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
 .lg-brand{display:flex;align-items:center;gap:22px;color:#FFFFFF}
@@ -514,13 +514,68 @@ table.tbl,table.log{width:100%;border-collapse:collapse;font-size:13.5px}
 .lg-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:1180px){.lg-card{width:27rem;padding:2rem}.lg-hero{max-width:44vw}.lg-name{font-size:28px}.lg-logo{width:76px}}
 @media(max-width:860px){
-  #login::before{content:"";position:fixed;inset:0;background:rgba(10,30,60,.28)}
+  #login::before{content:"";position:fixed;inset:0;z-index:1;background:rgba(10,30,60,.28)}
   .lg-hero,.lg-eco{display:none}
   .lg-top{left:16px;right:16px;top:20px;justify-content:center}
   .lg-brand{gap:14px}.lg-logo{width:56px}.lg-div{height:44px}.lg-name{font-size:22px}.lg-tag{font-size:12.5px}
   .lg-card{position:relative;right:auto;top:auto;transform:none;margin:112px auto 24px;width:min(31.5rem,calc(100vw - 32px));padding:1.75rem 1.25rem}
   .lg-mark{width:92px;height:92px}.lg-mark svg{width:64px}
   .lg-sub{margin-bottom:22px;font-size:14.5px}
+}
+
+/* ---- Trang đăng nhập: chuyển động theo video mẫu (mây trôi, ống kính đẩy chậm, mặt trời lóe, vệt sáng lướt trên kính, sao lấp lánh) ---- */
+.lg-scene{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.lg-scene>*{position:absolute}
+.lg-bg{inset:0;background:url(/img/login-bg.jpg) center center/cover no-repeat}
+#login.show .lg-scene{animation:lgPush 32s ease-in-out infinite alternate}
+@keyframes lgPush{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.08) translate3d(-1.2%,-.6%,0)}}
+/* mây: hai lớp trôi ngang khác tốc độ (parallax), chỉ trong vùng trời */
+.lg-clouds{left:0;right:0;top:0;height:62%;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.lg-clouds i{position:absolute;top:0;left:0;width:calc(var(--tw,100vw)*2);height:100%;background:url(/img/login-clouds.webp) repeat-x 0 0/var(--tw,100vw) 100%;opacity:.42;will-change:transform;animation:lgDrift 110s linear infinite}
+.lg-clouds i.far{top:-6%;height:80%;opacity:.3;transform:scaleY(-1);animation-duration:190s;filter:blur(1.5px)}
+@keyframes lgDrift{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(var(--tw,100vw)*-1),0,0)}}
+.lg-clouds i.far{animation-name:lgDriftFar}
+@keyframes lgDriftFar{from{transform:translate3d(calc(var(--tw,100vw)*-1),0,0) scaleY(-1)}to{transform:translate3d(0,0,0) scaleY(-1)}}
+/* mặt trời: quầng sáng thở, lóe tia xoay chậm (vị trí đặt bằng JS theo ảnh nền) */
+.lg-sun{width:0;height:0;left:48.6%;top:71.4%}
+.lg-sun i{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
+.lg-sun .halo{width:46vmin;height:46vmin;background:radial-gradient(circle,rgba(255,214,140,.55) 0,rgba(255,180,90,.22) 28%,rgba(255,170,80,0) 62%);mix-blend-mode:screen;animation:lgBreath 6s ease-in-out infinite}
+.lg-sun .core{width:7vmin;height:7vmin;background:radial-gradient(circle,rgba(255,255,240,.95) 0,rgba(255,236,190,.6) 35%,rgba(255,220,150,0) 70%);mix-blend-mode:screen;animation:lgBreath 3.2s ease-in-out infinite}
+.lg-sun .flare{width:60vmin;height:60vmin;border-radius:0;background:conic-gradient(from 0deg,transparent 0 8deg,rgba(255,236,190,.22) 10deg,transparent 14deg 52deg,rgba(255,236,190,.16) 55deg,transparent 60deg 118deg,rgba(255,236,190,.2) 121deg,transparent 126deg 182deg,rgba(255,236,190,.14) 186deg,transparent 190deg 246deg,rgba(255,236,190,.2) 249deg,transparent 254deg 310deg,rgba(255,236,190,.15) 313deg,transparent 318deg);-webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 25%,transparent 62%);mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 25%,transparent 62%);mix-blend-mode:screen;animation:lgSpin 80s linear infinite}
+@keyframes lgBreath{0%,100%{opacity:.75;transform:translate(-50%,-50%) scale(.94)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+@keyframes lgSpin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* vệt phản chiếu mặt trời trên mặt sàn */
+.lg-glint{width:5vmin;height:18vmin;left:48.6%;top:76%;transform:translateX(-50%);background:linear-gradient(rgba(255,226,170,.75),rgba(255,214,150,.25) 45%,transparent);filter:blur(6px);mix-blend-mode:screen;animation:lgShimmer 2.6s ease-in-out infinite}
+@keyframes lgShimmer{0%,100%{opacity:.55;transform:translateX(-50%) scaleX(.85)}50%{opacity:.95;transform:translateX(-50%) scaleX(1.15)}}
+/* nội dung nằm trên cảnh */
+.lg-top,.lg-hero,.lg-card{z-index:2}
+/* vệt sáng lướt qua khung kính */
+.lg-card{overflow:hidden}
+.lg-card::before{content:"";position:absolute;top:-30%;bottom:-30%;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45) 50%,transparent);transform:skewX(-18deg) translateX(0);pointer-events:none;animation:lgSheen 9s ease-in-out 1.6s infinite}
+@keyframes lgSheen{0%,70%{transform:skewX(-18deg) translateX(0);opacity:0}72%{opacity:1}92%{transform:skewX(-18deg) translateX(420%);opacity:1}100%{transform:skewX(-18deg) translateX(420%);opacity:0}}
+.lg-card>*{position:relative}
+/* ngôi sao 4 cánh lấp lánh góc phải dưới */
+.lg-spark{position:fixed;right:5.5vw;bottom:13vh;width:30px;height:30px;fill:rgba(255,255,255,.85);z-index:1;filter:drop-shadow(0 0 6px rgba(255,255,255,.6));animation:lgTwinkle 4.2s ease-in-out infinite}
+@keyframes lgTwinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(45deg)}}
+/* vào trang: các khối hiện lần lượt */
+#login.show .lg-brand,#login.show .lg-eco{animation:lgIn .8s cubic-bezier(.2,.7,.2,1) both}
+#login.show .lg-hero h1{animation:lgIn .9s cubic-bezier(.2,.7,.2,1) .15s both}
+#login.show .lg-rule{animation:lgRule .9s cubic-bezier(.2,.7,.2,1) .45s both;transform-origin:left}
+#login.show .lg-hero p{animation:lgIn .9s cubic-bezier(.2,.7,.2,1) .55s both}
+#login.show .lg-card{animation:lgCard 1s cubic-bezier(.2,.7,.2,1) .25s both}
+@keyframes lgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes lgRule{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes lgCard{from{opacity:0;transform:translateY(calc(-49% + 24px)) scale(.98)}to{opacity:1;transform:translateY(-49%)}}
+.lg-field input,.lg-btn{transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease,transform .15s ease}
+.lg-btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(18,100,192,.34)}
+@media(max-width:860px){
+  .lg-spark{display:none}
+  #login.show .lg-card{animation-name:lgCardM}
+  .lg-clouds i.far{display:none}
+}
+@keyframes lgCardM{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  #login .lg-scene,#login .lg-scene *,.lg-card::before,.lg-spark,#login.show *{animation:none!important}
 }
 
 /* ============================ RESPONSIVE ============================ */

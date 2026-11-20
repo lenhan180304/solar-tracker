@@ -505,6 +505,7 @@
         <div class="set-row"><div class="sr-t">Thiết bị ↔ Cloud</div><span class="sr-v" id="setCloud">—</span></div>
         <div class="set-row"><div class="sr-t">Mã thiết bị</div><span class="sr-v num" id="setDevId">—</span></div>
         <div class="set-row only-esp32 col"><div class="sr-t">Wi-Fi Router<small>Lưu vào bộ nhớ ESP32. Wi-Fi SOLAR_TRACKER luôn hoạt động; mất Internet không ảnh hưởng bám nắng.</small></div>
+          <div class="dl" id="wSaved"></div><p class="hint" id="wErr" style="display:none"></p>
           <form class="form" id="wifiForm" onsubmit="saveWifi(event)">
             <label>Tên Wi-Fi (SSID)<div class="inline"><input id="wSsid" list="wList" maxlength="32" autocomplete="off" required><button type="button" class="btn sm" onclick="scanWifi()" id="scanBtn">Quét</button></div><datalist id="wList"></datalist></label>
             <label>Mật khẩu<input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
@@ -1260,21 +1261,33 @@ bindMotorBtn('btnM2D', 'm2_left', 'm2_left_hold');
 /* ---------------- LOCAL: cấu hình Wi-Fi Router (lưu NVS) ---------------- */
 let netCfgLoaded=false;
 function loadNetCfg(){
-  if(ENV!=='esp32'||netCfgLoaded)return;
+  if(ENV!=='esp32')return;
   fetch('/api/netcfg',{cache:'no-store'}).then(r=>r.json()).then(c=>{
     netCfgLoaded=true;
-    $('wSsid').value=c.staSsid||''; $('wPass').placeholder=c.staHasPass?'Để trống = giữ mật khẩu đã lưu':'Mật khẩu Wi-Fi';
+    const box=$('wSaved'); if(box){
+      const sv=c.saved||[];
+      box.innerHTML=sv.length?sv.map(w=>{const cur=c.staSsid===w.ssid;const st=cur?(c.staConnected?'<span class="status-ok">Đang dùng'+(c.staRssi?' • '+c.staRssi+' dBm':'')+'</span>':(c.staTrying?'<span class="status-warn">Đang kết nối...</span>':'')):'';
+        return '<div class="row"><span>'+esc(w.ssid)+(w.hasPass?'':' <small>(không mật khẩu)</small>')+'</span><span style="display:flex;gap:8px;align-items:center">'+st+'<button class="btn sm" type="button" data-forget="'+esc(w.ssid)+'">Xóa</button></span></div>'}).join('')
+        :'<div class="row"><span>Mạng đã lưu</span><span class="kv">Chưa có. ESP32 chỉ phát Wi-Fi SOLAR_TRACKER.</span></div>';
+      box.querySelectorAll('[data-forget]').forEach(b=>b.onclick=()=>forgetWifi(b.dataset.forget));
+    }
+    const er=$('wErr'); if(er){const show=!!c.lastFailSsid;er.style.display=show?'':'none';if(show)er.textContent='Lần thử gần nhất không kết nối được "'+c.lastFailSsid+'": '+(c.lastReasonText||'lỗi')+' (mã '+c.lastReason+').'}
+    $('wPass').placeholder='Mật khẩu (để trống = giữ mật khẩu đã lưu của mạng này)';
   }).catch(()=>{});
+}
+function forgetWifi(ssid){
+  if(!confirm('Quên mạng "'+ssid+'"?'))return;
+  postForm('/api/wifi',{forget:ssid}).then(()=>{toast('Đã quên mạng '+ssid,'ok');loadNetCfg()}).catch(er=>toast('Lỗi: '+er.message,'bad'));
 }
 function postForm(url,obj){return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(obj)}).then(async r=>{const t=await r.text();if(!r.ok)throw new Error(t||('HTTP '+r.status));return t})}
 function saveWifi(e){
   e.preventDefault();
   postForm('/api/wifi',{ssid:$('wSsid').value.trim(),pass:$('wPass').value})
-    .then(()=>{toast('Đã lưu Wi-Fi. ESP32 đang kết nối Router...','ok');$('wPass').value='';netCfgLoaded=false;loadNetCfg()})
+    .then(()=>{toast('Đã lưu mạng. ESP32 tự kết nối mạng đã lưu có sóng mạnh nhất...','ok');$('wPass').value='';$('wSsid').value='';loadNetCfg();setTimeout(loadNetCfg,8000);setTimeout(loadNetCfg,20000)})
     .catch(er=>toast('Lỗi lưu Wi-Fi: '+er.message,'bad'));
 }
 function clearWifi(){
-  if(!confirm('Xóa cấu hình Wi-Fi Router? ESP32 sẽ chỉ còn phát Wi-Fi SOLAR_TRACKER (LOCAL).'))return;
+  if(!confirm('Xóa TẤT CẢ mạng Wi-Fi đã lưu? ESP32 sẽ chỉ còn phát Wi-Fi SOLAR_TRACKER (LOCAL).'))return;
   postForm('/api/wifi',{clear:'1'}).then(()=>{toast('Đã xóa cấu hình Wi-Fi Router','ok');$('wSsid').value='';netCfgLoaded=false;loadNetCfg()}).catch(er=>toast('Lỗi: '+er.message,'bad'));
 }
 function scanWifi(){

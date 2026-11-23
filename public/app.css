@@ -671,9 +671,9 @@ html{background:#0b1220}body{background:transparent}
 .bgv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,24,.28) 0%,rgba(8,12,24,.5) 100%)}
 :root[data-theme="dark"] .bgv::after{background:linear-gradient(180deg,rgba(4,6,12,.42) 0%,rgba(4,6,12,.68) 100%)}
 /* bề mặt kính mờ: sáng = kính trắng, tối = kính khói */
-:root:not([data-theme="dark"]){--surface:rgba(255,255,255,.80);--surface2:rgba(247,248,250,.74);--sunken:rgba(236,239,243,.72);--line:rgba(214,219,227,.75);--line2:rgba(226,230,236,.7)}
-:root[data-theme="dark"]{--surface:rgba(20,23,29,.68);--surface2:rgba(28,32,39,.62);--sunken:rgba(14,17,22,.6);--line:rgba(255,255,255,.11);--line2:rgba(255,255,255,.07)}
-:root{--glass:saturate(1.5) blur(18px)}
+:root:not([data-theme="dark"]){--surface:rgba(255,255,255,.55);--surface2:rgba(255,255,255,.34);--sunken:rgba(236,240,246,.38);--line:rgba(255,255,255,.55);--line2:rgba(255,255,255,.42)}
+:root[data-theme="dark"]{--surface:rgba(18,21,27,.45);--surface2:rgba(30,34,42,.36);--sunken:rgba(10,13,18,.34);--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.08)}
+:root{--glass:saturate(1.6) blur(14px)}
 .panel,.side,header.top,.statusbar{-webkit-backdrop-filter:var(--glass);backdrop-filter:var(--glass)}
 .panel{box-shadow:0 10px 30px rgba(3,8,20,.22),inset 0 1px 0 rgba(255,255,255,.45)}
 :root[data-theme="dark"] .panel{box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
@@ -696,3 +696,11 @@ footer{border-top-color:rgba(255,255,255,.14)}
   animation:lgxRip .75s cubic-bezier(.2,.7,.2,1) forwards}
 @keyframes lgxRip{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
 .lgx-pressed{filter:drop-shadow(0 6px 14px rgba(30,111,232,.22))}
+
+/* ---- khối trong vừa (sáng 55% / tối 45%): giữ chữ dễ đọc trên nền video ---- */
+:root:not([data-theme="dark"]){--text:#0B1220;--text2:#1F2937;--muted:#334155;--faint:#475569}
+:root[data-theme="dark"] .panel,:root[data-theme="dark"] .side,:root[data-theme="dark"] header.top,:root[data-theme="dark"] .statusbar{text-shadow:0 1px 6px rgba(0,0,0,.45)}
+.statusbar{background:var(--surface)}
+/* khung mô hình 3D: bỏ nền xanh, mô hình nổi trên video; ban đêm chỉ phủ tối nhẹ */
+.d3-view{background:transparent}
+.d3-view.night{background:rgba(3,5,10,.38)}

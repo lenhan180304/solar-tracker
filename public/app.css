@@ -663,3 +663,36 @@ table.tbl,table.log{width:100%;border-collapse:collapse;font-size:13.5px}
 .d3-view.night{background:linear-gradient(180deg,#070b16 0%,#060914 60%,#04060c 100%)}
 .d3-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px}
 #d3SunInfo{color:var(--text2)}
+
+/* ===================== NỀN VIDEO + KÍNH (chỉ các trang bên trong, không ở trang đăng nhập) ===================== */
+html{background:#0b1220}body{background:transparent}
+.bgv{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#0b1220 url(/img/bg-night.jpg) center/cover no-repeat}
+.bgv video{width:100%;height:100%;object-fit:cover;display:block}
+.bgv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,24,.28) 0%,rgba(8,12,24,.5) 100%)}
+:root[data-theme="dark"] .bgv::after{background:linear-gradient(180deg,rgba(4,6,12,.42) 0%,rgba(4,6,12,.68) 100%)}
+/* bề mặt kính mờ: sáng = kính trắng, tối = kính khói */
+:root:not([data-theme="dark"]){--surface:rgba(255,255,255,.80);--surface2:rgba(247,248,250,.74);--sunken:rgba(236,239,243,.72);--line:rgba(214,219,227,.75);--line2:rgba(226,230,236,.7)}
+:root[data-theme="dark"]{--surface:rgba(20,23,29,.68);--surface2:rgba(28,32,39,.62);--sunken:rgba(14,17,22,.6);--line:rgba(255,255,255,.11);--line2:rgba(255,255,255,.07)}
+:root{--glass:saturate(1.5) blur(18px)}
+.panel,.side,header.top,.statusbar{-webkit-backdrop-filter:var(--glass);backdrop-filter:var(--glass)}
+.panel{box-shadow:0 10px 30px rgba(3,8,20,.22),inset 0 1px 0 rgba(255,255,255,.45)}
+:root[data-theme="dark"] .panel{box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+/* chữ nằm trực tiếp trên nền video */
+.page-head h2{color:#F4F7FB;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+.page-head p,footer{color:#C9D3E2;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+footer{border-top-color:rgba(255,255,255,.14)}
+@media(prefers-reduced-motion:reduce){.bgv video{display:none}}
+
+/* ===================== LIQUID GLASS KHI NHẤN NÚT (mã: cloud-glass.js) ===================== */
+.lgx-rel{position:relative}
+.lgx{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden;opacity:0;z-index:1;
+  transition:opacity .4s var(--ease);
+  background:radial-gradient(130% 130% at var(--lx,50%) var(--ly,50%),rgba(255,255,255,.62) 0,rgba(255,255,255,.22) 26%,rgba(255,255,255,.04) 55%,rgba(255,255,255,0) 70%),
+             linear-gradient(180deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 46%,rgba(255,255,255,.10) 100%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 2px rgba(10,20,40,.22),inset 0 0 0 1px rgba(255,255,255,.38),inset 0 0 12px rgba(120,170,255,.25)}
+.lgx.on{opacity:1}
+.lgx-rip{position:absolute;border-radius:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,0) 38%,rgba(255,255,255,.55) 60%,rgba(190,215,255,.25) 68%,rgba(255,255,255,0) 74%);
+  animation:lgxRip .75s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes lgxRip{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.lgx-pressed{filter:drop-shadow(0 6px 14px rgba(30,111,232,.22))}

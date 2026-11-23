@@ -154,12 +154,12 @@
   </div>
 
   <section class="panel model3d">
-    <div class="ph"><h2>Mô hình 3D</h2><span class="ph-sub" id="d3Sub">Chờ góc motor từ ESP32...</span></div>
+    <div class="ph"><h2>Mô hình 3D</h2><span class="ph-sub" id="d3Sub">Chờ góc motor từ ESP32...</span><button class="badge-btn d3-sunbtn" id="d3Sun" type="button" aria-pressed="true" title="Bật: mặt trời và ngày/đêm thật theo dữ liệu thời tiết. Tắt: không có mặt trời, ánh sáng đều.">Mặt trời: bật</button></div>
     <div class="d3-view" id="dash3d" aria-label="Mô hình 3D solar tracker quay theo góc motor thật. Kéo để xoay, cuộn để phóng to.">
       <p class="d3-msg">Mô hình hiển thị khi có dữ liệu góc từ thiết bị.</p>
       <p class="d3-nogl">Trình duyệt không hỗ trợ WebGL nên không vẽ được mô hình 3D.</p>
     </div>
-    <div class="d3-cap">Kéo để xoay · cuộn để phóng to · M1 nghiêng tấm pin (90° = nằm ngang) · M2 xoay trục đứng</div>
+    <div class="d3-cap"><span id="d3SunInfo">Mặt trời theo dữ liệu thời tiết</span><span class="d3-help">Kéo để xoay · cuộn để phóng to · M1 nghiêng tấm pin (90° = nằm ngang) · M2 xoay trục đứng</span></div>
   </section>
 
   <section class="panel bat-strip" id="grpBat">

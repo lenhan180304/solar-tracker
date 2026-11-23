@@ -109,8 +109,8 @@ function trackEvents(id, d, j, ts) {
   if (prev.es !== cur.es) ev(cur.es ? 'Emergency Stop' : 'Emergency Stop Released', cur.es ? 'Dừng khẩn cấp được kích hoạt' : 'Đã nhả dừng khẩn cấp');
   if (prev.night !== cur.night) ev(cur.night ? 'Night Mode Entered' : 'Night Mode Exited', cur.night ? 'Vào chế độ ban đêm' : 'Thoát chế độ ban đêm');
   if (prev.sim !== cur.sim) ev(cur.sim ? 'Simulation Entered' : 'Simulation Exited', cur.sim ? 'Vào chế độ mô phỏng (MATLAB)' : 'Quay về chế độ thật');
-  if (prev.m1 !== cur.m1) ev(cur.m1 ? 'Motor Activated' : 'Motor Stopped', 'Motor 1 (trục đứng) ' + (cur.m1 ? 'bắt đầu quay: ' + (j.motor1State || '') : 'dừng') + ' • góc ' + Number(j.motor1Angle).toFixed(1) + '°');
-  if (prev.m2 !== cur.m2) ev(cur.m2 ? 'Motor Activated' : 'Motor Stopped', 'Motor 2 (trục ngang) ' + (cur.m2 ? 'bắt đầu quay: ' + (j.motor2State || '') : 'dừng') + ' • góc ' + Number(j.motor2Angle).toFixed(1) + '°');
+  if (prev.m1 !== cur.m1) ev(cur.m1 ? 'Motor Activated' : 'Motor Stopped', 'Motor 1 (trục ngang) ' + (cur.m1 ? 'bắt đầu quay: ' + (j.motor1State || '') : 'dừng') + ' • góc ' + Number(j.motor1Angle).toFixed(1) + '°');
+  if (prev.m2 !== cur.m2) ev(cur.m2 ? 'Motor Activated' : 'Motor Stopped', 'Motor 2 (trục đứng) ' + (cur.m2 ? 'bắt đầu quay: ' + (j.motor2State || '') : 'dừng') + ' • góc ' + Number(j.motor2Angle).toFixed(1) + '°');
   if (prev.trk !== cur.trk && cur.trk) ev('Tracking Status', (prev.trk || '--') + ' → ' + cur.trk);
   if (prev.pv !== cur.pv) ev(cur.pv ? 'Sensor Recovered' : 'Sensor Error', 'INA219 PV ' + (cur.pv ? 'đã đọc được lại' : 'không phản hồi'));
   if (prev.bat !== cur.bat) ev(cur.bat ? 'Sensor Recovered' : 'Sensor Error', 'INA219 ắc quy ' + (cur.bat ? 'đã đọc được lại' : 'không phản hồi'));

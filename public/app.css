@@ -646,3 +646,15 @@ table.tbl,table.log{width:100%;border-collapse:collapse;font-size:13.5px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
+
+/* ---- Mô hình 3D (trang Tổng quan): quay theo góc motor thật, mã ở tracker3d.js ---- */
+.model3d{margin-top:20px;padding:0;overflow:hidden}
+.model3d .ph{padding:20px 24px 12px;margin:0}
+.d3-view{position:relative;height:440px;background:linear-gradient(180deg,#1e3a62 0%,#13284a 60%,#0b1220 100%);touch-action:none}
+.d3-view canvas{display:block;width:100%!important;height:100%!important;cursor:grab}
+.d3-view canvas:active{cursor:grabbing}
+.d3-msg,.d3-nogl{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;color:#A9B6CB;font-size:13px}
+.d3-nogl,.d3-view.ready .d3-msg{display:none}
+.d3-view.nogl .d3-msg{display:none}.d3-view.nogl .d3-nogl{display:grid}
+.d3-cap{padding:10px 24px;font-size:12px;color:var(--muted);border-top:1px solid var(--line2)}
+@media(max-width:860px){.d3-view{height:300px}.model3d .ph{padding:16px 20px 10px}.d3-cap{padding:10px 20px}}

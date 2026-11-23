@@ -153,6 +153,15 @@
     </section>
   </div>
 
+  <section class="panel model3d">
+    <div class="ph"><h2>Mô hình 3D</h2><span class="ph-sub" id="d3Sub">Chờ góc motor từ ESP32...</span></div>
+    <div class="d3-view" id="dash3d" aria-label="Mô hình 3D solar tracker quay theo góc motor thật. Kéo để xoay, cuộn để phóng to.">
+      <p class="d3-msg">Mô hình hiển thị khi có dữ liệu góc từ thiết bị.</p>
+      <p class="d3-nogl">Trình duyệt không hỗ trợ WebGL nên không vẽ được mô hình 3D.</p>
+    </div>
+    <div class="d3-cap">Kéo để xoay · cuộn để phóng to · M1 nghiêng tấm pin (90° = nằm ngang) · M2 xoay trục đứng</div>
+  </section>
+
   <section class="panel bat-strip" id="grpBat">
     <div class="bs-head"><h2>Ắc quy</h2><span class="chip" id="chipBat"><i></i><b>INA219 --</b></span></div>
     <div class="bs-cell"><span class="k">Điện áp</span><span class="v"><span class="num" id="batV">—</span><small>V</small></span></div>
@@ -191,13 +200,13 @@
         <div class="axis">
           <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g1"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
           <div class="ax-v num"><span id="a1">—</span><small>°</small></div>
-          <div class="ax-k">Motor 1 · trục đứng</div>
+          <div class="ax-k">Motor 1 · trục ngang (nghiêng)</div>
           <div class="gst" id="m1">STOP</div>
         </div>
         <div class="axis">
           <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g2"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
           <div class="ax-v num"><span id="a2">—</span><small>°</small></div>
-          <div class="ax-k">Motor 2 · trục ngang</div>
+          <div class="ax-k">Motor 2 · trục đứng (xoay)</div>
           <div class="gst" id="m2">STOP</div>
         </div>
         <div class="ldr-mini">
@@ -368,7 +377,7 @@
     <div class="ph"><h2>Động cơ</h2><span class="ph-sub only-esp32">Nhấn: ±10° · Giữ: quay liên tục</span><span class="ph-sub only-cloud">Qua Cloud mỗi lần bấm quay đúng 10°</span></div>
     <div class="motor-row">
       <div class="motor">
-        <div class="mt-head"><span>Motor 1 · trục đứng</span><span class="motor-state" id="m1x">STOP</span></div>
+        <div class="mt-head"><span>Motor 1 · trục ngang (nghiêng)</span><span class="motor-state" id="m1x">STOP</span></div>
         <div class="mt-angle num"><b id="a1x">--.-</b><small>°</small></div>
         <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir1">--</dd></div><div><dt>Tốc độ</dt><dd id="spd1">--</dd></div><div><dt>Driver</dt><dd id="drv1">--</dd></div></dl>
         <div class="mt-btns">
@@ -378,7 +387,7 @@
         </div>
       </div>
       <div class="motor">
-        <div class="mt-head"><span>Motor 2 · trục ngang</span><span class="motor-state" id="m2x">STOP</span></div>
+        <div class="mt-head"><span>Motor 2 · trục đứng (xoay)</span><span class="motor-state" id="m2x">STOP</span></div>
         <div class="mt-angle num"><b id="a2x">--.-</b><small>°</small></div>
         <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir2">--</dd></div><div><dt>Tốc độ</dt><dd id="spd2">--</dd></div><div><dt>Driver</dt><dd id="drv2">--</dd></div></dl>
         <div class="mt-btns">
@@ -419,8 +428,8 @@
         <tr><td class="k">ESP32 Controller<small>Vi điều khiển chính</small></td><td><span class="status-na" id="espStatus">N/A</span></td><td class="d">IP mạng AP <span class="num" id="ip">192.168.4.1</span></td></tr>
         <tr><td class="k">INA219 PV<small>I2C 0x40 · đo tấm pin</small></td><td><span id="pvStatus" class="status-na">N/A</span></td><td class="d" id="pvStatusD">--</td></tr>
         <tr><td class="k">INA219 ắc quy<small>I2C 0x41 · đo ắc quy</small></td><td><span id="batStatus" class="status-na">N/A</span></td><td class="d" id="batStatusD">--</td></tr>
-        <tr><td class="k">Driver động cơ 1<small>TMC2208 · trục đứng</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
-        <tr><td class="k">Driver động cơ 2<small>TMC2208 · trục ngang</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
+        <tr><td class="k">Driver động cơ 1<small>TMC2208 · trục ngang</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
+        <tr><td class="k">Driver động cơ 2<small>TMC2208 · trục đứng</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
         <tr><td class="k">Bus I2C<small>SDA 21 · SCL 22</small></td><td><span class="status-na" id="i2cStat">N/A</span></td><td class="d">Địa chỉ tìm thấy <b class="num" id="i2cFound">--</b><button class="btn sm ctl" id="btnI2cScan">Quét I2C</button></td></tr>
         <tr><td class="k">Wi-Fi AP<small>Điểm phát của ESP32</small></td><td><span class="status-na" id="apStat">N/A</span></td><td class="d">SOLAR_TRACKER · 192.168.4.1</td></tr>
         <tr><td class="k">Wi-Fi Router<small>Kết nối Internet</small></td><td><span class="status-na" id="staStat">N/A</span></td><td class="d">IP <span class="num" id="staIp">N/A</span> · sóng <span class="num" id="rssi">N/A</span></td></tr>
@@ -1370,5 +1379,6 @@ T.start();
 </script>
 <script src="/cloud-fx.js"></script>
 <script src="/cloud-login.js"></script>
+<script src="/tracker3d.js"></script>
 </body>
 </html>

@@ -671,7 +671,7 @@ html{background:#0b1220}body{background:transparent}
 .bgv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,24,.28) 0%,rgba(8,12,24,.5) 100%)}
 :root[data-theme="dark"] .bgv::after{background:linear-gradient(180deg,rgba(4,6,12,.42) 0%,rgba(4,6,12,.68) 100%)}
 /* bề mặt kính mờ: sáng = kính trắng, tối = kính khói */
-:root:not([data-theme="dark"]){--surface:rgba(255,255,255,.55);--surface2:rgba(255,255,255,.34);--sunken:rgba(236,240,246,.38);--line:rgba(255,255,255,.55);--line2:rgba(255,255,255,.42)}
+:root:not([data-theme="dark"]){--surface:rgba(255,255,255,.30);--surface2:rgba(255,255,255,.20);--sunken:rgba(255,255,255,.16);--line:rgba(255,255,255,.55);--line2:rgba(255,255,255,.38);--glass:blur(16px) saturate(1.7) brightness(1.55)}
 :root[data-theme="dark"]{--surface:rgba(18,21,27,.45);--surface2:rgba(30,34,42,.36);--sunken:rgba(10,13,18,.34);--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.08)}
 :root{--glass:saturate(1.6) blur(14px)}
 .panel,.side,header.top,.statusbar{-webkit-backdrop-filter:var(--glass);backdrop-filter:var(--glass)}
@@ -698,9 +698,13 @@ footer{border-top-color:rgba(255,255,255,.14)}
 .lgx-pressed{filter:drop-shadow(0 6px 14px rgba(30,111,232,.22))}
 
 /* ---- khối trong vừa (sáng 55% / tối 45%): giữ chữ dễ đọc trên nền video ---- */
-:root:not([data-theme="dark"]){--text:#0B1220;--text2:#1F2937;--muted:#334155;--faint:#475569}
+:root:not([data-theme="dark"]){--text:#0B1220;--text2:#18212F;--muted:#243042;--faint:#334155}
+:root:not([data-theme="dark"]) .estop:not(.active){background:rgba(255,255,255,.85)}
 :root[data-theme="dark"] .panel,:root[data-theme="dark"] .side,:root[data-theme="dark"] header.top,:root[data-theme="dark"] .statusbar{text-shadow:0 1px 6px rgba(0,0,0,.45)}
 .statusbar{background:var(--surface)}
 /* khung mô hình 3D: bỏ nền xanh, mô hình nổi trên video; ban đêm chỉ phủ tối nhẹ */
 .d3-view{background:transparent}
 .d3-view.night{background:rgba(3,5,10,.38)}
+
+/* giao diện sáng: không phủ tối video, kính làm sáng nền phía sau (kiểu kính sáng Apple) */
+:root:not([data-theme="dark"]) .bgv::after{background:linear-gradient(180deg,rgba(8,12,24,.05) 0%,rgba(8,12,24,.18) 100%)}

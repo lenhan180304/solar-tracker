@@ -286,16 +286,16 @@
 
 <!-- ======================= ĐO LƯỜNG ======================= -->
 <section class="page" id="page-measure">
-  <div class="page-head"><h2>Đo lường</h2><p>Thông số từ cảm biến INA219 (PV 0x40, ắc quy 0x41). Giá trị không khả dụng hiển thị "—", không bao giờ thay bằng 0.</p></div>
+  <div class="page-head"><h2>Đo lường</h2><p>Số đo điện từ hai cảm biến INA219 (PV 0x40, ắc quy 0x41) và môi trường tủ điện. Giá trị không khả dụng hiển thị "—", không bao giờ thay bằng 0.</p></div>
   <div class="readouts">
     <section class="panel readout pv">
       <div class="ph"><h2><svg class="ic"><use href="#i-sun"/></svg>Tấm pin (PV)</h2><span class="ph-sub" id="msPvSt">--</span></div>
-      <div class="ro-main"><span class="ro-k">Điện áp</span><span class="ro-v num" id="msPvV">—</span></div>
+      <div class="ro-main"><span class="ro-k">Công suất</span><span class="ro-v num" id="msPvP">—</span></div>
       <dl class="ro-list">
+        <div><dt>Điện áp</dt><dd class="num" id="msPvV">—</dd></div>
         <div><dt>Dòng điện</dt><dd class="num" id="msPvI">—</dd></div>
-        <div><dt>Công suất</dt><dd class="num" id="msPvP">—</dd></div>
         <div><dt>Điện năng tích lũy</dt><dd class="num" id="pvWh">—</dd></div>
-        <div><dt>Cảm biến INA219</dt><dd><span class="status-na" id="msPvIna">--</span></dd></div>
+        <div><dt>Cảm biến INA219 (0x40)</dt><dd><span class="status-na" id="msPvIna">--</span></dd></div>
       </dl>
       <div class="ro-foot">Cập nhật <span class="upd">N/A</span></div>
     </section>
@@ -303,37 +303,25 @@
       <div class="ph"><h2><svg class="ic"><use href="#i-battery"/></svg>Ắc quy</h2><span class="ph-sub" id="msBatSt">--</span></div>
       <div class="ro-main"><span class="ro-k">Điện áp</span><span class="ro-v num" id="msBatV">—</span></div>
       <dl class="ro-list">
+        <div><dt>Trạng thái</dt><dd id="msChg">—</dd></div>
         <div><dt>Dòng điện</dt><dd class="num" id="msBatI">—</dd></div>
         <div><dt>Công suất</dt><dd class="num" id="msBatP">—</dd></div>
-        <div><dt>Dung lượng ước tính (SOC)</dt><dd class="num" id="batSOC">—</dd></div>
+        <div><dt>SOC ước tính (firmware)</dt><dd class="num" id="batSOC">—</dd></div>
         <div><dt>Điện năng tích lũy</dt><dd class="num" id="msBatWh">—</dd></div>
-        <div><dt>Cảm biến INA219</dt><dd><span class="status-na" id="msBatIna">--</span></dd></div>
+        <div><dt>Cảm biến INA219 (0x41)</dt><dd><span class="status-na" id="msBatIna">--</span></dd></div>
       </dl>
-      <div class="ro-foot">Cập nhật <span class="upd">N/A</span></div>
+      <div class="ro-foot">Cập nhật <span class="upd">N/A</span> · sạc/xả theo quy ước chiều dòng ở Cài đặt → Đo ắc quy</div>
     </section>
   </div>
-  <div class="split">
-    <section class="panel">
-      <div class="ph"><h2><svg class="ic"><use href="#i-gauge"/></svg>MPPT &amp; bám nắng</h2></div>
-      <dl class="dl">
-        <div><dt>Trạng thái MPPT</dt><dd id="msMppt">—</dd></div>
-        <div><dt>Trạng thái bám nắng</dt><dd id="msTrack">—</dd></div>
-        <div><dt>Công suất PV hiện tại</dt><dd class="num" id="msMpptP">—</dd></div>
-        <div><dt>Sai lệch quang học</dt><dd class="num" id="msErr">—</dd></div>
-        <div><dt>Chế độ</dt><dd id="msMode">—</dd></div>
-        <div><dt>Ban đêm (Night)</dt><dd id="msNight">—</dd></div>
-      </dl>
-    </section>
-    <section class="panel">
-      <div class="ph"><h2><svg class="ic"><use href="#i-temp"/></svg>Tủ điện</h2></div>
-      <dl class="dl">
-        <div><dt>Nhiệt độ (DHT11)</dt><dd class="num" id="dhtT">—</dd></div>
-        <div><dt>Độ ẩm (DHT11)</dt><dd class="num" id="dhtH">—</dd></div>
-        <div><dt>Quạt tản nhiệt</dt><dd><span class="status-na" id="fanStatus">—</span></dd></div>
-        <div><dt>Đèn báo nguồn</dt><dd id="ledStatus">—</dd></div>
-      </dl>
-    </section>
-  </div>
+  <section class="panel ms-env">
+    <div class="ph"><h2><svg class="ic"><use href="#i-temp"/></svg>Môi trường tủ điện</h2></div>
+    <div class="env-cells">
+      <div class="env-cell"><span class="k">Nhiệt độ (DHT11)</span><b class="num" id="dhtT">—</b></div>
+      <div class="env-cell"><span class="k">Độ ẩm (DHT11)</span><b class="num" id="dhtH">—</b></div>
+      <div class="env-cell"><span class="k">Quạt tản nhiệt</span><b><span class="status-na" id="fanStatus">—</span></b></div>
+      <div class="env-cell"><span class="k">Đèn báo nguồn</span><b id="ledStatus">—</b></div>
+    </div>
+  </section>
 </section>
 
 <!-- ======================= BIỂU ĐỒ & BÁO CÁO ======================= -->
@@ -344,33 +332,37 @@
       <h2 class="chart-title" id="chartTitle">Công suất thời gian thực (W)</h2>
       <div class="legend"><span id="legPV" class="lg pv">Công suất PV (W)</span><span id="legBat" class="lg bat batDot">Công suất ắc quy (W)</span></div>
     </div>
-    <div class="toolbar">
-      <div class="segc" role="group" aria-label="Đại lượng">
-        <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất</button>
-        <button class="cpill" id="mpillV" onclick="setChartMetric('volt')">Điện áp</button>
-        <button class="cpill" id="mpillI" onclick="setChartMetric('curr')">Dòng điện</button>
-      </div>
-      <div class="segc" role="group" aria-label="Kênh">
-        <button class="cpill" id="cpillPV" onclick="setChartChannel('pv')">Tấm pin</button>
-        <button class="cpill" id="cpillBat" onclick="setChartChannel('bat')">Ắc quy</button>
-        <button class="cpill active" id="cpillBoth" onclick="setChartChannel('both')">Cả hai</button>
-      </div>
-      <div class="segc only-cloud" role="group" aria-label="Khoảng thời gian">
-        <button class="cpill active" id="rpillLive" onclick="setChartRange('live')">Trực tiếp</button>
-        <button class="cpill" id="rpill1h" onclick="setChartRange('1h')">1 giờ</button>
-        <button class="cpill" id="rpill6h" onclick="setChartRange('6h')">6 giờ</button>
-        <button class="cpill" id="rpill24h" onclick="setChartRange('24h')">24 giờ</button>
-        <button class="cpill" id="rpill7d" onclick="setChartRange('7d')">7 ngày</button>
-        <button class="cpill" id="rpill30d" onclick="setChartRange('30d')">30 ngày</button>
-      </div>
+    <div class="toolbar gr-tools">
+      <div class="gr-tool"><span class="gr-k">Nguồn dữ liệu</span>
+        <div class="segc" role="group" aria-label="Nguồn dữ liệu">
+          <button class="cpill" id="cpillPV" onclick="setChartChannel('pv')">PV</button>
+          <button class="cpill" id="cpillBat" onclick="setChartChannel('bat')">Ắc quy</button>
+          <button class="cpill active" id="cpillBoth" onclick="setChartChannel('both')">Cả hai</button>
+        </div></div>
+      <div class="gr-tool"><span class="gr-k">Đại lượng</span>
+        <div class="segc" role="group" aria-label="Đại lượng">
+          <button class="cpill" id="mpillV" onclick="setChartMetric('volt')">Điện áp (V)</button>
+          <button class="cpill" id="mpillI" onclick="setChartMetric('curr')">Dòng điện (A)</button>
+          <button class="cpill active" id="mpillP" onclick="setChartMetric('power')">Công suất (W)</button>
+        </div></div>
+      <div class="gr-tool only-cloud"><span class="gr-k">Khoảng thời gian</span>
+        <div class="segc" role="group" aria-label="Khoảng thời gian">
+          <button class="cpill active" id="rpillLive" onclick="setChartRange('live')">Trực tiếp</button>
+          <button class="cpill" id="rpill1h" onclick="setChartRange('1h')">1 giờ</button>
+          <button class="cpill" id="rpill6h" onclick="setChartRange('6h')">6 giờ</button>
+          <button class="cpill" id="rpill24h" onclick="setChartRange('24h')">24 giờ</button>
+          <button class="cpill" id="rpill7d" onclick="setChartRange('7d')">7 ngày</button>
+          <button class="cpill" id="rpill30d" onclick="setChartRange('30d')">30 ngày</button>
+        </div></div>
     </div>
     <canvas id="chart"></canvas>
+    <p class="gr-foot only-cloud">Mỗi đại lượng một trục Y riêng theo đơn vị đang chọn. Chọn "PV" hoặc "Ắc quy" để chỉ xem một đường. Khoảng dài lấy dữ liệu đã gộp của Cloud nên không vẽ quá nhiều điểm.</p>
   </section>
 
   <section class="panel report only-cloud" id="rptCard">
     <div class="rp-intro">
-      <h2><svg class="ic"><use href="#i-down"/></svg>Xuất báo cáo Excel</h2>
-      <p>Điện áp, dòng điện, công suất của tấm pin và ắc quy. Mỗi ngày (hoặc tháng) một sheet có bảng thống kê và biểu đồ, lấy từ dữ liệu đo thực tế đã lưu trên Cloud.</p>
+      <h2><svg class="ic"><use href="#i-down"/></svg>Xuất báo cáo Excel – điện áp</h2>
+      <p>Chỉ điện áp đo được của tấm pin và ắc quy. File gồm 4 sheet: <b>SUMMARY</b> (thống kê), <b>PV VOLTAGE</b>, <b>BATTERY VOLTAGE</b> (Date · Time · Voltage) và <b>VOLTAGE CHARTS</b> (2 biểu đồ theo thời gian). Khoảng 6 tháng và 1 năm dùng trung bình theo giờ, có ghi rõ trong file.</p>
       <div class="segc rpt-quick" id="rptRanges" role="radiogroup" aria-label="Khoảng thời gian báo cáo">
         <button class="cpill active" type="button" role="radio" aria-checked="true" data-r="7d" onclick="rptPick('7d')">7 ngày</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1m" onclick="rptPick('1m')">1 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="6m" onclick="rptPick('6m')">6 tháng</button><button class="cpill" type="button" role="radio" aria-checked="false" data-r="1y" onclick="rptPick('1y')">1 năm</button>
       </div>
@@ -381,9 +373,14 @@
         <div><dt>Từ ngày</dt><dd class="num" id="rptFrom">--</dd></div>
         <div><dt>Đến ngày</dt><dd class="num" id="rptTo">--</dd></div>
         <div><dt>Số mẫu đo</dt><dd class="num" id="rptN">--</dd></div>
-        <div><dt>PV trung bình</dt><dd class="num" id="rptPv">--</dd></div>
-        <div><dt>Ắc quy trung bình</dt><dd class="num" id="rptBat">--</dd></div>
       </dl>
+      <table class="rp-stat">
+        <thead><tr><th></th><th>Trung bình</th><th>Cao nhất</th><th>Thấp nhất</th></tr></thead>
+        <tbody>
+          <tr><th>PV</th><td class="num" id="rptPv">--</td><td class="num" id="rptPvMax">--</td><td class="num" id="rptPvMin">--</td></tr>
+          <tr><th>Ắc quy</th><td class="num" id="rptBat">--</td><td class="num" id="rptBatMax">--</td><td class="num" id="rptBatMin">--</td></tr>
+        </tbody>
+      </table>
       <div class="rp-act"><button class="btn solid" id="btnExport" onclick="downloadReport()"><svg class="ic"><use href="#i-down"/></svg>Xuất báo cáo Excel</button><span class="rp-msg" id="rptMsg"></span></div>
     </div>
   </section>
@@ -392,65 +389,79 @@
 
 <!-- ======================= BÁM NẮNG ======================= -->
 <section class="page" id="page-tracking">
-  <div class="page-head row-head"><div><h2>Bám nắng</h2><p>Bốn cảm biến LDR (thang 0–1000 của firmware), hai trục động cơ và các lệnh điều khiển.</p></div>
-    <div class="head-act"><span class="hk">Chế độ</span><button class="badge-btn ctl" id="modeBtn" onclick="toggleAuto()">AUTO TRACKING</button><button class="btn stop ctl safety" onclick="cmd('stop')">Dừng động cơ</button></div>
-  </div>
+  <div class="page-head"><h2>Bám nắng</h2><p>Giám sát thuật toán bám nắng, 4 cảm biến LDR, hai trục động cơ, điều khiển chi tiết và hiệu chuẩn.</p></div>
+
+  <section class="panel trk-status">
+    <div class="ph"><h2>Trạng thái bám nắng</h2><span class="ph-sub">Cập nhật <span class="upd">N/A</span></span>
+      <div class="head-act"><span class="hk">Chuyển chế độ</span><button class="badge-btn ctl" id="modeBtn" onclick="toggleAuto()" title="Bấm để chuyển AUTO / MANUAL (lệnh auto_toggle)">AUTO TRACKING</button><button class="btn stop ctl safety" onclick="cmd('stop')" title="Dừng cả 2 motor; firmware chuyển sang MANUAL">Dừng động cơ</button></div></div>
+    <div class="trk-cells">
+      <div><span class="k">Chế độ</span><b id="modeInfoT">—</b></div>
+      <div><span class="k">Trạng thái bám</span><b><span class="status-ok" id="trackStat">—</span></b></div>
+      <div><span class="k">Motor 1 (nghiêng)</span><b><span class="motor-state" id="m1x">STOP</span></b></div>
+      <div><span class="k">Motor 2 (xoay)</span><b><span class="motor-state" id="m2x">STOP</span></b></div>
+      <div><span class="k">Ban đêm</span><b id="msNight">—</b></div>
+      <div><span class="k">Giai đoạn MPPT</span><b id="msMppt">—</b></div>
+    </div>
+  </section>
 
   <div class="track-top">
     <section class="panel">
-      <div class="ph"><h2>Cảm biến ánh sáng</h2><span class="ph-sub" id="trackStatDash2">--</span></div>
+      <div class="ph"><h2>Cảm biến ánh sáng (LDR)</h2><span class="ph-sub" id="trackStatDash2">--</span></div>
       <div class="ldr-compass">
         <div class="cross-line h"></div><div class="cross-line v"></div>
         <div class="axis-cap t">Phía trên</div><div class="axis-cap b">Phía dưới</div>
-        <div class="ldr-quad tl"><div class="ldr-tag">Trên trái · GPIO 36</div><div class="ldr-val num" id="ldrTL">—</div><div class="ldr-bar"><i id="bTL"></i></div><div class="ldr-st" id="stTL">--</div></div>
-        <div class="ldr-quad tr"><div class="ldr-tag">Trên phải · GPIO 39</div><div class="ldr-val num" id="ldrTR">—</div><div class="ldr-bar"><i id="bTR"></i></div><div class="ldr-st" id="stTR">--</div></div>
-        <div class="ldr-quad bl"><div class="ldr-tag">Dưới trái · GPIO 32</div><div class="ldr-val num" id="ldrBL">—</div><div class="ldr-bar"><i id="bBL"></i></div><div class="ldr-st" id="stBL">--</div></div>
-        <div class="ldr-quad br"><div class="ldr-tag">Dưới phải · GPIO 33</div><div class="ldr-val num" id="ldrBR">—</div><div class="ldr-bar"><i id="bBR"></i></div><div class="ldr-st" id="stBR">--</div></div>
+        <div class="ldr-quad tl"><div class="ldr-tag">Trên trái (TL) · GPIO 36</div><div class="ldr-val num" id="ldrTL">—</div><div class="ldr-bar"><i id="bTL"></i></div><div class="ldr-st" id="stTL">--</div></div>
+        <div class="ldr-quad tr"><div class="ldr-tag">Trên phải (TR) · GPIO 39</div><div class="ldr-val num" id="ldrTR">—</div><div class="ldr-bar"><i id="bTR"></i></div><div class="ldr-st" id="stTR">--</div></div>
+        <div class="ldr-quad bl"><div class="ldr-tag">Dưới trái (BL) · GPIO 32</div><div class="ldr-val num" id="ldrBL">—</div><div class="ldr-bar"><i id="bBL"></i></div><div class="ldr-st" id="stBL">--</div></div>
+        <div class="ldr-quad br"><div class="ldr-tag">Dưới phải (BR) · GPIO 33</div><div class="ldr-val num" id="ldrBR">—</div><div class="ldr-bar"><i id="bBR"></i></div><div class="ldr-st" id="stBR">--</div></div>
         <div class="sun-center" id="sunCenter"><svg class="ic"><use href="#i-sun"/></svg></div>
       </div>
-      <p class="hint">Chấm ở giữa dịch về phía cảm biến sáng hơn; nằm giữa tâm là đã cân bằng.</p>
-    </section>
-    <section class="panel">
-      <div class="ph"><h2>Phân tích sai lệch</h2></div>
-      <dl class="dl">
-        <div><dt>Trạng thái bám</dt><dd><span class="status-ok" id="trackStat">—</span></dd></div>
-        <div><dt>Chế độ vận hành</dt><dd id="modeInfoT">—</dd></div>
-        <div><dt>Chênh lệch ngang (ΔH = R − L)</dt><dd><span class="stat-num num" id="dH">—</span></dd></div>
-        <div><dt>Chênh lệch dọc (ΔV = T − B)</dt><dd><span class="stat-num num" id="dV">—</span></dd></div>
-        <div><dt>Sai số bám</dt><dd><span class="stat-num num" id="trkErr">—</span></dd></div>
-        <div><dt>Cường độ sáng trung bình</dt><dd><span class="stat-num num" id="avgL">—</span></dd></div>
+      <dl class="dl ldr-dl">
+        <div><dt>Giá trị đã hiệu chuẩn (ô trên)</dt><dd>thang 0–1000 của firmware</dd></div>
         <div><dt>ADC thô (TL / TR / BL / BR)</dt><dd class="num" id="ldrRaw">—</dd></div>
         <div><dt>Trạng thái cảm biến</dt><dd><span class="kv" id="ldrSens">—</span></dd></div>
-        <div><dt>Vùng chết sai số</dt><dd class="num">±80</dd></div>
       </dl>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Sai lệch bám</h2><span class="ph-sub" id="trkBal">—</span></div>
+      <dl class="dl">
+        <div><dt>Sai lệch trái/phải (ΔH = L − R, %)</dt><dd><span class="stat-num num" id="dH">—</span></dd></div>
+        <div><dt>Sai lệch trên/dưới (ΔV = T − B, %)</dt><dd><span class="stat-num num" id="dV">—</span></dd></div>
+        <div><dt>Sai số bám</dt><dd><span class="stat-num num" id="trkErr">—</span></dd></div>
+        <div><dt>Cường độ sáng trung bình</dt><dd><span class="stat-num num" id="avgL">—</span></dd></div>
+        <div><dt>Ngưỡng giữ yên / chỉnh lại (firmware)</dt><dd class="num">≤ 3 % / &gt; 5 %</dd></div>
+        <div><dt>Công suất PV hiện tại</dt><dd class="num" id="msMpptP">—</dd></div>
+      </dl>
+      <p class="hint">ΔH điều khiển Motor 2 (xoay), ΔV điều khiển Motor 1 (nghiêng). Sai lệch ≤ 3 %: trục đó vào HOLD (giữ yên); > 5 %: chỉnh tinh; > 22 %: chỉnh thô. Thuật toán chạy trên ESP32, trang này chỉ hiển thị.</p>
     </section>
   </div>
 
   <section class="panel motors">
-    <div class="ph"><h2>Động cơ</h2><span class="ph-sub only-esp32">Nhấn: ±10° · Giữ: quay liên tục</span><span class="ph-sub only-cloud">Qua Cloud mỗi lần bấm quay đúng 10°</span></div>
+    <div class="ph"><h2>Động cơ &amp; điều khiển chi tiết</h2><span class="ph-sub only-esp32">Nhấn: ±10° · Giữ: quay liên tục</span><span class="ph-sub only-cloud">Qua Cloud mỗi lần bấm quay đúng 10°</span></div>
+    <div class="trk-lock" id="trkLockNote" role="status">Chờ dữ liệu từ ESP32...</div>
     <div class="motor-row">
       <div class="motor">
-        <div class="mt-head"><span>Motor 1 · trục ngang (nghiêng)</span><span class="motor-state" id="m1x">STOP</span></div>
+        <div class="mt-head"><span>Motor 1 · trục nghiêng</span><span class="motor-state" id="trkM1st">--</span></div>
         <div class="mt-angle num"><b id="a1x">--.-</b><small>°</small></div>
         <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir1">--</dd></div><div><dt>Tốc độ</dt><dd id="spd1">--</dd></div><div><dt>Driver</dt><dd id="drv1">--</dd></div></dl>
         <div class="mt-btns">
           <button class="btn primary ctl" id="btnM1L" title="Nhấn 1 lần: −10°"><svg class="ic"><use href="#i-left"/></svg>10°</button>
-          <button class="btn stop ctl safety" onclick="cmd('stop')">Dừng</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')" title="Firmware chỉ có lệnh dừng chung: dừng cả 2 motor và chuyển MANUAL">Dừng cả 2</button>
           <button class="btn primary ctl" id="btnM1R" title="Nhấn 1 lần: +10°">10°<svg class="ic"><use href="#i-right"/></svg></button>
         </div>
       </div>
       <div class="motor">
-        <div class="mt-head"><span>Motor 2 · trục đứng (xoay)</span><span class="motor-state" id="m2x">STOP</span></div>
+        <div class="mt-head"><span>Motor 2 · trục xoay</span><span class="motor-state" id="trkM2st">--</span></div>
         <div class="mt-angle num"><b id="a2x">--.-</b><small>°</small></div>
         <dl class="mt-meta"><div><dt>Hướng quay</dt><dd id="dir2">--</dd></div><div><dt>Tốc độ</dt><dd id="spd2">--</dd></div><div><dt>Driver</dt><dd id="drv2">--</dd></div></dl>
         <div class="mt-btns">
           <button class="btn primary ctl" id="btnM2L" title="Nhấn 1 lần: −10°"><svg class="ic"><use href="#i-left"/></svg>10°</button>
-          <button class="btn stop ctl safety" onclick="cmd('stop')">Dừng</button>
+          <button class="btn stop ctl safety" onclick="cmd('stop')" title="Firmware chỉ có lệnh dừng chung: dừng cả 2 motor và chuyển MANUAL">Dừng cả 2</button>
           <button class="btn primary ctl" id="btnM2R" title="Nhấn 1 lần: +10°">10°<svg class="ic"><use href="#i-right"/></svg></button>
         </div>
       </div>
     </div>
-    <div class="cloud-hint">Điều khiển qua Internet: chức năng "giữ để quay liên tục" bị tắt để đảm bảo an toàn.</div>
+    <div class="cloud-hint">Góc là vị trí ESP32 tính từ số bước đã chạy kể từ gốc cơ khí (không có encoder đo góc thật). Điều khiển qua Internet: chức năng "giữ để quay liên tục" bị tắt để đảm bảo an toàn.</div>
     <div class="speedbar">
       <div class="sp-k">Tốc độ xoay <span class="speed-badge" id="speedBadge">--</span></div>
       <div class="sp-ctl">
@@ -462,10 +473,12 @@
   </section>
 
   <section class="panel">
-    <div class="ph"><h2>Hiệu chuẩn</h2></div>
+    <div class="ph"><h2>Hiệu chuẩn</h2><span class="ph-sub">Kết quả theo phản hồi thực tế của ESP32</span></div>
     <div class="set-list">
-      <div class="set-row"><div class="sr-t">Cân bằng 4 cảm biến LDR<small>Đặt cả 4 cảm biến ở cùng độ sáng, không bão hòa, rồi bấm.</small></div><button class="btn ctl" onclick="cmd('cal_zero')">Hiệu chuẩn cân bằng</button></div>
-      <div class="set-row"><div class="sr-t">Gốc cơ khí<small>Lấy vị trí hiện tại làm 90°.</small></div><button class="btn ctl" onclick="cmd('set_home')">Đặt gốc 90°</button></div>
+      <div class="set-row"><div class="sr-t">Cân bằng 4 cảm biến LDR<small>Đặt cả 4 cảm biến ở cùng độ sáng, không bão hòa, rồi bấm.</small></div><button class="btn ctl" data-confirm="Cân bằng 4 cảm biến LDR ngay bây giờ? Cả 4 cảm biến phải đang nhận cùng độ sáng." onclick="cmd('cal_zero')">Hiệu chuẩn cân bằng</button></div>
+      <div class="set-row"><div class="sr-t">Xóa hiệu chuẩn LDR<small>Đưa hệ số cân bằng về 1 và offset về 0.</small></div><button class="btn ctl danger" data-confirm="Xóa toàn bộ hiệu chuẩn LDR (hệ số = 1, offset = 0)?" onclick="cmd('reset_cal')">Xóa hiệu chuẩn</button></div>
+      <div class="set-row"><div class="sr-t">Gốc cơ khí<small>Lấy vị trí hiện tại làm 90° cho cả hai trục.</small></div><button class="btn ctl" data-confirm="Lấy vị trí hiện tại của cả hai trục làm gốc 90°? Góc hiển thị sẽ được đặt lại." onclick="cmd('set_home')">Đặt gốc 90°</button></div>
+      <div class="set-row"><div class="sr-t">Kết quả cân bằng gần nhất</div><span class="sr-v" id="calMsg">--</span></div>
     </div>
   </section>
 </section>
@@ -473,121 +486,145 @@
 <!-- ======================= THIẾT BỊ ======================= -->
 <section class="page" id="page-device">
   <div class="page-head"><h2>Thiết bị</h2><p>Chỉ hiển thị ONLINE khi xác nhận được từ dữ liệu thực. Thành phần ESP32 không đọc được phản hồi được ghi rõ là không xác minh. Cập nhật <span class="upd">N/A</span>.</p></div>
-  <section class="panel table-panel">
-    <div class="scroll">
-    <table class="tbl">
-      <thead><tr><th>Thành phần</th><th>Trạng thái</th><th>Chi tiết</th></tr></thead>
-      <tbody>
+  <div class="dv-grid">
+    <section class="panel table-panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-cpu"/></svg>Bộ điều khiển chính</h2></div>
+      <table class="tbl"><tbody>
         <tr><td class="k">ESP32 Controller<small>Vi điều khiển chính</small></td><td><span class="status-na" id="espStatus">N/A</span></td><td class="d">IP mạng AP <span class="num" id="ip">192.168.4.1</span></td></tr>
+        <tr><td class="k">Lần cuối nhận dữ liệu<small>Bản tin trạng thái gần nhất</small></td><td colspan="2" class="d num" id="dvSeen">--</td></tr>
+        <tr><td class="k">Phiên bản firmware · Uptime</td><td colspan="2" class="d">Firmware hiện chưa gửi thông tin này</td></tr>
+      </tbody></table>
+    </section>
+
+    <section class="panel table-panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-gauge"/></svg>Cảm biến &amp; đo lường</h2></div>
+      <table class="tbl"><tbody>
         <tr><td class="k">INA219 PV<small>I2C 0x40 · đo tấm pin</small></td><td><span id="pvStatus" class="status-na">N/A</span></td><td class="d" id="pvStatusD">--</td></tr>
         <tr><td class="k">INA219 ắc quy<small>I2C 0x41 · đo ắc quy</small></td><td><span id="batStatus" class="status-na">N/A</span></td><td class="d" id="batStatusD">--</td></tr>
-        <tr><td class="k">Driver động cơ 1<small>TMC2208 · trục ngang</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
-        <tr><td class="k">Driver động cơ 2<small>TMC2208 · trục đứng</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
-        <tr><td class="k">Bus I2C<small>SDA 21 · SCL 22</small></td><td><span class="status-na" id="i2cStat">N/A</span></td><td class="d">Địa chỉ tìm thấy <b class="num" id="i2cFound">--</b><button class="btn sm ctl" id="btnI2cScan">Quét I2C</button></td></tr>
+        <tr><td class="k">4 cảm biến LDR<small>GPIO 36 · 39 · 32 · 33 (ADC)</small></td><td><span class="status-na" id="dvLdr">N/A</span></td><td class="d" id="dvLdrD">--</td></tr>
+        <tr><td class="k">DHT11<small>GPIO 13 · nhiệt độ, độ ẩm tủ</small></td><td><span class="status-na" id="dvDht">N/A</span></td><td class="d">Nhiệt độ trong tủ <span class="num" id="dhtT2">—</span></td></tr>
+        <tr><td class="k">Bus I2C<small>SDA 21 · SCL 22</small></td><td><span class="status-na" id="i2cStat">N/A</span></td><td class="d">Suy ra từ phản hồi của 2 INA219</td></tr>
+      </tbody></table>
+    </section>
+
+    <section class="panel table-panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-target"/></svg>Driver động cơ</h2></div>
+      <table class="tbl"><tbody>
+        <tr><td class="k">Driver 1 · TMC2208<small>Motor 1 · trục nghiêng · STEP 25 · DIR 14 · EN 4</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
+        <tr><td class="k">Driver 2 · TMC2208<small>Motor 2 · trục xoay · STEP 26 · DIR 15 · EN 4</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
+      </tbody></table>
+      <p class="hint">Phân biệt: "ĐANG CẤP XUNG" = ESP32 đang phát xung STEP; "ENABLE" = driver được bật giữ vị trí; driver không gửi phản hồi lỗi về ESP32 nên không có trạng thái "driver online" thật.</p>
+    </section>
+
+    <section class="panel table-panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-wifi"/></svg>Kết nối</h2></div>
+      <table class="tbl"><tbody>
+        <tr><td class="k">Trình duyệt ↔ thiết bị</td><td colspan="2"><span class="chip" id="chipLink"><i></i><b>--</b></span></td></tr>
+        <tr><td class="k">Thiết bị ↔ Cloud</td><td colspan="2"><span class="chip" id="chipCloud"><i></i><b>--</b></span></td></tr>
         <tr><td class="k">Wi-Fi AP<small>Điểm phát của ESP32</small></td><td><span class="status-na" id="apStat">N/A</span></td><td class="d">SOLAR_TRACKER · 192.168.4.1</td></tr>
         <tr><td class="k">Wi-Fi Router<small>Kết nối Internet</small></td><td><span class="status-na" id="staStat">N/A</span></td><td class="d">IP <span class="num" id="staIp">N/A</span> · sóng <span class="num" id="rssi">N/A</span></td></tr>
         <tr><td class="k">Cloud<small>MQTT/TLS, tự kết nối</small></td><td><span class="status-na" id="cloudStat">N/A</span></td><td class="d"><span class="only-esp32">Mã thiết bị <span class="num" id="devIdShow">N/A</span></span></td></tr>
-        <tr><td class="k">Quạt tản nhiệt<small>Relay GPIO 12</small></td><td><span class="status-na" id="fanStatus2">N/A</span></td><td class="d">Ngưỡng bật <span class="num" id="fanThrInfo">N/A</span></td></tr>
-        <tr><td class="k">Tấm pin mặt trời<small>Nguồn năng lượng</small></td><td><span class="status-na" id="solarState">N/A</span></td><td class="d">Theo cảm biến INA219 PV</td></tr>
-      </tbody>
-    </table>
-    </div>
-  </section>
-  <div class="split">
-    <section class="panel">
-      <div class="ph"><h2><svg class="ic"><use href="#i-wifi"/></svg>Liên kết</h2></div>
-      <dl class="dl">
-        <div><dt>Trình duyệt ↔ thiết bị</dt><dd><span class="chip" id="chipLink"><i></i><b>--</b></span></dd></div>
-        <div><dt>Thiết bị ↔ Cloud</dt><dd><span class="chip" id="chipCloud"><i></i><b>--</b></span></dd></div>
-        <div><dt>Đang giữ quyền điều khiển</dt><dd id="ownerInfo">—</dd></div>
-        <div><dt>Chế độ bám</dt><dd id="modeInfo">—</dd></div>
-        <div><dt>Dừng khẩn cấp</dt><dd id="estopInfo">—</dd></div>
-      </dl>
+        <tr><td class="k">Dịch vụ thời tiết<small>Open-Meteo qua ESP32</small></td><td colspan="2" class="d"><span id="wxStatus">—</span> · ngoài trời <span class="num" id="outT">—</span>, <span class="num" id="outH">—</span> · mọc/lặn <span class="num" id="sunTimes">—</span></td></tr>
+        <tr><td class="k">Quyền điều khiển</td><td colspan="2" class="d"><span id="ownerInfo">—</span> · chế độ <span id="modeInfo">—</span> · E-STOP <span id="estopInfo">—</span></td></tr>
+      </tbody></table>
       <p class="hint">Khi có thao tác tại chỗ (web LOCAL, màn TFT), lệnh từ Cloud tạm bị từ chối 30 giây để tránh xung đột. Lệnh dừng luôn được chấp nhận.</p>
     </section>
-    <section class="panel">
-      <div class="ph"><h2><svg class="ic"><use href="#i-temp"/></svg>Môi trường</h2></div>
+
+    <section class="panel table-panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-zap"/></svg>Thiết bị phụ</h2></div>
+      <table class="tbl"><tbody>
+        <tr><td class="k">Quạt tản nhiệt<small>Relay GPIO 12</small></td><td><span class="status-na" id="fanStatus2">N/A</span></td><td class="d">Ngưỡng bật <span class="num" id="fanThrInfo">N/A</span></td></tr>
+        <tr><td class="k">Đèn báo nguồn<small>GPIO 0</small></td><td colspan="2" class="d" id="dvLed">--</td></tr>
+        <tr><td class="k">Tấm pin mặt trời<small>Nguồn năng lượng</small></td><td><span class="status-na" id="solarState">N/A</span></td><td class="d">Theo cảm biến INA219 PV</td></tr>
+      </tbody></table>
+    </section>
+
+    <section class="panel dv-card">
+      <div class="ph"><h2><svg class="ic"><use href="#i-refresh"/></svg>Quét I2C</h2></div>
       <dl class="dl">
-        <div><dt>Nhiệt độ trong tủ</dt><dd class="num" id="dhtT2">—</dd></div>
-        <div><dt>Nhiệt độ ngoài trời</dt><dd class="num" id="outT">—</dd></div>
-        <div><dt>Độ ẩm ngoài trời</dt><dd class="num" id="outH">—</dd></div>
-        <div><dt>Mặt trời mọc / lặn</dt><dd class="num" id="sunTimes">—</dd></div>
-        <div><dt>Nguồn thời tiết</dt><dd id="wxStatus">—</dd></div>
+        <div><dt>Địa chỉ tìm thấy (lần quét gần nhất của ESP32)</dt><dd class="num"><b id="i2cFound">--</b></dd></div>
+        <div><dt>Địa chỉ cần có</dt><dd class="num">0x40 (INA219 PV) · 0x41 (INA219 ắc quy)</dd></div>
       </dl>
+      <div class="dv-act"><button class="btn sm ctl" id="btnI2cScan">Quét I2C</button><span class="hint">Quét theo yêu cầu chỉ chạy ở giao diện LOCAL; trên Cloud hiển thị kết quả ESP32 gửi trong bản tin trạng thái.</span></div>
     </section>
   </div>
 </section>
 
 <!-- ======================= CÀI ĐẶT ======================= -->
 <section class="page" id="page-setting">
-  <div class="page-head"><h2>Cài đặt</h2><p>Mỗi thay đổi được gửi tới thiết bị và có thông báo kết quả.</p></div>
+  <div class="page-head"><h2>Cài đặt</h2><p>Mỗi thay đổi được gửi tới thiết bị; chỉ báo thành công khi ESP32 xác nhận.</p></div>
+  <nav class="set-nav" id="setNav" aria-label="Nhóm cài đặt">
+    <button type="button" data-g="trk" class="on">Bám nắng</button><button type="button" data-g="night">Ban đêm</button><button type="button" data-g="fan">Quạt</button><button type="button" data-g="disp">Hiển thị</button><button type="button" data-g="loc">Vị trí</button><button type="button" data-g="net">Mạng &amp; Cloud</button><button type="button" data-g="users" class="only-cloud only-admin">Người dùng</button><button type="button" data-g="logs" class="only-cloud">Nhật ký</button><button type="button" data-g="bat">Đo ắc quy</button>
+  </nav>
   <div class="settings">
-    <section class="set-group">
+    <section class="set-group" data-g="trk">
       <h3>Bám nắng &amp; hiệu chuẩn</h3>
       <div class="panel set-list">
-        <div class="set-row"><div class="sr-t">Tốc độ xoay động cơ<small>Đổi ở trang Bám nắng.</small></div><span class="sr-v" id="setSpeed">—</span></div>
+        <div class="set-row"><div class="sr-t">Tốc độ xoay động cơ<small>Đổi ở trang Bám nắng hoặc Tổng quan.</small></div><span class="sr-v" id="setSpeed">—</span></div>
         <div class="set-row"><div class="sr-t">Chế độ<small>AUTO bám theo cảm biến, MANUAL điều khiển tay.</small></div><span class="sr-v" id="setMode">—</span></div>
-        <div class="set-row"><div class="sr-t">Vùng chết sai số<small>Ngưỡng thuật toán nằm trong firmware.</small></div><span class="sr-v num">±80</span></div>
-        <div class="set-row"><div class="sr-t">Offset LDR<small>TL / TR / BL / BR</small></div><span class="sr-v num" id="offsets">—</span></div>
-        <div class="set-row"><div class="sr-t">Hệ số cân bằng<small>TL / TR / BL / BR</small></div><span class="sr-v num" id="calGains">—</span></div>
-        <div class="set-row"><div class="sr-t">Kết quả cân bằng gần nhất</div><span class="sr-v" id="calMsg">--</span></div>
-        <div class="set-row"><div class="sr-t">Hiệu chuẩn</div><div class="sr-act"><button class="btn sm ctl" onclick="cmd('set_home')">Đặt gốc 90°</button><button class="btn sm ctl" onclick="cmd('cal_zero')">Cân bằng LDR</button><button class="btn sm ctl danger" onclick="cmd('reset_cal')">Xóa hiệu chuẩn</button></div></div>
+        <div class="set-row"><div class="sr-t">Ngưỡng sai lệch bám<small>Cố định trong firmware, không chỉnh từ web: HOLD ≤ 3 %, chỉnh tinh &gt; 5 %, chỉnh thô &gt; 22 % (về tinh &lt; 18 %).</small></div><span class="sr-v num">3 / 5 / 22 %</span></div>
+        <div class="set-row"><div class="sr-t">Offset LDR<small>TL / TR / BL / BR – do firmware lưu khi hiệu chuẩn</small></div><span class="sr-v num" id="offsets">—</span></div>
+        <div class="set-row"><div class="sr-t">Hệ số cân bằng<small>TL / TR / BL / BR – do firmware lưu khi hiệu chuẩn</small></div><span class="sr-v num" id="calGains">—</span></div>
+        <div class="set-row"><div class="sr-t">Thực hiện hiệu chuẩn<small>Cân bằng LDR, xóa hiệu chuẩn, đặt gốc cơ khí nằm ở trang Bám nắng.</small></div><button class="btn sm" type="button" onclick="document.querySelector('.tab[data-tab=&quot;tracking&quot;]').click()">Mở trang Bám nắng</button></div>
       </div>
     </section>
 
-    <section class="set-group">
+    <section class="set-group" data-g="night">
       <h3>Ban đêm</h3>
       <div class="panel set-list">
-        <div class="set-row"><div class="sr-t">Trạng thái</div><span class="status-ok" id="nightState">—</span></div>
-        <div class="set-row"><div class="sr-t">Điện áp PV hiện tại<small>Tự vào ban đêm sau giờ mặt trời lặn và khi PV dưới 5 V.</small></div><span class="sr-v num" id="nightPv">—</span></div>
-        <div class="set-row"><div class="sr-t">Chế độ ban đêm</div><div class="segc"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">Tự động</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">Bật</button><button class="btn sm ctl nightmode" data-m="2" onclick="cmd('night_off')">Tắt</button></div></div>
+        <div class="set-row"><div class="sr-t">Trạng thái thực tế</div><span class="status-ok" id="nightState">—</span></div>
+        <div class="set-row"><div class="sr-t">Điện áp PV hiện tại<small>Firmware tự vào ban đêm sau giờ mặt trời lặn và khi PV dưới 5 V, rồi đưa tấm pin về vị trí ban đêm.</small></div><span class="sr-v num" id="nightPv">—</span></div>
+        <div class="set-row"><div class="sr-t">Chế độ ban đêm<small>Tự động: theo điều kiện trên · Bật: ép ban đêm · Tắt: bỏ qua ban đêm.</small></div><div class="segc"><button class="btn sm ctl nightmode" data-m="0" onclick="cmd('night_auto')">Tự động</button><button class="btn sm ctl nightmode" data-m="1" onclick="cmd('night_on')">Bật</button><button class="btn sm ctl nightmode" data-m="2" onclick="cmd('night_off')">Tắt</button></div></div>
       </div>
     </section>
 
-    <section class="set-group">
+    <section class="set-group" data-g="fan">
       <h3>Quạt tản nhiệt</h3>
       <div class="panel set-list">
-        <div class="set-row"><div class="sr-t">Ngưỡng bật quạt<small>Ở chế độ tự động, quạt bật khi nhiệt độ tủ vượt ngưỡng.</small></div><div class="stepper"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')" aria-label="Giảm ngưỡng">−</button><b id="fanThreshVal" class="num">38.0 °C</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')" aria-label="Tăng ngưỡng">+</button></div></div>
-        <div class="set-row"><div class="sr-t">Điều khiển quạt</div><div class="segc"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">Tự động</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">Bật</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">Tắt</button></div></div>
+        <div class="set-row"><div class="sr-t">Nhiệt độ tủ hiện tại · trạng thái quạt</div><span class="sr-v num" id="setFanNow">—</span></div>
+        <div class="set-row"><div class="sr-t">Ngưỡng bật quạt<small>Ở chế độ tự động, quạt bật khi nhiệt độ tủ vượt ngưỡng (firmware không có ngưỡng tắt riêng).</small></div><div class="stepper"><button class="btn sm ctl" onclick="cmd('fan_thresh_down')" aria-label="Giảm ngưỡng">−</button><b id="fanThreshVal" class="num">--</b><button class="btn sm ctl" onclick="cmd('fan_thresh_up')" aria-label="Tăng ngưỡng">+</button></div></div>
+        <div class="set-row"><div class="sr-t">Chế độ quạt</div><div class="segc"><button class="btn sm ctl fanmode" data-m="0" onclick="cmd('fan_auto')">Tự động</button><button class="btn sm ctl fanmode" data-m="1" onclick="cmd('fan_on')">Bật</button><button class="btn sm ctl fanmode" data-m="2" onclick="cmd('fan_off')">Tắt</button></div></div>
       </div>
     </section>
 
-    <section class="set-group">
-      <h3>Màn hình TFT &amp; vị trí</h3>
+    <section class="set-group" data-g="disp">
+      <h3>Hiển thị</h3>
       <div class="panel set-list">
-        <div class="set-row only-esp32"><div class="sr-t">Tự tắt màn hình sau<small>Phút, 0 = không tắt.</small></div><div class="sr-act"><input id="tftSleepIn" type="number" min="0" max="240" step="1"><button class="btn sm ctl" onclick="setTftSleep()">Lưu</button></div></div>
-        <div class="set-row only-esp32"><div class="sr-t">Vị trí lắp đặt<small>Vĩ độ / kinh độ, dùng cho giờ mặt trời và thời tiết.</small></div><div class="sr-act"><input id="latIn" type="number" step="0.0001"><input id="lonIn" type="number" step="0.0001"><button class="btn sm ctl" onclick="setLoc()">Lưu</button></div></div>
-        <div class="set-row only-cloud"><div class="sr-t">Chỉ chỉnh tại mạng nội bộ<small>Thời gian tắt màn hình TFT và vị trí lắp đặt chỉnh ở giao diện LOCAL (Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN).</small></div></div>
+        <div class="set-row only-esp32"><div class="sr-t">Tự tắt màn hình TFT sau<small>Phút, 0 = không tắt.</small></div><div class="sr-act"><input id="tftSleepIn" type="number" min="0" max="240" step="1"><button class="btn sm ctl" onclick="setTftSleep()">Lưu</button></div></div>
+        <div class="set-row only-cloud"><div class="sr-t">Màn hình TFT<small>Thời gian tự tắt màn hình chỉ chỉnh ở giao diện LOCAL (Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN).</small></div><span class="sr-v" id="setTft">—</span></div>
+        <div class="set-row"><div class="sr-t">Giao diện web<small>Lưu trên trình duyệt này, áp dụng ngay.</small></div><select id="optTheme"><option value="light">Sáng</option><option value="dark">Tối</option><option value="system">Theo hệ thống</option></select></div>
       </div>
     </section>
 
-    <section class="set-group">
+    <section class="set-group" data-g="loc">
+      <h3>Vị trí lắp đặt</h3>
+      <div class="panel set-list">
+        <div class="set-row only-esp32"><div class="sr-t">Vĩ độ / kinh độ<small>Dùng cho giờ mặt trời và thời tiết. Vĩ độ −90..90, kinh độ −180..180.</small></div><div class="sr-act"><input id="latIn" type="number" step="0.0001"><input id="lonIn" type="number" step="0.0001"><button class="btn sm ctl" onclick="setLoc()">Lưu</button></div></div>
+        <div class="set-row only-cloud"><div class="sr-t">Vĩ độ / kinh độ hiện tại<small>Chỉ chỉnh ở giao diện LOCAL (Wi-Fi SOLAR_TRACKER hoặc cùng mạng LAN).</small></div><span class="sr-v num" id="setLocNow">—</span></div>
+      </div>
+    </section>
+
+    <section class="set-group" data-g="net">
       <h3>Mạng &amp; Cloud</h3>
       <div class="panel set-list">
         <div class="set-row"><div class="sr-t">Thiết bị ↔ Cloud</div><span class="sr-v" id="setCloud">—</span></div>
         <div class="set-row"><div class="sr-t">Mã thiết bị</div><span class="sr-v num" id="setDevId">—</span></div>
+        <div class="set-row only-cloud"><div class="sr-t">Wi-Fi Router<small>Cấu hình Wi-Fi chỉ thực hiện ở giao diện LOCAL để không gửi mật khẩu Wi-Fi qua Internet.</small></div></div>
         <div class="set-row only-esp32 col"><div class="sr-t">Wi-Fi Router<small>Lưu vào bộ nhớ ESP32. Wi-Fi SOLAR_TRACKER luôn hoạt động; mất Internet không ảnh hưởng bám nắng.</small></div>
           <div class="dl" id="wSaved"></div><p class="hint" id="wErr" style="display:none"></p>
           <form class="form" id="wifiForm" onsubmit="saveWifi(event)">
             <label>Tên Wi-Fi (SSID)<div class="inline"><input id="wSsid" list="wList" maxlength="32" autocomplete="off" required><button type="button" class="btn sm" onclick="scanWifi()" id="scanBtn">Quét</button></div><datalist id="wList"></datalist></label>
-            <label>Mật khẩu<input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"></label>
+            <label>Mật khẩu<div class="inline"><input id="wPass" type="password" maxlength="64" autocomplete="new-password" placeholder="Để trống = giữ mật khẩu đã lưu"><button type="button" class="btn sm" id="wPassEye" aria-pressed="false" title="Hiện / ẩn mật khẩu đang nhập">Hiện</button></div></label>
             <div class="inline"><button class="btn solid" type="submit">Lưu và kết nối</button><button class="btn" type="button" onclick="clearWifi()">Xóa cấu hình</button></div>
           </form>
         </div>
       </div>
     </section>
 
-    <section class="set-group only-cloud">
-      <h3>Nhật ký điều khiển từ xa</h3>
-      <div class="panel table-panel">
-        <div class="tp-head"><span>50 lệnh gần nhất</span><button class="btn sm" onclick="loadLogs()"><svg class="ic"><use href="#i-refresh"/></svg>Làm mới</button></div>
-        <div class="scroll"><table class="log"><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Lệnh</th><th>Kết quả</th></tr></thead><tbody id="logBody"><tr><td colspan="4">N/A</td></tr></tbody></table></div>
-      </div>
-    </section>
-
-    <section class="set-group only-cloud only-admin">
+    <section class="set-group only-cloud only-admin" data-g="users">
       <h3>Người dùng &amp; phân quyền</h3>
       <div class="panel table-panel">
+        <div class="tp-head"><span>viewer = chỉ giám sát · operator = điều khiển · admin = điều khiển + quản lý người dùng</span></div>
         <div class="scroll"><table class="log"><thead><tr><th>Tài khoản</th><th>Quyền</th><th></th></tr></thead><tbody id="userBody"></tbody></table></div>
         <form class="form user-form" onsubmit="addUser(event)">
           <label>Tài khoản<input id="nuName" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" required></label>
@@ -595,19 +632,36 @@
           <label>Mật khẩu (≥ 8 ký tự)<input id="nuPass" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></label>
           <button class="btn solid" type="submit">Thêm người dùng</button>
         </form>
+        <p class="hint">Máy chủ hiện hỗ trợ thêm và xóa tài khoản. Đổi quyền hoặc mật khẩu: xóa rồi tạo lại tài khoản. Không bao giờ hiển thị mật khẩu.</p>
       </div>
     </section>
 
-    <section class="set-group">
-      <h3>Giao diện</h3>
+    <section class="set-group only-cloud" data-g="logs">
+      <h3>Nhật ký điều khiển từ xa</h3>
+      <div class="panel table-panel">
+        <div class="tp-head"><span id="logHead">50 lệnh gần nhất của thiết bị đang chọn</span><button class="btn sm" onclick="loadLogs()"><svg class="ic"><use href="#i-refresh"/></svg>Làm mới</button></div>
+        <div class="log-filter">
+          <label>Ngày<input type="date" id="lfDate"></label>
+          <label>Người dùng<select id="lfUser"><option value="">Tất cả</option></select></label>
+          <label>Lệnh<select id="lfCmd"><option value="">Tất cả</option></select></label>
+          <label>Kết quả<select id="lfRes"><option value="">Tất cả</option><option value="ok">ESP32 đã xác nhận (OK)</option><option value="fail">Không xác nhận / bị từ chối</option></select></label>
+        </div>
+        <div class="scroll"><table class="log"><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Lệnh</th><th>Kết quả</th></tr></thead><tbody id="logBody"><tr><td colspan="4">N/A</td></tr></tbody></table></div>
+        <p class="hint">OK = ESP32 đã nhận và xác nhận lệnh. TIMEOUT, OFFLINE, BUSY_LOCAL, FORBIDDEN… = lệnh không được ESP32 xác nhận hoặc bị từ chối trước khi gửi.</p>
+      </div>
+    </section>
+
+    <section class="set-group" data-g="bat">
+      <h3>Đo ắc quy</h3>
       <div class="panel set-list">
-        <div class="set-row"><div class="sr-t">Giao diện<small>Lưu trên trình duyệt này, áp dụng ngay.</small></div><select id="optTheme"><option value="light">Sáng</option><option value="dark">Tối</option><option value="system">Theo hệ thống</option></select></div>
-        <div class="set-row"><div class="sr-t">Chiều dòng điện ắc quy<small>Để hiển thị đúng "đang sạc / đang xả", tùy cách nối INA219 #2.</small></div><select id="optChg"><option value="unk">Chưa xác định</option><option value="pos">Dòng dương = đang sạc</option><option value="neg">Dòng âm = đang sạc</option></select></div>
+        <div class="set-row"><div class="sr-t">Chiều dòng điện ắc quy (INA219 0x41)<small>Để hiển thị đúng "đang sạc / đang xả", tùy cách nối INA219 #2. Chỉ đổi cách hiển thị trên trình duyệt này, không đổi số đo.</small></div><select id="optChg"><option value="unk">Chưa xác định</option><option value="pos">Dòng dương = đang sạc</option><option value="neg">Dòng âm = đang sạc</option></select></div>
+        <div class="set-row"><div class="sr-t">Dòng hiện tại · trạng thái theo quy ước</div><span class="sr-v num" id="setChgNow">—</span></div>
       </div>
     </section>
   </div>
 </section>
 
+<div hidden aria-hidden="true"><span id="msTrack"></span><span id="msErr"></span><span id="msMode"></span></div>
 <div hidden aria-hidden="true"><i id="pvVbar"></i><i id="pvIbar"></i><i id="batVbar"></i></div>
 <footer>Solar Tracker Cloud · Giám sát và bám nắng</footer>
 </div>
@@ -982,7 +1036,7 @@ function render(d){
   const drvTxt=drvOn?((r1||r2)?'ĐANG CẤP XUNG':'ENABLE (GIỮ VỊ TRÍ)'):'SLEEP (ENABLE TẮT)';
   const drvNote='ESP32 chỉ điều khiển STEP/DIR/ENABLE, không đọc được phản hồi từ driver nên trạng thái được suy ra từ chân ENABLE.';
   stt('drvStatus',drvOn?(r1?'ok':'na'):'na',drvTxt); stt('drv2Status',drvOn?(r2?'ok':'na'):'na',drvTxt);
-  setText('drv1D','Trục đứng. '+drvNote); setText('drv2D','Trục ngang. '+drvNote);
+  setText('drv1D','Motor 1 (trục nghiêng) · suy ra từ chân ENABLE, driver không gửi phản hồi'); setText('drv2D','Motor 2 (trục xoay) · suy ra từ chân ENABLE, driver không gửi phản hồi');
   stt('i2cStat',(pvOk&&batOk)?'ok':((pvOk||batOk)?'warn':'bad'),(pvOk&&batOk)?'CẢ 2 INA219 PHẢN HỒI':((pvOk||batOk)?'CHỈ 1/2 THIẾT BỊ':'KHÔNG THẤY THIẾT BỊ'));
   stt('apStat',(ENV==='esp32'&&online)?'ok':'na',(ENV==='esp32'&&online)?'ĐANG PHÁT':'KHÔNG XÁC MINH');
   stt('solarState',pvOk?(pp>0.05?'ok':'na'):'na',pvOk?(pp>0.05?'ĐANG PHÁT ĐIỆN':'CHƯA PHÁT ĐIỆN'):'KHÔNG CÓ DỮ LIỆU');
@@ -1384,7 +1438,7 @@ function rptPick(r){
     const j=await x.json(); if(my!==rptSeq)return; if(!x.ok)throw new Error(j.error||('Lỗi '+x.status));
     const off=(j.tzHours||7)*3600e3, d=ms=>{const t=new Date(ms+off);return String(t.getUTCDate()).padStart(2,'0')+'/'+String(t.getUTCMonth()+1).padStart(2,'0')+'/'+t.getUTCFullYear()};
     setText('rptFrom',d(j.from)); setText('rptTo',d(j.to)); setText('rptN',j.n?j.n.toLocaleString('vi-VN'):'0');
-    setText('rptPv',j.pv.n?j.pv.avg.toFixed(2)+' V':'--'); setText('rptBat',j.bat.n?j.bat.avg.toFixed(2)+' V':'--');
+    setText('rptPv',j.pv.n?j.pv.avg.toFixed(2)+' V':'--'); setText('rptBat',j.bat.n?j.bat.avg.toFixed(2)+' V':'--');setText('rptPvMax',j.pv.n?j.pv.max.toFixed(2)+' V':'--'); setText('rptPvMin',j.pv.n?j.pv.min.toFixed(2)+' V':'--');setText('rptBatMax',j.bat.n?j.bat.max.toFixed(2)+' V':'--'); setText('rptBatMin',j.bat.n?j.bat.min.toFixed(2)+' V':'--');
     if(!j.n){rptSet('bad','Không có dữ liệu điện áp trong khoảng thời gian đã chọn. Báo cáo sẽ không được tạo.');return}
     const notes=[]; if(j.mode==='hourly')notes.push('khoảng này dài nên báo cáo dùng giá trị trung bình theo giờ (mỗi dòng = 1 giờ)'); if(j.pv.n===0)notes.push('chưa có dữ liệu điện áp PV'); if(j.bat.n===0)notes.push('chưa có dữ liệu điện áp ắc quy');
     rptOk=true; $('btnExport').disabled=false;
@@ -1434,6 +1488,7 @@ T.start();
 <script src="/cloud-login.js"></script>
 <script src="/cloud-glass.js"></script>
 <script src="/cloud-dash.js"></script>
+<script src="/cloud-pages.js"></script>
 <script src="/tracker3d.js"></script>
 </body>
 </html>

@@ -114,11 +114,27 @@
 
 <!-- ======================= TỔNG QUAN ======================= -->
 <section class="page active" id="page-dash">
-  <div class="dash-hero">
+
+  <!-- 1. TRẠNG THÁI HỆ THỐNG (gọn; ESP32/Internet/quyền/cập nhật/E-STOP ở thanh đầu trang luôn hiển thị) -->
+  <section class="panel dash-status" aria-label="Trạng thái hệ thống">
+    <ul class="health-list status-strip" id="overview">
+      <li><span class="hk"><svg class="ic"><use href="#i-cpu"/></svg>ESP32</span><span class="v na" id="ovEspV"><i></i><span>Đang chờ</span></span><span class="hd" id="ovEspD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-wifi"/></svg>Wi-Fi</span><span class="v na" id="ovWifiV"><i></i><span>--</span></span><span class="hd" id="ovWifiD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-cloud"/></svg>Cloud</span><span class="v na" id="ovCloudV"><i></i><span>--</span></span><span class="hd" id="ovCloudD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-target"/></svg>Chế độ</span><span class="v na" id="dStModeV"><i></i><span>--</span></span><span class="hd" id="dStModeD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-target"/></svg>Bám nắng</span><span class="v na" id="ovTrackV"><i></i><span>--</span></span><span class="hd" id="ovTrackD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-gauge"/></svg>MPPT</span><span class="v na" id="ovMpptV"><i></i><span>--</span></span><span class="hd" id="ovMpptD">--</span></li>
+      <li><span class="hk"><svg class="ic"><use href="#i-battery"/></svg>Ắc quy</span><span class="v na" id="ovBatV"><i></i><span>--</span></span><span class="hd" id="ovBatD">--</span></li>
+    </ul>
+  </section>
+
+  <!-- 2. TỔNG QUAN NĂNG LƯỢNG: 2 thẻ cân đối -->
+  <div class="dash-row dash-energy">
     <section class="panel pv-hero" id="grpPv">
       <div class="ph"><h2>Tấm pin mặt trời</h2><span class="chip" id="chipPv"><i></i><b>INA219 --</b></span></div>
       <div class="kpi-xl"><span class="num" id="pvP">—</span><span class="u">W</span></div>
-      <div class="kpi-note"><span id="powerRingWrap" title="So với công suất định mức 30 W"><span class="num" id="powerRing">--%</span> công suất định mức 30 W</span></div>
+      <div class="kpi-note"><span id="powerRingWrap" title="So với công suất định mức 20 W"><span class="num" id="powerRing">--%</span> công suất định mức 20 W</span></div>
+      <div class="pbar" aria-hidden="true"><i id="pvBar"></i></div>
       <dl class="kv-grid">
         <div><dt>Điện áp</dt><dd><span class="num" id="pvV">—</span><small>V</small></dd></div>
         <div><dt>Dòng điện</dt><dd><span class="num" id="pvI">—</span><small>A</small></dd></div>
@@ -126,98 +142,134 @@
       </dl>
     </section>
 
-    <section class="panel flow-panel">
-      <div class="ph"><h2>Dòng năng lượng</h2><span class="ph-sub">Mũi tên chỉ chạy khi xác định được chiều dòng từ dữ liệu đo</span></div>
-      <div class="flow">
-        <div class="node pv">
-          <div class="node-ic"><svg class="ic"><use href="#i-sun"/></svg></div>
-          <div class="node-k">Tấm pin</div>
-          <div class="node-v num"><span id="pfPvP">—</span><small>W</small></div>
-          <div class="node-s num"><span id="pfPvV">—</span> · <span id="pfPvI">—</span></div>
-        </div>
-        <div class="link" id="pfLinkA" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
-        <div class="node mppt">
-          <div class="node-ic"><svg class="ic"><use href="#i-cpu"/></svg></div>
-          <div class="node-k">Bộ điều khiển</div>
-          <div class="node-t" id="pfMppt">—</div>
-          <div class="node-s">MPPT chạy trên ESP32</div>
-        </div>
-        <div class="link b" id="pfLinkB" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
-        <div class="node bat">
-          <div class="node-ic"><svg class="ic"><use href="#i-battery"/></svg></div>
-          <div class="node-k">Ắc quy</div>
-          <div class="node-v num"><span id="pfBatV">—</span><small>V</small></div>
-          <div class="node-s num"><span id="pfBatI">—</span> · <span id="pfBatP">—</span></div>
-        </div>
-      </div>
-      <div class="flow-cap" id="pfCap">Chờ dữ liệu từ ESP32...</div>
+    <section class="panel pv-hero bat-hero" id="grpBat">
+      <div class="ph"><h2>Ắc quy</h2><span class="chip" id="chipBat"><i></i><b>INA219 --</b></span></div>
+      <div class="kpi-xl"><span class="num" id="batV">—</span><span class="u">V</span></div>
+      <div class="kpi-note"><b class="chg" id="chgState">—</b> · <span id="chgSub">SOC: —</span></div>
+      <div class="pbar bat" aria-hidden="true"><i id="batBar"></i></div>
+      <dl class="kv-grid">
+        <div><dt>Dòng điện</dt><dd><span class="num" id="batI">—</span><small>A</small></dd></div>
+        <div><dt>Công suất</dt><dd><span class="num" id="batP">—</span><small>W</small></dd></div>
+        <div class="wide"><dt>Chiều dòng</dt><dd class="txt" id="dBatDir">Theo quy ước chọn ở Cài đặt (chưa chọn thì không suy đoán sạc/xả)</dd></div>
+      </dl>
     </section>
   </div>
 
-  <section class="panel model3d">
-    <div class="ph"><h2>Mô hình 3D</h2><span class="ph-sub" id="d3Sub">Chờ góc motor từ ESP32...</span><button class="badge-btn d3-sunbtn" id="d3Sun" type="button" aria-pressed="true" title="Bật: mặt trời và ngày/đêm thật theo dữ liệu thời tiết. Tắt: không có mặt trời, ánh sáng đều.">Mặt trời: bật</button></div>
-    <div class="d3-view" id="dash3d" aria-label="Mô hình 3D solar tracker quay theo góc motor thật. Kéo để xoay, cuộn để phóng to.">
-      <p class="d3-msg">Mô hình hiển thị khi có dữ liệu góc từ thiết bị.</p>
-      <p class="d3-nogl">Trình duyệt không hỗ trợ WebGL nên không vẽ được mô hình 3D.</p>
+  <!-- 3. DÒNG NĂNG LƯỢNG -->
+  <section class="panel flow-panel dash-flow">
+    <div class="ph"><h2>Dòng năng lượng</h2><span class="ph-sub">Mũi tên chỉ chạy khi xác định được chiều dòng từ dữ liệu đo</span></div>
+    <div class="flow">
+      <div class="node pv">
+        <div class="node-ic"><svg class="ic"><use href="#i-sun"/></svg></div>
+        <div class="node-k">Tấm pin</div>
+        <div class="node-v num"><span id="pfPvP">—</span><small>W</small></div>
+        <div class="node-s num"><span id="pfPvV">—</span> · <span id="pfPvI">—</span></div>
+      </div>
+      <div class="link" id="pfLinkA" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
+      <div class="node mppt">
+        <div class="node-ic"><svg class="ic"><use href="#i-cpu"/></svg></div>
+        <div class="node-k">Bộ điều khiển</div>
+        <div class="node-t" id="pfMppt">—</div>
+        <div class="node-s">MPPT chạy trên ESP32</div>
+      </div>
+      <div class="link b" id="pfLinkB" aria-hidden="true"><svg viewBox="0 0 120 10" preserveAspectRatio="none"><line class="trk" x1="0" y1="5" x2="120" y2="5"/><line class="run" x1="0" y1="5" x2="120" y2="5"/></svg></div>
+      <div class="node bat">
+        <div class="node-ic"><svg class="ic"><use href="#i-battery"/></svg></div>
+        <div class="node-k">Ắc quy</div>
+        <div class="node-v num"><span id="pfBatV">—</span><small>V</small></div>
+        <div class="node-s num"><span id="pfBatI">—</span> · <span id="pfBatP">—</span></div>
+      </div>
     </div>
-    <div class="d3-cap"><span id="d3SunInfo">Mặt trời theo dữ liệu thời tiết</span><span class="d3-help">Kéo để xoay · cuộn để phóng to · M1 nghiêng tấm pin (90° = nằm ngang) · M2 xoay trục đứng</span></div>
+    <div class="flow-cap" id="pfCap">Chờ dữ liệu từ ESP32...</div>
   </section>
 
-  <section class="panel bat-strip" id="grpBat">
-    <div class="bs-head"><h2>Ắc quy</h2><span class="chip" id="chipBat"><i></i><b>INA219 --</b></span></div>
-    <div class="bs-cell"><span class="k">Điện áp</span><span class="v"><span class="num" id="batV">—</span><small>V</small></span></div>
-    <div class="bs-cell"><span class="k">Dòng điện</span><span class="v"><span class="num" id="batI">—</span><small>A</small></span></div>
-    <div class="bs-cell"><span class="k">Công suất</span><span class="v"><span class="num" id="batP">—</span><small>W</small></span></div>
-    <div class="bs-cell state"><span class="k">Trạng thái</span><span class="v txt"><span id="chgState">—</span><small id="chgSub">SOC: —</small></span></div>
-  </section>
+  <!-- 4. MÔ HÌNH 3D + 5. TRUNG TÂM ĐIỀU KHIỂN ĐỘNG CƠ -->
+  <div class="dash-row dash-ops">
+    <section class="panel model3d">
+      <div class="ph"><h2>Mô hình 3D</h2><span class="ph-sub" id="d3Sub">Chờ góc motor từ ESP32...</span><button class="badge-btn d3-sunbtn" id="d3Sun" type="button" aria-pressed="true" title="Bật: mặt trời và ngày/đêm thật theo dữ liệu thời tiết. Tắt: không có mặt trời, ánh sáng đều.">Mặt trời: bật</button></div>
+      <div class="d3-view" id="dash3d" aria-label="Mô hình 3D solar tracker quay theo góc motor thật. Kéo để xoay, cuộn để phóng to.">
+        <p class="d3-msg">Mô hình hiển thị khi có dữ liệu góc từ thiết bị.</p>
+        <p class="d3-nogl">Trình duyệt không hỗ trợ WebGL nên không vẽ được mô hình 3D.</p>
+      </div>
+      <div class="d3-cap"><span id="d3SunInfo">Mặt trời theo dữ liệu thời tiết</span><span class="d3-help">Kéo để xoay · cuộn để phóng to · M1 nghiêng tấm pin (90° = nằm ngang) · M2 xoay trục đứng</span></div>
+    </section>
 
-  <div class="dash-grid">
+    <section class="panel mcc" id="dMcc" aria-label="Trung tâm điều khiển động cơ">
+      <div class="ph"><h2>Điều khiển động cơ</h2><span class="ph-sub">Qua Cloud mỗi lần bấm quay đúng 10°</span></div>
+
+      <div class="mcc-mode" role="group" aria-label="Chế độ vận hành">
+        <button class="badge-btn ctl mode-a" id="dModeAuto" type="button" onclick="dashMode(true)">AUTO</button>
+        <button class="badge-btn ctl mode-m" id="dModeMan" type="button" onclick="dashMode(false)">MANUAL</button>
+      </div>
+      <div class="mcc-note" id="dMccNote" role="status">Chờ dữ liệu từ ESP32...</div>
+
+      <div class="mcc-motors">
+        <div class="mcc-motor">
+          <div class="mt-head"><span>Motor 1 · trục nghiêng</span><span class="gst" id="m1">STOP</span></div>
+          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g1"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
+          <div class="ax-v num"><span id="a1">—</span><small>°</small></div>
+          <div class="mcc-btns">
+            <button class="btn primary ctl" id="dM1Dn" type="button" title="Motor 1 quay −10° (lệnh m1_left)"><svg class="ic"><use href="#i-left"/></svg>−10°</button>
+            <button class="btn primary ctl" id="dM1Up" type="button" title="Motor 1 quay +10° (lệnh m1_right)">+10°<svg class="ic"><use href="#i-right"/></svg></button>
+          </div>
+        </div>
+        <div class="mcc-motor">
+          <div class="mt-head"><span>Motor 2 · trục xoay</span><span class="gst" id="m2">STOP</span></div>
+          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g2"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
+          <div class="ax-v num"><span id="a2">—</span><small>°</small></div>
+          <div class="mcc-btns">
+            <button class="btn primary ctl" id="dM2L" type="button" title="Motor 2 quay trái −10° (lệnh m2_left)"><svg class="ic"><use href="#i-left"/></svg>Trái</button>
+            <button class="btn primary ctl" id="dM2R" type="button" title="Motor 2 quay phải +10° (lệnh m2_right)">Phải<svg class="ic"><use href="#i-right"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mcc-speed">
+        <span class="hk">Tốc độ</span>
+        <div class="segc" id="dSpd"><button class="badge-btn spd ctl" type="button" data-lv="1" onclick="setSpeed(1)">50%</button><button class="badge-btn spd ctl" type="button" data-lv="2" onclick="setSpeed(2)">75%</button><button class="badge-btn spd ctl" type="button" data-lv="3" onclick="setSpeed(3)">100%</button><button class="badge-btn spd ctl" type="button" data-lv="4" onclick="setSpeed(4)">150%</button><button class="badge-btn spd ctl" type="button" data-lv="5" onclick="setSpeed(5)">200%</button></div>
+      </div>
+
+      <div class="mcc-stop">
+        <button class="btn stop ctl safety" type="button" onclick="cmd('stop')" title="Dừng ngay cả 2 motor. Theo firmware, lệnh này đồng thời chuyển hệ thống sang MANUAL.">Dừng cả 2 motor</button>
+        <button class="estop ctl safety" id="dEstop" type="button" onclick="cmd('estop_toggle')">Dừng khẩn cấp</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 6. BIỂU ĐỒ CÔNG SUẤT + 7. TRẠNG THÁI BÁM NẮNG -->
+  <div class="dash-row dash-mon">
     <section class="panel chart-panel">
       <div class="ph"><h2>Công suất thời gian thực</h2>
-        <div class="legend"><span class="lg pv">Tấm pin</span><span class="lg bat">Ắc quy</span></div>
+        <div class="legend"><button class="lg pv" type="button" id="dLgPv" aria-pressed="true" onclick="dashSeries('pv')" title="Bật/tắt đường tấm pin">Tấm pin</button><button class="lg bat" type="button" id="dLgBat" aria-pressed="true" onclick="dashSeries('bat')" title="Bật/tắt đường ắc quy">Ắc quy</button></div>
         <button class="linkbtn" type="button" onclick="document.querySelector('.tab[data-tab=&quot;graph&quot;]').click()">Lịch sử &amp; báo cáo<svg class="ic"><use href="#i-arrow"/></svg></button>
       </div>
       <canvas id="miniChart"></canvas>
     </section>
 
-    <section class="panel health">
-      <div class="ph"><h2>Tình trạng hệ thống</h2></div>
-      <ul class="health-list" id="overview">
-        <li><span class="hk"><svg class="ic"><use href="#i-cpu"/></svg>ESP32</span><span class="v na" id="ovEspV"><i></i><span>Đang chờ</span></span><span class="hd" id="ovEspD">--</span></li>
-        <li><span class="hk"><svg class="ic"><use href="#i-wifi"/></svg>Wi-Fi</span><span class="v na" id="ovWifiV"><i></i><span>--</span></span><span class="hd" id="ovWifiD">--</span></li>
-        <li><span class="hk"><svg class="ic"><use href="#i-cloud"/></svg>Cloud</span><span class="v na" id="ovCloudV"><i></i><span>--</span></span><span class="hd" id="ovCloudD">--</span></li>
-        <li><span class="hk"><svg class="ic"><use href="#i-gauge"/></svg>MPPT</span><span class="v na" id="ovMpptV"><i></i><span>--</span></span><span class="hd" id="ovMpptD">--</span></li>
-        <li><span class="hk"><svg class="ic"><use href="#i-target"/></svg>Bám nắng</span><span class="v na" id="ovTrackV"><i></i><span>--</span></span><span class="hd" id="ovTrackD">--</span></li>
-        <li><span class="hk"><svg class="ic"><use href="#i-battery"/></svg>Ắc quy</span><span class="v na" id="ovBatV"><i></i><span>--</span></span><span class="hd" id="ovBatD">--</span></li>
-      </ul>
+    <section class="panel track-sum">
+      <div class="ph"><h2>Trạng thái bám nắng</h2><span class="badge-btn ctl" id="modeBtnTop">AUTO</span></div>
+      <dl class="mini-dl">
+        <div><dt>Trạng thái</dt><dd id="trackStatDash">—</dd></div>
+        <div><dt>Motor 1</dt><dd id="dTrkM1">—</dd></div>
+        <div><dt>Motor 2</dt><dd id="dTrkM2">—</dd></div>
+        <div><dt>Quyền điều khiển</dt><dd id="ownerInfo2">—</dd></div>
+        <div><dt>Cập nhật</dt><dd class="num" id="dTrkUpd">—</dd></div>
+      </dl>
+      <div class="lm-k">Cảm biến LDR</div>
+      <div class="lm-grid"><div>TL<b class="num" id="qTL">—</b></div><div>TR<b class="num" id="qTR">—</b></div><div>BL<b class="num" id="qBL">—</b></div><div>BR<b class="num" id="qBR">—</b></div></div>
     </section>
   </div>
 
-  <div class="dash-grid">
-    <section class="panel track-sum">
-      <div class="ph"><h2>Bám nắng</h2><span class="ph-sub" id="trackStatDash">—</span>
-        <button class="badge-btn ctl" id="modeBtnTop" onclick="toggleAuto()">AUTO</button></div>
-      <div class="axes">
-        <div class="axis">
-          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g1"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
-          <div class="ax-v num"><span id="a1">—</span><small>°</small></div>
-          <div class="ax-k">Motor 1 · trục ngang (nghiêng)</div>
-          <div class="gst" id="m1">STOP</div>
-        </div>
-        <div class="axis">
-          <svg viewBox="0 0 120 70" class="dial"><path class="arc" d="M10 62 A50 50 0 0 1 110 62"/><g id="g2"><line class="needle" x1="60" y1="62" x2="60" y2="20"/></g><circle class="hub" cx="60" cy="62" r="4"/></svg>
-          <div class="ax-v num"><span id="a2">—</span><small>°</small></div>
-          <div class="ax-k">Motor 2 · trục đứng (xoay)</div>
-          <div class="gst" id="m2">STOP</div>
-        </div>
-        <div class="ldr-mini">
-          <div class="lm-k">Cảm biến LDR</div>
-          <div class="lm-grid"><div>TL<b class="num" id="qTL">—</b></div><div>TR<b class="num" id="qTR">—</b></div><div>BL<b class="num" id="qBL">—</b></div><div>BR<b class="num" id="qBR">—</b></div></div>
-          <div class="lm-own">Quyền điều khiển <b id="ownerInfo2">—</b></div>
-        </div>
-      </div>
+  <!-- 8. MÔI TRƯỜNG -->
+  <div class="dash-row dash-env">
+    <section class="panel env-box">
+      <div class="ph"><h2>Tủ điện</h2></div>
+      <dl class="mini-dl">
+        <div><dt>Nhiệt độ (DHT11)</dt><dd class="num" id="dEnvT">—</dd></div>
+        <div><dt>Độ ẩm (DHT11)</dt><dd class="num" id="dEnvH">—</dd></div>
+        <div><dt>Quạt tản nhiệt</dt><dd id="dEnvFan">—</dd></div>
+      </dl>
     </section>
-
     <section class="panel weather">
       <div class="ph"><h2>Thời tiết &amp; mặt trời</h2><button class="icon-btn ctl" onclick="cmd('wx_refresh')" title="Làm mới thời tiết" aria-label="Làm mới thời tiết"><svg class="ic"><use href="#i-refresh"/></svg></button></div>
       <div class="wx-main"><div class="wx-t"><span class="num" id="wxT">--</span><small>°C</small></div><div class="wx-h"><svg class="ic"><use href="#i-drop"/></svg><span class="num" id="wxH">--</span>%</div></div>
@@ -857,7 +909,7 @@ function drawChart(){
 }
 function drawMini(){
   const c=$('miniChart'); if(!c||!c.offsetParent)return;
-  renderChart(c,{t:histT,pv:histPV_P,bat:histBat_P},{pv:true,bat:true,unit:'W',dec:0,defMax:24,tip:false,axis:false,hover:null,H:170,empty:'Đang chờ dữ liệu...'});
+  renderChart(c,{t:histT,pv:histPV_P,bat:histBat_P},{pv:window.miniPV!==false,bat:window.miniBat!==false,unit:'W',dec:0,defMax:24,tip:false,axis:true,tmode:'hms',hover:null,H:260,empty:'Đang chờ dữ liệu...'});
 }
 function schedDraw(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;drawChart()})}
 {const c=$('chart');
@@ -936,7 +988,7 @@ function render(d){
   stt('solarState',pvOk?(pp>0.05?'ok':'na'):'na',pvOk?(pp>0.05?'ĐANG PHÁT ĐIỆN':'CHƯA PHÁT ĐIỆN'):'KHÔNG CÓ DỮ LIỆU');
 
   bar('pvVbar',pvOk?pv:0,24); bar('pvIbar',pvOk?pi:0,2); bar('batVbar',batOk?bv:0,14);
-  const pct=Math.round(Math.min(100,pp/30*100));
+  const pct=Math.round(Math.min(100,pp/20*100));
   setText('powerRing',pvOk?pct+'%':dash);
 
   // --- 4 cảm biến LDR ---
@@ -1381,6 +1433,7 @@ T.start();
 <script src="/cloud-fx.js"></script>
 <script src="/cloud-login.js"></script>
 <script src="/cloud-glass.js"></script>
+<script src="/cloud-dash.js"></script>
 <script src="/tracker3d.js"></script>
 </body>
 </html>

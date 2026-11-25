@@ -1085,7 +1085,7 @@ function render(d){
   else if(tsr.includes('P&O')){tt='MPPT ĐANG DÒ CÔNG SUẤT';tc='status-warn'}
   else if(tsr.includes('COARSE')||tsr==='TRACKING'){tt='LDR ĐỊNH HƯỚNG QUANG HỌC';tc='status-warn'}
   else if(tsr==='LDR LOCKED'||tsr==='LDR ALIGNED'){tt='ĐÃ CÂN BẰNG QUANG HỌC LDR';tc='status-ok'}
-  else if(tsr.includes('RETURNING')||tsr.includes('0°')){tt='ĐANG TRỞ VỀ 0° (BAN ĐÊM)';tc='status-warn'}
+  else if(tsr.includes('RETURNING')||tsr.includes('0°')){tt='ĐANG VỀ VỊ TRÍ BAN ĐÊM';tc='status-warn'}
   else if(tsr==='NIGHT'||tsr==='NIGHT_HOLD'){tt='BAN ĐÊM (NGHỈ)';tc='status-warn'}
   else{tt=tsr||'N/A';tc='status-ok'}
   setText('trackStat',tt); setCls('trackStat',tc); setText('trackStatDash',tt); setText('trackStatDash2',tt);

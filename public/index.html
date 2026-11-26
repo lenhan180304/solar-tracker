@@ -512,6 +512,7 @@
       <table class="tbl"><tbody>
         <tr><td class="k">Driver 1 · TMC2208<small>Motor 1 · trục nghiêng · STEP 25 · DIR 14 · EN 4</small></td><td><span class="status-na" id="drvStatus">N/A</span></td><td class="d" id="drv1D">--</td></tr>
         <tr><td class="k">Driver 2 · TMC2208<small>Motor 2 · trục xoay · STEP 26 · DIR 15 · EN 4</small></td><td><span class="status-na" id="drv2Status">N/A</span></td><td class="d" id="drv2D">--</td></tr>
+        <tr><td class="k">Công tắc hành trình M2<small>PCF8574T 0x20 · CT1 = 0° (P0) · CT2 = 180° (P1) · NC</small></td><td><span class="status-na" id="ctStat">N/A</span></td><td class="d"><span id="ctInfo">--</span> <button class="btn sm ctl only-esp32" id="btnHomeM2" onclick="homeM2()">Dò gốc M2</button></td></tr>
       </tbody></table>
       <p class="hint">Phân biệt: "ĐANG CẤP XUNG" = ESP32 đang phát xung STEP; "ENABLE" = driver được bật giữ vị trí; driver không gửi phản hồi lỗi về ESP32 nên không có trạng thái "driver online" thật.</p>
     </section>
@@ -1087,6 +1088,7 @@ function render(d){
   else if(tsr==='LDR LOCKED'||tsr==='LDR ALIGNED'){tt='ĐÃ CÂN BẰNG QUANG HỌC LDR';tc='status-ok'}
   else if(tsr.includes('RETURNING')||tsr.includes('0°')){tt='ĐANG VỀ VỊ TRÍ BAN ĐÊM';tc='status-warn'}
   else if(tsr==='NIGHT'||tsr==='NIGHT_HOLD'){tt='BAN ĐÊM (NGHỈ)';tc='status-warn'}
+  else if(tsr==='M2 HOMING'){tt='ĐANG DÒ GỐC M2';tc='status-warn'}
   else{tt=tsr||'N/A';tc='status-ok'}
   setText('trackStat',tt); setCls('trackStat',tc); setText('trackStatDash',tt); setText('trackStatDash2',tt);
   const mpptRun=pvOk&&(tsr.includes('Pmax')||tsr.includes('P&O'));
@@ -1135,6 +1137,11 @@ function render(d){
   setCls('btnSimReal',sim?'':'on'); setCls('btnSimOn',sim?'on sim':'');
   const cs=$('chipSim'); if(cs){const dd=sim?'':'none'; if(cs.style.display!==dd)cs.style.display=dd; if(sim){const a=Number(d.simAgeMs)||0; setChip('chipSim',a<4000?'ok':'bad',a<4000?'MATLAB OK':'MATLAB MẤT')}}
   setText('i2cFound',d.i2cFound||'N/A');
+  {const pc=d.pcfOK,hm=!!d.m2Homing,ok=!!d.m2Homed;
+   if(pc===undefined){stt('ctStat','na','CHƯA HỖ TRỢ');setText('ctInfo','Firmware chưa gửi trạng thái công tắc')}
+   else{stt('ctStat',!pc?'bad':(hm?'warn':(ok?'ok':'bad')),!pc?'KHÔNG THẤY PCF8574T':(hm?'ĐANG DÒ GỐC':(ok?'GỐC M2 OK':'CHƯA CÓ GỐC')));
+     setText('ctInfo','CT1 '+(d.ct1?'CHẠM':'nhả')+' · CT2 '+(d.ct2?'CHẠM':'nhả')+' · '+(d.m2HomeMsg||''))}
+   setText('btnHomeM2',hm?'ĐANG DÒ...':'DÒ GỐC M2')}
 
   // --- Sạc pin + sơ đồ dòng năng lượng (không suy diễn khi chưa biết chiều dòng) ---
   const ci=chargeInfo(d);
@@ -1224,6 +1231,12 @@ $('btnSimReal').addEventListener('click',()=>{
   if(lastData&&!lastData.simMode)return;
   cmd('sim_off');
 });
+function homeM2(){
+  if(ENV!=='esp32'){toast('Dò gốc M2 chỉ dùng ở web LOCAL hoặc màn TFT (máy sẽ quay, cần người đứng cạnh).','warn',4500);return}
+  if(lastData&&lastData.m2Homing){toast('Đang dò gốc M2...','info');return}
+  if(!confirm('Dò gốc M2: motor 2 sẽ quay về công tắc 0°, tới công tắc 180° để kiểm tra, rồi về 90°. Bảo đảm không có vật cản. Tiếp tục?'))return;
+  cmd('home_m2');
+}
 $('btnI2cScan').addEventListener('click',()=>{
   if(ENV!=='esp32'){toast('Quét I2C chỉ dùng được ở web nội bộ (LOCAL).','warn',4000);return}
   fetch('/api/i2c',{cache:'no-store'}).then(r=>r.json()).then(j=>{

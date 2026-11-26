@@ -1234,7 +1234,7 @@ $('btnSimReal').addEventListener('click',()=>{
 function homeM2(){
   if(ENV!=='esp32'){toast('Dò gốc M2 chỉ dùng ở web LOCAL hoặc màn TFT (máy sẽ quay, cần người đứng cạnh).','warn',4500);return}
   if(lastData&&lastData.m2Homing){toast('Đang dò gốc M2...','info');return}
-  if(!confirm('Dò gốc M2: motor 2 sẽ quay về công tắc 0°, tới công tắc 180° để kiểm tra, rồi về 90°. Bảo đảm không có vật cản. Tiếp tục?'))return;
+  if(!confirm('Dò gốc M2: motor 2 sẽ quay tới công tắc gần nhất (góc hiện tại > 90° thì CT2 180°, còn lại CT1 0°), rồi về 90°. Bảo đảm không có vật cản. Tiếp tục?'))return;
   cmd('home_m2');
 }
 $('btnI2cScan').addEventListener('click',()=>{
